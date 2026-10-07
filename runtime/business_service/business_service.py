@@ -60,9 +60,16 @@ class BusinessService:
         # The order is read internally, but never returned before identity/ownership checks.
         if not isinstance(identity,Identity) or type(identity.roles) is not frozenset:raise PermissionError('trusted identity required')
         self.approvals.text(identity.actor)
-        state=self.orders.get(oid)
         if 'OWNER' in identity.roles:
-            self.role(identity,'OWNER');return state
+            self.role(identity,'OWNER')
+        elif not identity.roles.intersection({'DISPATCHER','PARTNER'}):
+            raise PermissionError('order read denied')
+        try:
+            state=self.orders.get(oid)
+        except (LookupError, ValueError):
+            raise PermissionError('order read denied') from None
+        if 'OWNER' in identity.roles:
+            return state
         if 'DISPATCHER' in identity.roles and identity.actor==state['owner']:return state
         if 'PARTNER' in identity.roles and identity.actor==state['driver']:
             return {k:state[k] for k in ('id','status','revision','driver','eta','call','test')} | {

@@ -57,3 +57,21 @@ Dependency graph:
 Քլոդը դնում է առանձին PR-ով, Linux/Windows CI է ավելացնում։ Merge հերթը՝ Order Flow -> Request Flow, Approval -> Executor, հետո Business Service։ Repo-ի դիզայնը անկախ է։ Ամեն նախորդ merge-ից հետո կախված ճյուղերը համադրվում են նոր main-ի հետ, նոր head-ի CI-ն նորից կանաչ է պահանջվում։ Վերջում main-ի CI-ն ստուգվում է։ Բոլոր commit/merge-երի author=committer=MenQ։
 
 Սերվերի deploy, LIVE, արտաքին գործողություն կամ timer այս փաթեթով չի արվում։
+
+## Pre-merge fixes r1, 08.10.2026 / Մինչև merge ուղղումներ r1
+
+EN. Added after the package, from `KRYUK24_Premerge_Fixes_r1_from_GPT.zip` (sha256 `7de328b4e8a1779faa109d2a98d0e7a8ce4fd0b0383959d118c7c13ee6bd05de`); it replaced `business_service.py` and `test_business_service.py`, and the two Request Flow files (see that module's README). Where the text above says otherwise, this section holds.
+
+`order()` checks the permitted role and the configured owner before it reads the order. For an admitted identity a missing, an unmanaged and a not-owned order all raise `PermissionError('order read denied')`, with the original lookup error not chained. An identity with no order role, or a false OWNER, is refused without a read. The partner still gets the restricted projection.
+
+Limits. The same application answer, not constant timing. A future HTTP adapter must map the refusal uniformly and never return a stack trace. The other reads (inquiries, audit) are not claimed to answer uniformly.
+
+Tests: 9 integration tests; 69 with the five underlying suites (runtime 7, order flow 18, request flow 13, approval 11, executor 11).
+
+HY. Ավելացվել ա փաթեթից հետո, նույն զիպից. փոխարինվել են `business_service.py`-ն ու `test_business_service.py`-ն, ու դիմումների հոսքի երկու ֆայլը (տես էդ մոդուլի README-ն)։ Որտեղ վերևի տեքստը ուրիշ բան ա ասում, ուժի մեջ ա այս բաժինը։
+
+`order()`-ը թույլատրելի դերն ու կարգավորված տիրոջը ստուգում ա պատվերը կարդալուց առաջ։ Ընդունված identity-ի համար բացակայող, չկառավարվող ու ուրիշին պատկանող պատվերները նույն `PermissionError('order read denied')`-ն են տալիս, առանց սկզբնական սխալի շղթայի։ Պատվերի դեր չունեցողը կամ կեղծ OWNER-ը մերժվում ա առանց կարդալու։ Partner-ը առաջվա պես ստանում ա սահմանափակ տեսքը։
+
+Սահմաններ. նույն պատասխանն ա, ոչ նույն տևողության երաշխիք։ Ապագա HTTP adapter-ը մերժումը պիտի նույն ձևով տա, առանց stack trace-ի։ Մյուս ընթերցումների (դիմումներ, audit) համար նույնը չի պնդվում։
+
+Թեստեր՝ 9 ինտեգրման թեստ. տակի հինգ suite-ի հետ՝ 69 (runtime 7, պատվերի հոսք 18, դիմումների հոսք 13, հաստատում 11, executor 11)։

@@ -1,5 +1,6 @@
 import tempfile
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta, timezone
 from runtime import Runtime
 from order_flow import OrderFlow
@@ -116,5 +117,20 @@ class Tests(unittest.TestCase):
         with self.assertRaises(ValueError):self.s.convert(self.d,r['id'],1,**self.fields)
         board=self.s.board(self.owner)
         self.assertEqual(board['counts']['requests'],1);self.assertEqual(board['counts']['managed_orders'],0)
+
+    def test_order_denials_do_not_disclose_existence(self):
+        oid=self.intake()['order_id']
+        unauthorized=Identity('other',frozenset({'DISPATCHER'}))
+        errors=[]
+        for target in (oid, 'missing-order'):
+            with self.assertRaises(PermissionError) as caught:self.s.order(unauthorized,target)
+            errors.append(str(caught.exception))
+        self.assertEqual(errors,['order read denied','order read denied'])
+        # A real but unmanaged legacy order also gives the same denial.
+        legacy=self.r.intake(dict(contact='SAMPLE',pickup='A',destination='B',vehicle='car',test=True),'legacy')['id']
+        with self.assertRaisesRegex(PermissionError,'^order read denied$'):self.s.order(unauthorized,legacy)
+        with patch.object(self.orders,'get',side_effect=AssertionError('must not query')):
+            with self.assertRaises(PermissionError):self.s.order(Identity('no-role',frozenset()),oid)
+            with self.assertRaises(PermissionError):self.s.order(Identity('fake',frozenset({'OWNER'})),oid)
 
 if __name__=='__main__':unittest.main()
