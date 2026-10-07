@@ -57,6 +57,10 @@ jobs:
         env:
           PYTHONPATH: runtime/server
         run: python -m unittest discover -s runtime/action_approval -p "test_*.py"
+      - name: Action executor, simulation only (no external action) on top of the approval contract
+        env:
+          PYTHONPATH: "runtime/server:runtime/action_approval"
+        run: python -m unittest discover -s runtime/action_executor -p "test_*.py"
   windows:
     runs-on: windows-latest
     steps:
@@ -80,6 +84,10 @@ jobs:
         env:
           PYTHONPATH: runtime/server
         run: python -m unittest discover -s runtime/action_approval -p "test_*.py"
+      - name: Action executor, simulation only (no external action) on top of the approval contract
+        env:
+          PYTHONPATH: "runtime/server;runtime/action_approval"
+        run: python -m unittest discover -s runtime/action_executor -p "test_*.py"
       - name: WIP, Chrome proxy (stand-in upstream, no browser)
         working-directory: runtime/wip/chrome_proxy
         run: python -m unittest test_bro_chrome_proxy
