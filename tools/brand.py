@@ -14,7 +14,6 @@ import base64
 from functools import lru_cache
 from pathlib import Path
 
-from PIL import ImageFont
 
 ROOT = Path(__file__).resolve().parents[1]
 FONTS = ROOT / "site" / "assets" / "fonts"
@@ -64,6 +63,7 @@ FALLBACK = {("display", 700): ["ARIALNB.TTF", "arialbd.ttf"], ("text", 400): ["s
 
 @lru_cache(maxsize=None)
 def _pil(family, weight, script, size=1000):
+    from PIL import ImageFont      # loaded only when a font is measured or drawn
     if script == "fallback":
         for name in FALLBACK[(family, weight)]:
             if (WIN / name).exists():

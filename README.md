@@ -1,10 +1,119 @@
-# KRYUK24 (kryuk24.ru)
+<p align="center">
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/cover-narrow-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/cover-narrow-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/cover-dark.svg"><img src="docs/assets/readme/cover-light.svg" alt="KRYUK24 Bro: the business operating assistant for a tow-truck service in Moscow and the Moscow region" width="960"></picture>
+</p>
+
+# KRYUK24 · Bro
+
+**[Current state](docs/CURRENT_STATE.md)** · **[Roadmap and task queue](docs/ROADMAP.md)** · [Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/DECISIONS.md) · [Operations](docs/OPERATIONS.md) · [Security](docs/SECURITY.md) · [Հայերեն](#հայերեն)
 
 Tow-truck service in Moscow and the Moscow region, public number +7 985 893-06-06. This repository holds the live site, the server-side runtime ("Bro": a daily queue of checks, an operator dashboard, machine readers), the tools that build brand and site material, and the documents that say what is true today.
 
 People: **Armen** owns the business and decides prices, terms, geography and the upper budget limit. **Gev** has the final word on every public and money step. **Claude** builds, operates and verifies. **GPT** reviews, challenges and accepts packages.
 
 First business goal (Gev, 04.10.2026): five profitable completed orders a day on average. Orders, revenue, cost per order and margin are **UNKNOWN** today, not zero: no real request or order is recorded anywhere.
+
+## At a glance
+
+Each picture carries one idea in large labels, so that it reads on a phone. The details are in the list below it and, with evidence, in the linked document. State on 07.10.2026. A status is always a word, never a colour alone.
+
+### Where each part lives
+
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-en-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/placement-en-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-wide-en-dark.svg"><img src="docs/assets/readme/placement-wide-en-light.svg" alt="Where each part lives: GitHub in place; VPS runtime in STAGING; Debian desktop planned; Windows in use. Details in the list below." width="960"></picture>
+
+- **GitHub**
+  - What lives there: code, documents: the canonical ones, with decisions and the roadmap
+  - Today: in place: private repository, checks on every change
+- **VPS**
+  - What lives there: the runtime: queue and database, API readers, mailbox, approvals, executor of API and mail actions, monitoring
+  - Today: STAGING, sending is off; what is installed is in the next picture
+- **Debian desktop**
+  - What lives there: browser worker; media work too
+  - Today: planned; the move has not started
+- **Windows**
+  - What lives there: development, trials; supervised trials only
+  - Today: in use; the Chrome proxy, the gate and the trial harness are work in progress
+
+Boundaries and data flow: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
+### On the server today
+
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/server-en-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/server-en-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/server-wide-en-dark.svg"><img src="docs/assets/readme/server-wide-en-light.svg" alt="On the server today: queue and dashboard, Bro bridge and API reader installed; mailbox, approvals, executor and monitoring planned. Details in the list below." width="960"></picture>
+
+- **Queue and dashboard**: installed; ten tasks are planned every day at 06:00 UTC
+- **Bro bridge**: installed; the service runs but does not start by itself after a reboot
+- **API reader (hosting, Metrica, Webmaster)**: installed on 07.10.2026; its first supervised write is pending
+- **Mailbox**: planned; blocked until the mail application exists
+- **Approvals**: planned; today only the daily report draft can be approved, not an action
+- **Executor**: planned; nothing is written
+- **Monitoring**: planned; no schedule is switched on without Gev's separate yes
+
+Evidence for each line: [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
+
+### Roadmap phases
+
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-en-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/phases-en-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-wide-en-dark.svg"><img src="docs/assets/readme/phases-wide-en-light.svg" alt="Roadmap phases: 0 in review; 1, 2 and 6 started; 3, 4, 5, 7 and 8 not started. Details in the list below." width="960"></picture>
+
+- **0 Canonical state**
+  - Owner / acceptor: Claude / GPT
+  - State: in review: done on Claude's side, awaits GPT's acceptance
+- **1 Security and recovery**
+  - Owner / acceptor: Claude / GPT
+  - State: started: off-disk copy exists; credentials clean-up and a rehearsed restore are open
+- **2 Reliable collection**
+  - Owner / acceptor: Claude / GPT
+  - State: started: API reader installed, first supervised write pending
+- **3 Real business flow**
+  - Owner / acceptor: GPT / Armen
+  - State: not started
+- **4 Action approval**
+  - Owner / acceptor: GPT / Claude
+  - State: not started
+- **5 Executor**
+  - Owner / acceptor: Claude / GPT
+  - State: not started
+- **6 Browser and Debian**
+  - Owner / acceptor: Claude / GPT
+  - State: started: the harness failures on the hosted runner are diagnosed and fixed
+- **7 Reports, control**
+  - Owner / acceptor: Claude / Gev
+  - State: not started
+- **8 Operation, v1.0**
+  - Owner / acceptor: Gev / GPT
+  - State: not started
+
+A phase closes on its acceptor's word, not on a file. Scope, closing conditions and the task queue: [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+### What Bro reads today
+
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/sources-en-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/sources-en-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/sources-wide-en-dark.svg"><img src="docs/assets/readme/sources-wide-en-light.svg" alt="What Bro reads today: hosting, Metrica and Webmaster installed; Direct and the mailbox blocked; Avito on hold; the Business card in progress; requests and orders not built. Details in the list below." width="960"></picture>
+
+- **Hosting account**
+  - What: balance, days left
+  - State: installed
+- **Yandex Metrica**
+  - What: the site and the Maps card, as two separate readings
+  - State: installed
+- **Yandex Webmaster**
+  - What: indexing of the site
+  - State: installed
+- **Yandex Direct**
+  - What: state and spend
+  - State: blocked: waits for Yandex to grant API access
+- **Avito**
+  - What: listings, statistics
+  - State: on hold by Gev; reading works, nothing is changed
+- **Mailbox**
+  - What: reviews, moderation results, letters from the services
+  - State: blocked: no mail application, no credential
+- **Business card**
+  - What: Yandex Business: card state, reviews
+  - State: in progress: no API; the browser route is not accepted yet
+- **Requests, orders**
+  - What: request → order → completion → payment
+  - State: not built: nothing real is recorded
+
+A source that is not read is UNKNOWN, never "no problem". A click is not a call, a call is not an order, an order is not a paid completion.
+
 
 ## State in ten lines (07.10.2026, details and evidence in [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md))
 
@@ -21,47 +130,53 @@ First business goal (Gev, 04.10.2026): five profitable completed orders a day on
 
 ## Where things are
 
-| Path | What it is |
-| --- | --- |
-| `site/` | The live site exactly as deployed. How to deploy: `site/README.md` |
-| `runtime/api_reader/` | API reader v0.3.2 r2: collector, queue side, installer, tests, evidence |
-| `runtime/server/` | The code exactly as installed on the VPS in `/opt/kryuk24`, fetched read-only on 07.10.2026 13:08 UTC, with `MANIFEST.md`. No database, no credentials |
-| `runtime/received/` | Packages as received from GPT, with `MAPPING.md` (which version is installed, which is superseded) |
-| `runtime/wip/chrome_proxy/` | WIP. Proxy in front of the Chrome tools; never run with a real model |
-| `runtime/wip/adapter_preflight/` | WIP. Gate hook, Windows job runner, tool schemas |
-| `runtime/wip/trial/` | WIP. Supervised trial harness v5.3 and its plan |
-| `tools/` | Site checks (`tools/tests/`), brand and media generators, API setup scripts (`tools/api_setup/`) |
-| `research/` | Owner's prices and answers, Yandex rules, Direct launch package |
-| `brand/`, `offers/`, `reports/`, `photo/01_real_polished/` | Brand sources, texts for the owner, reports, the processed photo set that may be published |
-| `docs/` | The six documents below, `LESSONS.md`, `history/`, `inventory/`, `cleanup/`, `media-index.md` |
-| `_drive_staging/` | Git-ignored. Media and archives that go to Drive, not to GitHub, kept locally until Gev names the Drive. Index: `docs/media-index.md` |
-| `_private/` | Not in git. Private notes (the VPS address is there). Not read by AI sessions |
+- **`site/`**: The live site exactly as deployed. How to deploy: `site/README.md`
+- **`runtime/api_reader/`**: API reader v0.3.2 r2: collector, queue side, installer, tests, evidence
+- **`runtime/server/`**: The code exactly as installed on the VPS in `/opt/kryuk24`, fetched read-only on 07.10.2026 13:08 UTC, with `MANIFEST.md`. No database, no credentials
+- **`runtime/received/`**: Packages as received from GPT, with `MAPPING.md` (which version is installed, which is superseded)
+- **`runtime/wip/chrome_proxy/`**: WIP. Proxy in front of the Chrome tools; never run with a real model
+- **`runtime/wip/adapter_preflight/`**: WIP. Gate hook, Windows job runner, tool schemas
+- **`runtime/wip/trial/`**: WIP. Supervised trial harness v5.3 and its plan
+- **`tools/`**: Site checks (`tools/tests/`), brand and media generators, API setup scripts (`tools/api_setup/`)
+- **`research/`**: Owner's prices and answers, Yandex rules, Direct launch package
+- **`brand/`, `offers/`, `reports/`, `photo/01_real_polished/`**: Brand sources, texts for the owner, reports, the processed photo set that may be published
+- **`docs/`**: The six documents below, `LESSONS.md`, `history/`, `inventory/`, `cleanup/`, `media-index.md`
+- **`_drive_staging/`**: Git-ignored. Media and archives that go to Drive, not to GitHub, kept locally until Gev names the Drive. Index: `docs/media-index.md`
+- **`_private/`**: Not in git. Private notes (the VPS address is there). Not read by AI sessions
 
 Zip packages for hand-over are placed in `C:\Users\Admin\Desktop\ZIP`, not in the repository.
 
 ## How to run the tests
 
-| Suite | Command | Last recorded result |
-| --- | --- | --- |
-| Site, local | `tools/.venv/Scripts/python.exe tools/tests/run_checks.py` | expected: issues 0, errors [], links_bad [] |
-| Site, live (read-only against kryuk24.ru) | same command with `live` | 06.10.2026: issues 0, errors [], links_bad [] |
-| API reader | in `runtime/api_reader/`: `python -m unittest test_bro_api_reader test_ops_api` | 18 + 27 OK on Windows (Python 3.12.10) and on the server (Python 3.14.4), 07.10.2026 |
-| Gate and job runner (Windows only) | in `runtime/wip/adapter_preflight/`: `test_bro_gate_hook`, `test_win_job` | 50 + 31 OK, 07.10.2026; not rerun in the clean-up |
-| Chrome proxy (Windows) | in `runtime/wip/chrome_proxy/`: `test_bro_chrome_proxy` | 12 OK, 07.10.2026 |
-| Trial harness (Windows only) | in `runtime/wip/trial/`: `test_trial_harness` | 68 OK, 07.10.2026 |
+- **Site, local**
+  - Command: `tools/.venv/Scripts/python.exe tools/tests/run_checks.py`
+  - Last recorded result: expected: issues 0, errors [], links_bad []
+- **Site, live (read-only against kryuk24.ru)**
+  - Command: same command with `live`
+  - Last recorded result: 06.10.2026: issues 0, errors [], links_bad []
+- **API reader**
+  - Command: in `runtime/api_reader/`: `python -m unittest test_bro_api_reader test_ops_api`
+  - Last recorded result: 18 + 27 OK on Windows (Python 3.12.10) and on the server (Python 3.14.4), 07.10.2026
+- **Gate and job runner (Windows only)**
+  - Command: in `runtime/wip/adapter_preflight/`: `test_bro_gate_hook`, `test_win_job`
+  - Last recorded result: 50 + 31 OK, 07.10.2026
+- **Chrome proxy (Windows)**
+  - Command: in `runtime/wip/chrome_proxy/`: `test_bro_chrome_proxy`
+  - Last recorded result: 12 OK, 07.10.2026
+- **Trial harness (Windows only)**
+  - Command: in `runtime/wip/trial/`: `test_trial_harness`
+  - Last recorded result: 68 OK, 07.10.2026
 
-The commands below were run from a fresh clone of this branch on 07.10.2026, on Windows (Python 3.12.10) and, for the Linux-capable part, on the server in a temporary folder (Python 3.14.4). The runtime code uses the standard library only. `tools/` needs a virtual environment (`tools/.venv`, git-ignored); its packages are listed in `tools/requirements.txt`. CI (`.github/workflows/ci.yml`) runs on GitHub since 07.10.2026. First run on `main` (`8bc7233`): **failed** in the Windows job, because the runner converted line endings on checkout and the fixtures no longer had the expected sha256. Fixed by `.gitattributes` (`* -text`) in pull request #1. On that branch the trial harness self-test then failed on the hosted Windows runner (3 of 68 tests) and was left out of CI for that merge (`0abf9b0`). The cause was found the same day: a race in the trial fixture server, which answered before it wrote its access-log row; fixed in pull request #2 (`d96e4f2`), which put the self-test back and repeats the three affected tests five times. CI on `main` is **green** with everything in: commit identity, Linux (API reader, server code, package manifest, site references), Windows (API reader, gate and job runner, proxy, trial harness self-test). Details: `runtime/wip/README.md`, `docs/cleanup/GITHUB_SETUP_RESULT.md`. `runtime/server/` is tested on Linux: `python3 -m unittest discover -p "test_*.py"` there, 102 pass.
+The commands above were run from a fresh clone of the cleanup branch on 07.10.2026, on Windows (Python 3.12.10) and, for the Linux-capable part, on the server in a temporary folder (Python 3.14.4). The runtime code uses the standard library only. `tools/` needs a virtual environment (`tools/.venv`, git-ignored); its packages are listed in `tools/requirements.txt`. CI (`.github/workflows/ci.yml`) runs on GitHub since 07.10.2026. First run on `main` (`8bc7233`): **failed** in the Windows job, because the runner converted line endings on checkout and the fixtures no longer had the expected sha256. Fixed by `.gitattributes` (`* -text`) in pull request #1. On that branch the trial harness self-test then failed on the hosted Windows runner (3 of 68 tests) and was left out of CI for that merge (`0abf9b0`). The cause was found the same day: a race in the trial fixture server, which answered before it wrote its access-log row; fixed in pull request #2 (`d96e4f2`), which put the self-test back and repeats the three affected tests five times. CI on `main` is **green** with everything in: commit identity, Linux (API reader, server code, package manifest, site references), Windows (API reader, gate and job runner, proxy, trial harness self-test). Details: `runtime/wip/README.md`, `docs/cleanup/GITHUB_SETUP_RESULT.md`. `runtime/server/` is tested on Linux: `python3 -m unittest discover -p "test_*.py"` there, 102 pass.
 
 ## The other six documents
 
-| Document | Answers |
-| --- | --- |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | What the components are and where the boundaries run: installed today versus target |
-| [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) | What is true today, each item with status and evidence |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | What was decided, when and by whom; resolved and open contradictions |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md) | The one prioritised queue with owners, dependencies, next steps and deadlines |
-| [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Install, backup, recovery, rollback, and whether each was really executed |
-| [`docs/SECURITY.md`](docs/SECURITY.md) | Where secrets live (never a value), authority limits, what an AI session may not hold, known gaps |
+- **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)**: What the components are and where the boundaries run: installed today versus target
+- **[`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md)**: What is true today, each item with status and evidence
+- **[`docs/DECISIONS.md`](docs/DECISIONS.md)**: What was decided, when and by whom; resolved and open contradictions
+- **[`docs/ROADMAP.md`](docs/ROADMAP.md)**: The one prioritised queue with owners, dependencies, next steps and deadlines
+- **[`docs/OPERATIONS.md`](docs/OPERATIONS.md)**: Install, backup, recovery, rollback, and whether each was really executed
+- **[`docs/SECURITY.md`](docs/SECURITY.md)**: Where secrets live (never a value), authority limits, what an AI session may not hold, known gaps
 
 Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do instead; read at session start), `docs/history/` (reports delivered to GPT, manual run records).
 
@@ -77,11 +192,116 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 
 # Հայերեն
 
+**[Գործող վիճակը](docs/CURRENT_STATE.md#հայերեն)** · **[Քարտեզն ու հերթը](docs/ROADMAP.md#հայերեն)** · [Ճարտարապետություն](docs/ARCHITECTURE.md#հայերեն) · [Որոշումներ](docs/DECISIONS.md#հայերեն) · [Աշխատացնել](docs/OPERATIONS.md#հայերեն) · [Անվտանգություն](docs/SECURITY.md#հայերեն) · [English](#kryuk24--bro)
+
 **KRYUK24 (kryuk24.ru)**. էվակուատորի ծառայություն Մոսկվայում ու մարզում, հանրային համարը՝ +7 985 893-06-06։ Էս repo-ում են կենդանի կայքը, սերվերի runtime-ը («Bro». օրվա ստուգումների հերթ, օպերատորի վահանակ, մեքենայական կարդացողներ), բրենդի ու կայքի գործիքները ու էն փաստաթղթերը, որ ասում են՝ ինչն ա այսօր ճիշտ։
 
 Մարդիկ. **Արմենը** բիզնեսի տերն ա, որոշում ա գները, պայմանները, աշխարհագրությունը, բյուջեի վերին սահմանը։ **Գևինն** ա վերջին խոսքը ամեն հրապարակային ու փողային քայլի համար։ **Claude-ը** կառուցում, վարում ու ստուգում ա։ **GPT-ն** review ա անում, առարկում ու ընդունում փաթեթները։
 
 Առաջին նպատակը (Գև, 04.10.2026)՝ միջինը օրը հինգ շահութաբեր ավարտված պատվեր։ Պատվերները, հասույթը, մեկ պատվերի ծախսն ու մարժան այսօր **UNKNOWN** են, ոչ թե զրո. իրական դիմում կամ պատվեր ոչ մի տեղ չի գրվում։
+
+## Մի հայացքով
+
+Ամեն նկար մեկ միտք ա տանում՝ խոշոր գրերով, որ հեռախոսում էլ կարդացվի։ Մանրամասները նկարի տակի ցանկում են, իսկ ապացույցով՝ հղված փաստաթղթում։ Վիճակը՝ 07.10.2026-ին։ Կարգավիճակը միշտ բառ ա, երբեք միայն գույն։
+
+### Որտեղ ինչն ա ապրում
+
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-hy-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/placement-hy-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-wide-hy-dark.svg"><img src="docs/assets/readme/placement-wide-hy-light.svg" alt="Որտեղ ինչն ա ապրում. GitHub-ը կա, VPS-ի runtime-ը STAGING ա, Debian desktop-ը պլանում ա, Windows-ը գործածվում ա։ Մանրամասները՝ ներքևի ցանկում։" width="960"></picture>
+
+- **GitHub**
+  - Ինչ ա ապրում էնտեղ: կոդ, փաստաթղթեր. հիմնականները՝ որոշումներով ու քարտեզով
+  - Այսօր: կա. փակ repo, ստուգումներ ամեն փոփոխության վրա
+- **VPS**
+  - Ինչ ա ապրում էնտեղ: runtime-ը. հերթ ու բազա, API reader-ներ, փոստ, հաստատումներ, API ու փոստի գործողությունների executor, monitoring
+  - Այսօր: STAGING, ուղարկելը անջատված ա. ինչն ա դրված՝ հաջորդ նկարում
+- **Debian desktop**
+  - Ինչ ա ապրում էնտեղ: browser worker. նաև media-ի գործը
+  - Այսօր: պլանում ա. տեղափոխումը չի սկսվել
+- **Windows**
+  - Ինչ ա ապրում էնտեղ: մշակում, փորձեր. միայն հսկվող փորձեր
+  - Այսօր: գործածվում ա. Chrome proxy-ն, gate-ը ու trial harness-ը ընթացքում են
+
+Սահմաններն ու տվյալների հոսքը՝ [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#հայերեն)։
+
+### Սերվերում այսօր
+
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/server-hy-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/server-hy-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/server-wide-hy-dark.svg"><img src="docs/assets/readme/server-wide-hy-light.svg" alt="Սերվերում այսօր. հերթն ու վահանակը, Bro-ի կամուրջն ու API reader-ը դրված են. փոստը, հաստատումները, executor-ն ու monitoring-ը պլանում են։ Մանրամասները՝ ներքևի ցանկում։" width="960"></picture>
+
+- **Հերթ ու վահանակ**: դրված ա. ամեն օր 06:00 UTC-ին պլանավորվում ա տասը գործ
+- **Bro-ի կամուրջ**: դրված ա. ծառայությունը աշխատում ա, բայց reboot-ից հետո ինքը չի բարձրանում
+- **API reader (հոստինգ, Metrica, Webmaster)**: դրված ա 07.10.2026-ին. առաջին հսկվող գրելը սպասվում ա
+- **Փոստ**: պլանում ա. փակ ա, մինչև փոստի հավելվածը լինի
+- **Հաստատումներ**: պլանում ա. այսօր հաստատվում ա միայն օրվա հաշվետվության սևագիրը, ոչ թե գործողությունը
+- **Executor**: պլանում ա. ոչինչ գրված չի
+- **Monitoring**: պլանում ա. առանց Գևի առանձին «հա»-ի ժամանակացույց չի միանում
+
+Ամեն տողի ապացույցը՝ [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md#հայերեն)։
+
+### Քարտեզի փուլերը
+
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-hy-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/phases-hy-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-wide-hy-dark.svg"><img src="docs/assets/readme/phases-wide-hy-light.svg" alt="Քարտեզի փուլերը. 0-րդը ընդունման մեջ ա. 1, 2 ու 6-ը սկսված են. 3, 4, 5, 7 ու 8-ը սկսված չեն։ Մանրամասները՝ ներքևի ցանկում։" width="960"></picture>
+
+- **0 Հիմնական վիճակ**
+  - Պատասխանատու / ընդունող: Claude / GPT
+  - Վիճակ: ընդունման մեջ. Claude-ի կողմից արված ա, սպասում ա GPT-ի ընդունմանը
+- **1 Անվտանգություն**
+  - Պատասխանատու / ընդունող: Claude / GPT
+  - Վիճակ: սկսված ա. արտաքին պատճենը կա. credential-ների մաքրումն ու փորձված restore-ը բաց են
+- **2 Հուսալի հավաքում**
+  - Պատասխանատու / ընդունող: Claude / GPT
+  - Վիճակ: սկսված ա. API reader-ը դրված ա, առաջին հսկվող գրելը սպասվում ա
+- **3 Իրական բիզնես հոսք**
+  - Պատասխանատու / ընդունող: GPT / Արմեն
+  - Վիճակ: սկսված չի
+- **4 Հաստատում**
+  - Պատասխանատու / ընդունող: GPT / Claude
+  - Վիճակ: սկսված չի
+- **5 Executor**
+  - Պատասխանատու / ընդունող: Claude / GPT
+  - Վիճակ: սկսված չի
+- **6 Զննարկիչ ու Debian**
+  - Պատասխանատու / ընդունող: Claude / GPT
+  - Վիճակ: սկսված ա. hosted runner-ի harness ձախողումները պարզված ու ուղղված են
+- **7 Հաշվետվություն**
+  - Պատասխանատու / ընդունող: Claude / Գև
+  - Վիճակ: սկսված չի
+- **8 Շահագործում, v1.0**
+  - Պատասխանատու / ընդունող: Գև / GPT
+  - Վիճակ: սկսված չի
+
+Փուլը փակում ա ընդունողը, ոչ թե ֆայլը։ Շրջանակը, փակման պայմաններն ու հերթը՝ [`docs/ROADMAP.md`](docs/ROADMAP.md#հայերեն)։
+
+### Ինչ ա կարդում Bro-ն այսօր
+
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/sources-hy-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/sources-hy-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/sources-wide-hy-dark.svg"><img src="docs/assets/readme/sources-wide-hy-light.svg" alt="Ինչ ա կարդում Bro-ն այսօր. հոստինգը, Metrica-ն ու Webmaster-ը դրված են. Direct-ն ու փոստը փակ են. Avito-ն HOLD ա. Բիզնեսի քարտը ընթացքում ա. դիմումներն ու պատվերները չկան։ Մանրամասները՝ ներքևի ցանկում։" width="960"></picture>
+
+- **Հոստինգի հաշիվ**
+  - Ինչ: մնացորդ, մնացած օրեր
+  - Վիճակ: դրված ա
+- **Yandex Metrica**
+  - Ինչ: կայքն ու Քարտեզի քարտը՝ երկու առանձին ընթերցում
+  - Վիճակ: դրված ա
+- **Yandex Webmaster**
+  - Ինչ: կայքի ինդեքսավորում
+  - Վիճակ: դրված ա
+- **Yandex Direct**
+  - Ինչ: վիճակ ու ծախս
+  - Վիճակ: փակ ա. սպասում ա Yandex-ի API թույլտվությանը
+- **Avito**
+  - Ինչ: հայտարարություններ, վիճակագրություն
+  - Վիճակ: HOLD՝ Գևի խոսքով. կարդալը աշխատում ա, ոչինչ չի փոխվում
+- **Փոստարկղ**
+  - Ինչ: կարծիքներ, մոդերացիայի արդյունքներ, ծառայությունների նամակներ
+  - Վիճակ: փակ ա. փոստի հավելված ու բանալի չկա
+- **Բիզնեսի քարտ**
+  - Ինչ: Yandex Բիզնես. քարտի վիճակ, կարծիքներ
+  - Վիճակ: ընթացքում ա. API չկա, զննարկչի ճանապարհը դեռ ընդունված չի
+- **Դիմումներ, պատվերներ**
+  - Ինչ: դիմում → պատվեր → ավարտ → վճարում
+  - Վիճակ: չկա. իրական ոչինչ չի գրանցվում
+
+Չկարդացված աղբյուրը UNKNOWN ա, ոչ թե «խնդիր չկա»։ Սեղմումը զանգ չի, զանգը պատվեր չի, պատվերը վճարված ավարտ չի։
+
 
 ## Վիճակը տասը տողով (07.10.2026, մանրամասնն ու ապացույցը՝ [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md))
 
@@ -98,47 +318,53 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 
 ## Որտեղ ինչն ա
 
-| Ճանապարհ | Ինչ ա |
-| --- | --- |
-| `site/` | Կենդանի կայքը, ոնց որ դրված ա։ Հրապարակելու կարգը՝ `site/README.md` |
-| `runtime/api_reader/` | API reader v0.3.2 r2. collector, հերթի կողմը, installer, թեստեր, ապացույցներ |
-| `runtime/server/` | Կոդը ճիշտ էնպես, ոնց դրված ա VPS-ում `/opt/kryuk24`-ում, վերցված միայն կարդալով 07.10.2026 13:08 UTC-ին, `MANIFEST.md`-ով։ Ոչ բազա կա, ոչ credential |
-| `runtime/received/` | GPT-ից ստացված փաթեթները, ոնց եկել են, `MAPPING.md`-ով (որ տարբերակն ա դրված, որը՝ փոխարինված) |
-| `runtime/wip/chrome_proxy/` | WIP. Chrome-ի գործիքների առաջ դրված proxy. իսկական մոդելով չի աշխատել |
-| `runtime/wip/adapter_preflight/` | WIP. gate hook, Windows-ի job runner, գործիքների սխեմաներ |
-| `runtime/wip/trial/` | WIP. հսկվող փորձի harness v5.3-ն ու պլանը |
-| `tools/` | Կայքի ստուգումները (`tools/tests/`), բրենդի ու մեդիայի գեներատորները, API-ի setup սկրիպտները (`tools/api_setup/`) |
-| `research/` | Տիրոջ գներն ու պատասխանները, Yandex-ի կանոնները, Direct-ի գործարկման փաթեթը |
-| `brand/`, `offers/`, `reports/`, `photo/01_real_polished/` | Բրենդի աղբյուրները, տեքստեր տիրոջ համար, հաշվետվություններ, մշակված նկարների սեթը, որ կարելի ա հրապարակել |
-| `docs/` | Ներքևի վեց փաստաթուղթը, `LESSONS.md`, `history/`, `inventory/`, `cleanup/`, `media-index.md` |
-| `_drive_staging/` | Git-ում չի։ Մեդիան ու արխիվները, որ գնում են Drive, ոչ GitHub. տեղում են, մինչև Գևը ասի՝ որ Drive-ը։ Ցուցակը՝ `docs/media-index.md` |
-| `_private/` | Git-ում չի։ Անձնական նշումներ (VPS-ի հասցեն էնտեղ ա)։ AI նիստերը չեն կարդում |
+- **`site/`**: Կենդանի կայքը, ոնց որ դրված ա։ Հրապարակելու կարգը՝ `site/README.md`
+- **`runtime/api_reader/`**: API reader v0.3.2 r2. collector, հերթի կողմը, installer, թեստեր, ապացույցներ
+- **`runtime/server/`**: Կոդը ճիշտ էնպես, ոնց դրված ա VPS-ում `/opt/kryuk24`-ում, վերցված միայն կարդալով 07.10.2026 13:08 UTC-ին, `MANIFEST.md`-ով։ Ոչ բազա կա, ոչ credential
+- **`runtime/received/`**: GPT-ից ստացված փաթեթները, ոնց եկել են, `MAPPING.md`-ով (որ տարբերակն ա դրված, որը՝ փոխարինված)
+- **`runtime/wip/chrome_proxy/`**: WIP. Chrome-ի գործիքների առաջ դրված proxy. իսկական մոդելով չի աշխատել
+- **`runtime/wip/adapter_preflight/`**: WIP. gate hook, Windows-ի job runner, գործիքների սխեմաներ
+- **`runtime/wip/trial/`**: WIP. հսկվող փորձի harness v5.3-ն ու պլանը
+- **`tools/`**: Կայքի ստուգումները (`tools/tests/`), բրենդի ու մեդիայի գեներատորները, API-ի setup սկրիպտները (`tools/api_setup/`)
+- **`research/`**: Տիրոջ գներն ու պատասխանները, Yandex-ի կանոնները, Direct-ի գործարկման փաթեթը
+- **`brand/`, `offers/`, `reports/`, `photo/01_real_polished/`**: Բրենդի աղբյուրները, տեքստեր տիրոջ համար, հաշվետվություններ, մշակված նկարների սեթը, որ կարելի ա հրապարակել
+- **`docs/`**: Ներքևի վեց փաստաթուղթը, `LESSONS.md`, `history/`, `inventory/`, `cleanup/`, `media-index.md`
+- **`_drive_staging/`**: Git-ում չի։ Մեդիան ու արխիվները, որ գնում են Drive, ոչ GitHub. տեղում են, մինչև Գևը ասի՝ որ Drive-ը։ Ցուցակը՝ `docs/media-index.md`
+- **`_private/`**: Git-ում չի։ Անձնական նշումներ (VPS-ի հասցեն էնտեղ ա)։ AI նիստերը չեն կարդում
 
 Փոխանցման zip-երը դրվում են `C:\Users\Admin\Desktop\ZIP`-ում, ոչ repo-ում։
 
 ## Թեստերը ոնց աշխատացնել
 
-| Ինչ | Հրաման | Վերջին գրանցված արդյունք |
-| --- | --- | --- |
-| Կայք, տեղում | `tools/.venv/Scripts/python.exe tools/tests/run_checks.py` | սպասվում ա՝ issues 0, errors [], links_bad [] |
-| Կայք, կենդանի (միայն կարդում ա kryuk24.ru-ն) | նույն հրամանը՝ `live`-ով | 06.10.2026՝ issues 0, errors [], links_bad [] |
-| API reader | `runtime/api_reader/`-ում՝ `python -m unittest test_bro_api_reader test_ops_api` | 18 + 27 OK Windows-ում (Python 3.12.10) ու սերվերում (Python 3.14.4), 07.10.2026 |
-| Gate ու job runner (միայն Windows) | `runtime/wip/adapter_preflight/`-ում՝ `test_bro_gate_hook`, `test_win_job` | 50 + 31 OK, 07.10.2026. մաքրման ժամանակ նորից չեն քշվել |
-| Chrome proxy (Windows) | `runtime/wip/chrome_proxy/`-ում՝ `test_bro_chrome_proxy` | 12 OK, 07.10.2026 |
-| Trial harness (միայն Windows) | `runtime/wip/trial/`-ում՝ `test_trial_harness` | 68 OK, 07.10.2026 |
+- **Կայք, տեղում**
+  - Հրաման: `tools/.venv/Scripts/python.exe tools/tests/run_checks.py`
+  - Վերջին գրանցված արդյունք: սպասվում ա՝ issues 0, errors [], links_bad []
+- **Կայք, կենդանի (միայն կարդում ա kryuk24.ru-ն)**
+  - Հրաման: նույն հրամանը՝ `live`-ով
+  - Վերջին գրանցված արդյունք: 06.10.2026՝ issues 0, errors [], links_bad []
+- **API reader**
+  - Հրաման: `runtime/api_reader/`-ում՝ `python -m unittest test_bro_api_reader test_ops_api`
+  - Վերջին գրանցված արդյունք: 18 + 27 OK Windows-ում (Python 3.12.10) ու սերվերում (Python 3.14.4), 07.10.2026
+- **Gate ու job runner (միայն Windows)**
+  - Հրաման: `runtime/wip/adapter_preflight/`-ում՝ `test_bro_gate_hook`, `test_win_job`
+  - Վերջին գրանցված արդյունք: 50 + 31 OK, 07.10.2026
+- **Chrome proxy (Windows)**
+  - Հրաման: `runtime/wip/chrome_proxy/`-ում՝ `test_bro_chrome_proxy`
+  - Վերջին գրանցված արդյունք: 12 OK, 07.10.2026
+- **Trial harness (միայն Windows)**
+  - Հրաման: `runtime/wip/trial/`-ում՝ `test_trial_harness`
+  - Վերջին գրանցված արդյունք: 68 OK, 07.10.2026
 
-Ներքևի հրամանները աշխատացվել են այս ճյուղի թարմ clone-ից 07.10.2026-ին՝ Windows-ում (Python 3.12.10) ու, Linux-ին հարմար մասը, սերվերի ժամանակավոր թղթապանակում (Python 3.14.4)։ Runtime-ի կոդը միայն ստանդարտ գրադարանով ա։ `tools/`-ին պետք ա virtual environment (`tools/.venv`, git-ում չի). փաթեթների ցուցակը՝ `tools/requirements.txt`։ CI-ն (`.github/workflows/ci.yml`) GitHub-ում աշխատում ա 07.10.2026-ից։ Առաջին գործարկումը `main`-ի վրա (`8bc7233`)՝ **ձախողվեց** Windows job-ում. runner-ը checkout-ի ժամանակ փոխում էր տողերի վերջավորությունները, ու fixture-ների sha256-ը էլ չէր համընկնում։ Ուղղվել ա `.gitattributes`-ով (`* -text`), pull request #1։ Էդ ճյուղում հետո ընկավ trial harness-ի self-test-ը hosted Windows runner-ում (68-ից 3-ը), ու էդ merge-ի համար (`0abf9b0`) դուրս մնաց CI-ից։ Պատճառը գտնվեց նույն օրը. մրցավազք trial-ի թեստային սերվերում, որը պատասխանում էր, մինչև իր մատյանի տողը գրելը. ուղղված ա pull request #2-ում (`d96e4f2`), որը self-test-ը վերադարձրել ա ու երեք թեստը կրկնում ա հինգ անգամ։ `main`-ի CI-ն **կանաչ ա** ամեն ինչով. commit-ների identity, Linux (API reader, սերվերի կոդ, փաթեթի manifest, կայքի հղումներ), Windows (API reader, gate ու job runner, proxy, trial harness self-test)։ Մանրամասնը՝ `runtime/wip/README.md`, `docs/cleanup/GITHUB_SETUP_RESULT.md`։ `runtime/server/`-ը ստուգվում ա Linux-ում. `python3 -m unittest discover -p "test_*.py"`, 102-ն անցնում ա։
+Վերևի հրամանները աշխատացվել են մաքրման ճյուղի թարմ clone-ից 07.10.2026-ին՝ Windows-ում (Python 3.12.10) ու, Linux-ին հարմար մասը, սերվերի ժամանակավոր թղթապանակում (Python 3.14.4)։ Runtime-ի կոդը միայն ստանդարտ գրադարանով ա։ `tools/`-ին պետք ա virtual environment (`tools/.venv`, git-ում չի). փաթեթների ցուցակը՝ `tools/requirements.txt`։ CI-ն (`.github/workflows/ci.yml`) GitHub-ում աշխատում ա 07.10.2026-ից։ Առաջին գործարկումը `main`-ի վրա (`8bc7233`)՝ **ձախողվեց** Windows job-ում. runner-ը checkout-ի ժամանակ փոխում էր տողերի վերջավորությունները, ու fixture-ների sha256-ը էլ չէր համընկնում։ Ուղղվել ա `.gitattributes`-ով (`* -text`), pull request #1։ Էդ ճյուղում հետո ընկավ trial harness-ի self-test-ը hosted Windows runner-ում (68-ից 3-ը), ու էդ merge-ի համար (`0abf9b0`) դուրս մնաց CI-ից։ Պատճառը գտնվեց նույն օրը. մրցավազք trial-ի թեստային սերվերում, որը պատասխանում էր, մինչև իր մատյանի տողը գրելը. ուղղված ա pull request #2-ում (`d96e4f2`), որը self-test-ը վերադարձրել ա ու երեք թեստը կրկնում ա հինգ անգամ։ `main`-ի CI-ն **կանաչ ա** ամեն ինչով. commit-ների identity, Linux (API reader, սերվերի կոդ, փաթեթի manifest, կայքի հղումներ), Windows (API reader, gate ու job runner, proxy, trial harness self-test)։ Մանրամասնը՝ `runtime/wip/README.md`, `docs/cleanup/GITHUB_SETUP_RESULT.md`։ `runtime/server/`-ը ստուգվում ա Linux-ում. `python3 -m unittest discover -p "test_*.py"`, 102-ն անցնում ա։
 
 ## Մնացած վեց փաստաթուղթը
 
-| Փաստաթուղթ | Ինչին ա պատասխանում |
-| --- | --- |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Ինչ բաղադրիչներ կան ու որտեղով են անցնում սահմանները. այսօր դրվածը ու թիրախը՝ առանձին |
-| [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) | Ինչն ա այսօր ճիշտ, ամեն կետը՝ վիճակով ու ապացույցով |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Ինչ ա որոշվել, երբ ու ով. լուծված ու բաց հակասությունները |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Մեկ առաջնահերթ հերթ՝ տերերով, կախվածություններով, հաջորդ քայլով ու ժամկետներով |
-| [`docs/OPERATIONS.md`](docs/OPERATIONS.md) | Դնել, պահուստ, վերականգնում, հետ գնալ, ու ամեն մեկը իրոք արվե՞լ ա |
-| [`docs/SECURITY.md`](docs/SECURITY.md) | Որտեղ են գաղտնիքները (երբեք արժեք), լիազորությունների սահմանները, ինչ չպիտի ունենա AI նիստը, հայտնի բացերը |
+- **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)**: Ինչ բաղադրիչներ կան ու որտեղով են անցնում սահմանները. այսօր դրվածը ու թիրախը՝ առանձին
+- **[`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md)**: Ինչն ա այսօր ճիշտ, ամեն կետը՝ վիճակով ու ապացույցով
+- **[`docs/DECISIONS.md`](docs/DECISIONS.md)**: Ինչ ա որոշվել, երբ ու ով. լուծված ու բաց հակասությունները
+- **[`docs/ROADMAP.md`](docs/ROADMAP.md)**: Մեկ առաջնահերթ հերթ՝ տերերով, կախվածություններով, հաջորդ քայլով ու ժամկետներով
+- **[`docs/OPERATIONS.md`](docs/OPERATIONS.md)**: Դնել, պահուստ, վերականգնում, հետ գնալ, ու ամեն մեկը իրոք արվե՞լ ա
+- **[`docs/SECURITY.md`](docs/SECURITY.md)**: Որտեղ են գաղտնիքները (երբեք արժեք), լիազորությունների սահմանները, ինչ չպիտի ունենա AI նիստը, հայտնի բացերը
 
 Նաև՝ [`docs/LESSONS.md`](docs/LESSONS.md) (ինչն ա սխալ գնացել ու ոնց անել հաջորդ անգամ. կարդացվում ա նիստի սկզբում), `docs/history/` (GPT-ին տրված զեկույցները, ձեռքով շրջայցերի գրառումները)։
 

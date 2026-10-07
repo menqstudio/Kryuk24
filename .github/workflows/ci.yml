@@ -73,6 +73,12 @@ jobs:
         env:
           PYTHONPATH: "runtime/server:runtime/order_flow:runtime/request_flow:runtime/action_approval:runtime/action_executor"
         run: python -m unittest discover -s runtime/business_service -p "test_*.py"
+      - name: README visuals hold nothing GitHub would block or that loads from outside
+        run: |
+          ! grep -l -E "<script|foreignObject|@font-face|<image|href=|url\(http" docs/assets/readme/*.svg
+          test "$(ls docs/assets/readme/*.svg | wc -l)" = 36
+      - name: README diagrams are what README.md says today
+        run: python tools/make_repo_visuals.py --check
   windows:
     runs-on: windows-latest
     steps:
