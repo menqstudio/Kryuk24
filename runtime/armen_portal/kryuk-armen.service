@@ -1,0 +1,23 @@
+[Unit]
+Description=KRYUK24 Armen private photo and answer portal
+After=network.target
+
+[Service]
+Type=simple
+User=kryuk-armen
+Group=kryuk-armen
+WorkingDirectory=/opt/kryuk24-armen
+ExecStart=/opt/kryuk24-armen/.venv/bin/python /opt/kryuk24-armen/portal.py --db /var/lib/kryuk24-armen/portal.sqlite --photos /var/lib/kryuk24-armen/photos --credentials /etc/kryuk24-armen/users.json --port 8790
+UMask=0077
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/kryuk24-armen
+MemoryMax=768M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

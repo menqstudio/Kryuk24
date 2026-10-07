@@ -1,0 +1,19 @@
+'use strict';
+const ROOT='/operator/work/armen/';
+const actor=document.querySelector('meta[name="actor"]').content;
+const csrf=document.querySelector('meta[name="csrf-token"]').content;
+const status=document.getElementById('status');let state=null;
+if(actor==='gev'){document.getElementById('greeting').textContent='Фото и ответы Армена';document.getElementById('upload').hidden=true;document.getElementById('question-hint').textContent='Ответы Армена. Только просмотр.';}
+function message(el,text,error=false){el.textContent=text;el.className=error?'error':'success';}
+async function api(path,options={}){const r=await fetch(ROOT+path,{credentials:'same-origin',...options});const data=await r.json();if(!r.ok)throw new Error(data.error||'Не сохранилось');return data;}
+function key(){return crypto.randomUUID().replaceAll('-','');}
+async function load(){state=await api('api/state');render();}
+function render(){document.getElementById('question-heading').textContent='Сегодня · '+state.day;const area=document.getElementById('questions');area.replaceChildren();
+ for(const q of state.questions){const card=document.createElement('div');card.className='question';const title=document.createElement('h3');title.textContent=q.title;card.append(title);const choices=document.createElement('div');choices.className='choices';const saved=state.answers.find(a=>a.question===q.id&&a.actor==='armen');for(const [value,label] of q.options){const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-pressed',String(saved?.answer===value));if(actor==='gev')b.disabled=true;b.onclick=async()=>{const requestKey=key();for(const x of choices.children)x.disabled=true;try{const options={method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf,'Idempotency-Key':requestKey},body:JSON.stringify({question:q.id,answer:value,day:state.day})};try{await api('api/answer',options);}catch(first){await api('api/answer',options);}message(status,'Ответ сохранён');await load();}catch(e){message(status,e.message,true);for(const x of choices.children)x.disabled=false;}};choices.append(b);}card.append(choices);area.append(card);}
+ const photos=document.getElementById('photos');photos.replaceChildren();for(const p of state.photos){const card=document.createElement('div');card.className='photo';const im=document.createElement('img');im.src=ROOT+'preview/'+p.id;im.alt='Загруженное фото';im.loading='lazy';card.append(im);const date=document.createElement('p');date.textContent=p.created.slice(0,10);card.append(date);photos.append(card);}if(!state.photos.length)photos.textContent='Пока нет фото.';
+}
+async function upload(input){const files=Array.from(input.files||[]);if(!files.length)return;const el=document.getElementById('upload-status');for(const picker of document.querySelectorAll('input[type=file]'))picker.disabled=true;let saved=0;const failed=[];const purpose=document.getElementById('purpose').value;
+ for(let i=0;i<files.length;i++){const f=files[i];message(el,'Загружаем '+(i+1)+' из '+files.length+'…');if(f.size>20*1024*1024||!['image/jpeg','image/png','image/webp'].includes(f.type)){failed.push(f.name+' — нужен JPEG/PNG/WebP до 20 МБ');continue;}try{await api('api/photo',{method:'POST',headers:{'Content-Type':f.type,'X-CSRF-Token':csrf,'X-Photo-Purpose':purpose},body:f});saved++;}catch(e){failed.push(f.name+' — '+e.message);}}
+ message(el,'Сохранено '+saved+' из '+files.length+(failed.length?'. '+failed.join('; '):'. Спасибо!'),failed.length>0);for(const picker of document.querySelectorAll('input[type=file]'))picker.disabled=false;input.value='';try{await load();}catch(e){message(status,'Фото могли сохраниться. Обновите страницу для проверки.',true);}}
+for(const id of ['gallery','camera'])document.getElementById(id).onchange=e=>upload(e.target);
+load().catch(()=>message(status,'Не удалось загрузить. Обновите страницу и проверьте вход.',true));
