@@ -775,11 +775,15 @@ class Trial:
         parent = {p.get('ProcessId'): p.get('ParentProcessId') for p in after} if valid else {}
         valid = valid and isinstance(run.get('started'), str)
         floor = (datetime.fromisoformat(run['started']) - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%S') if valid else ''
-        # A pid is reused by Windows as soon as its process is gone. The process list is taken by a powershell.exe that
-        # starts a second after the job ended and is in its own list; when it got the pid of a job process that had just
-        # ended, it was reported as a leftover (seen twice on the hosted runner on 07.10.2026). Whatever was created
-        # after the job ended cannot have been in the job, so its own pid proves nothing. Its parents are still followed:
-        # a process that escaped the job and is alive was created before the end and is reported itself.
+        # A pid is reused by Windows as soon as its process is gone, and the job result holds pids without creation times.
+        # So a live process under a job pid is not proof by itself. On the hosted runner on 07.10.2026 this check named a
+        # powershell.exe four times and a rundll32.exe once; rundll32 is nothing the job starts.
+        #   - created after the job ended: it cannot have been in the job, its pid proves nothing;
+        #   - created during the run under a job pid, parent in the job or the harness: a leftover, FAIL;
+        #   - created during the run under a job pid, parent NOT in the job and not the harness: a process of the job
+        #     always has such a parent, so this is most likely a reused pid, but that is not proven: INCONCLUSIVE,
+        #     with the process and its parent in the detail.
+        # Parents are still followed: what a real leftover started is reported with it.
         ended = run.get('job_ended')
         ceiling = datetime.fromisoformat(ended).strftime('%Y-%m-%dT%H:%M:%S') if valid and isinstance(ended, str) else None   # attempts before v5.4: none
 
@@ -788,8 +792,16 @@ class Trial:
             return not start or (start >= floor and (ceiling is None or start <= ceiling))
         alive = {p.get('ProcessId'): p for p in after} if valid else {}
 
+        family = peak | ({taken_by or os.getpid()} if taken_by is not None else set())
+
+        def own(p):
+            """A live process under a job pid, created within the run: 'sure' with a parent from the job, else 'doubt'."""
+            if not (p.get('ProcessId') in peak and within(p)):
+                return None
+            return 'sure' if taken_by is None or p.get('ParentProcessId') in family else 'doubt'
+
         def from_job(p, depth=0):
-            if p.get('ProcessId') in peak and within(p):
+            if own(p) == 'sure':
                 return True
             up = p.get('ParentProcessId')
             mother = alive.get(up)
@@ -798,6 +810,7 @@ class Trial:
                 return up in peak
             return depth < 20 and from_job(mother, depth + 1)
         leftovers = [p for p in after if from_job(p) and (not p.get('Start') or str(p['Start'])[:19] >= floor)] if valid else []
+        doubtful = [p for p in after if own(p) == 'doubt' and p not in leftovers] if valid else []
         before_ids = {ident(p) for p in before} if valid else set()
         new_claude = [p for p in after if ident(p) not in before_ids and str(p.get('Name', '')).lower().startswith(('claude', 'node'))] if valid else []
         chrome = [p for p in before if str(p.get('Name', '')).lower() == 'chrome.exe'] if valid else []
@@ -862,7 +875,10 @@ class Trial:
             chk(cid + '.a', 'Job reports no survivor', 'win_job result (job accounting + PIDs seen in the job)',
                 (survivors == 0) if type(survivors) is int else None, run['job']),
             chk(cid + '.b', 'No process of the job tree is alive afterwards', 'Windows process list taken by the harness after the run (Win32_Process)',
-                (not leftovers) if valid else None, [(p.get('ProcessId'), p.get('Name'), p.get('Start')) for p in leftovers] if valid else 'process list not usable'),
+                (False if leftovers else (None if doubtful else True)) if valid else None,
+                ([(p.get('ProcessId'), p.get('Name'), p.get('Start')) for p in leftovers] if leftovers or not doubtful else
+                 'a job pid is alive under a parent that was not in the job, most likely a reused pid, not proven (pid, name, created, parent): %s'
+                 % [(p.get('ProcessId'), p.get('Name'), p.get('Start'), p.get('ParentProcessId')) for p in doubtful]) if valid else 'process list not usable'),
             stray_check,
             chk(cid + '.d', 'Chrome was not killed: main process present; a lost child only of a short-lived kind with an exit record',
                 'Windows process list before/after (pid + creation time + kind) and exit records from handles opened before the run',

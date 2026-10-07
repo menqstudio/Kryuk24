@@ -403,8 +403,15 @@ class FalsePass(Base):
         lister = self.proc(5000, os.getpid(), name='powershell.exe', start='2026-10-07T01:00:41.9500000Z')   # takes the list, got a job pid
         self.assertEqual(self.cleanup([], [lister], peak=[5000], ended=ended)['b']['status'], 'PASS', 'created after the job ended')
         self.assertEqual(self.cleanup([], [lister], peak=[5000])['b']['status'], 'FAIL', 'an attempt without the end time keeps the old rule')
-        alive = self.proc(5000, 4, name='node.exe', start='2026-10-07T01:00:40.1000000Z')
-        self.assertEqual(self.cleanup([], [alive], peak=[5000], ended=ended)['b']['status'], 'FAIL', 'created before the job ended and still alive')
+        alive = self.proc(5000, os.getpid(), name='node.exe', start='2026-10-07T01:00:40.1000000Z')
+        self.assertEqual(self.cleanup([], [alive], peak=[5000], ended=ended)['b']['status'], 'FAIL', 'created before the job ended, started by the harness, still alive')
+        inner = self.proc(5001, 5000, name='node.exe', start='2026-10-07T01:00:30.0000000Z')
+        self.assertEqual(self.cleanup([], [inner], peak=[5000, 5001], ended=ended)['b']['status'], 'FAIL', 'a job process whose parent was in the job')
+        stranger = self.proc(5000, 900, name='rundll32.exe', start='2026-10-07T01:00:30.0000000Z')          # created during the run by something else
+        got = self.cleanup([], [stranger], peak=[5000], ended=ended)['b']
+        self.assertEqual(got['status'], 'INCONCLUSIVE', 'a job pid under a parent from outside the job is not proof either way')
+        self.assertIn("(5000, 'rundll32.exe', '2026-10-07T01:00:30.0000000Z', 900)", got['detail'])
+        self.assertEqual(self.cleanup([], [stranger, inner], peak=[5000, 5001], ended=ended)['b']['status'], 'FAIL', 'a sure leftover beside a doubtful one')
         escaped = self.proc(5001, 5000, name='node.exe', start='2026-10-07T01:00:20.0000000Z')              # its parent is gone, the pid 5000 is reused
         child = self.proc(5002, 5001, name='cmd.exe', start='2026-10-07T01:00:45.0000000Z')                 # started by the escaped one after the end
         got = self.cleanup([], [lister, escaped, child], peak=[5000, 5001], ended=ended)['b']
