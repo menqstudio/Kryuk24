@@ -1,0 +1,15 @@
+[Unit]
+Description=KRYUK24 daily work planner and local read checks
+After=kryuk-capture.service
+[Service]
+Type=oneshot
+User=kryuk-run
+Group=kryuk-run
+WorkingDirectory=/opt/kryuk24
+ExecStart=/usr/bin/python3 /opt/kryuk24/ops_daily.py --db /var/lib/kryuk24/runtime.sqlite --reports /var/lib/kryuk24/operations-reports --backup-directory /var/lib/kryuk24/operations-backups
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/kryuk24
+PrivateTmp=true

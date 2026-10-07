@@ -1,0 +1,36 @@
+# КРЮК24 · kryuk24.ru
+
+RewriteEngine On
+
+# http → https + сразу без www (один редирект, не цепочка)
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteCond %{HTTP_HOST} ^(?:www\.)?(.+)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
+# https://www → https без www
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
+ErrorDocument 404 /404.html
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css                  "access plus 30 days"
+  ExpiresByType image/jpeg                "access plus 180 days"
+  ExpiresByType image/png                 "access plus 180 days"
+  ExpiresByType image/svg+xml             "access plus 180 days"
+  ExpiresByType image/x-icon              "access plus 180 days"
+  ExpiresByType font/woff2                "access plus 365 days"
+  ExpiresByType video/mp4                 "access plus 180 days"
+  ExpiresByType application/manifest+json "access plus 7 days"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml image/svg+xml application/manifest+json
+</IfModule>

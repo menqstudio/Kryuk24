@@ -1,0 +1,14 @@
+# Work in progress: not installed, not accepted for use
+
+Three packages for letting a model read cabinets through Chrome under a restriction that does not depend on a hook.
+**None of this runs anywhere.** The tests here prove the logic of the tools against stand-ins, not the behaviour of a real model.
+
+| Folder | What | State on 07.10.2026 |
+|---|---|---|
+| `adapter_preflight/` | the gate (`bro_gate_hook.py`), the Windows job runner (`win_job.py`, explicit environment, whole process tree), tool schemas | tests pass (gate 50, job 31); used by the two packages below |
+| `chrome_proxy/` | proxy between Claude Code and the Chrome tools; refuses a call when the policy or the gate is missing | 12 tests with a stand-in upstream; one live check without a model; **never run with a real model** |
+| `trial/` | trial harness v5.3: cases T1 to T11 against fake pages | self-test 68 pass; T1 accepted by GPT (attempt 4); T2 run once and BLOCKED: two Chrome tools worked without a hook; T3 and later not started |
+
+Waiting for: GPT's decisions on the proxy package v5.3 (accept the proxy as the restriction layer, the shape of the trials with it, Windows or Debian for the first run). No new model run without Gev's word. Windows only: the job runner and the harness use Windows APIs; a Linux variant does not exist.
+
+`chrome_proxy/` and `trial/` find the gate at `../adapter_preflight`.

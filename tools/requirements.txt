@@ -1,0 +1,11 @@
+# For the scripts in tools/ only. The runtime code (runtime/) uses the Python standard library and needs nothing here.
+# Versions are the ones in the working environment on 07.10.2026 (Python 3.12, Windows).
+pillow==12.3.0
+numpy==2.5.3
+opencv-python-headless==5.0.0.93
+CairoSVG==2.9.1
+qrcode==8.2
+imageio-ffmpeg==0.6.0
+playwright==1.63.0
+# After installing: python -m playwright install chromium   (needed by tools/tests and by the report and logo scripts)
+# tools/make_signage_docx.py also needs python-docx; it is not in the working environment and its version is not recorded.

@@ -1,0 +1,36 @@
+{
+  "_about": "Template only. Holds no secret and no account id. Copy to .mcp.json (which is git-ignored) and adjust for the machine. Every credential is a reference to an environment variable of the process that starts the MCP server; nothing is written here. Before using it, read 00_STATE.md: these are third-party programs that receive the token they are given, and the decision of 07.10.2026 is that an AI session must not inherit the service secrets.",
+  "mcpServers": {
+    "yandex-metrika": {
+      "command": "npx",
+      "args": ["-y", "mcp-yandex-metrica@1.4.2"],
+      "env": {
+        "YANDEX_METRIKA_TOKEN": "${YANDEX_OAUTH_TOKEN:-}",
+        "YANDEX_METRIKA_COUNTER_ID": "<counter id>"
+      }
+    },
+    "yandex-webmaster": {
+      "command": "npx",
+      "args": ["-y", "@theyahia/yandex-webmaster-mcp@2.0.0"],
+      "env": {
+        "YANDEX_WEBMASTER_TOKEN": "${YANDEX_OAUTH_TOKEN:-}"
+      }
+    },
+    "yandex-direct": {
+      "command": "mcp-server-yandex-direct",
+      "args": [],
+      "env": {
+        "YD_TOKEN": "${YANDEX_OAUTH_TOKEN:-}"
+      }
+    },
+    "avito": {
+      "command": "npx",
+      "args": ["-y", "avito-mcp@2.1.1"],
+      "env": {
+        "Client_id": "${AVITO_CLIENT_ID:-}",
+        "Client_secret": "${AVITO_CLIENT_SECRET:-}",
+        "Profile_id": "${AVITO_PROFILE_ID:-}"
+      }
+    }
+  }
+}

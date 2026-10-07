@@ -1,0 +1,859 @@
+path,bytes,git,sha256,class,destination
+.claude/settings.local.json,4668,not in git,7281f7c0460750e0fb2360c2aa3ffff021275c659bc1d17fbecb3512293bd2e4,machine-specific configuration,local only
+.claude/skills/learn-by-doing/SKILL.md,1837,tracked,05ba2a313e1fac032ab76113ddf122f4bc3f73a4086e24604c806d22a35c0ab7,"entry point, configuration, CI, instructions",GitHub
+.github/CODEOWNERS,114,tracked,095df45560cbcf08089d338085f3ea9b92ed85a55c610bdcb11f147c672a9015,"entry point, configuration, CI, instructions",GitHub
+.github/ISSUE_TEMPLATE/config.yml,28,tracked,1f103c6a9dd07cd13a9a6f17ace6b813f47747eb9cb7e00488cb2073caaf91bb,"entry point, configuration, CI, instructions",GitHub
+.github/ISSUE_TEMPLATE/task.md,505,tracked,4c45aa0c3da5aa06848e1f7095d25637f7460033cb7d63a0b979c4b30ae4d37b,"entry point, configuration, CI, instructions",GitHub
+.github/PULL_REQUEST_TEMPLATE.md,771,tracked,135025e190701eff36061fe2e2de02f41b337f938891c744bddcea5fb464f003,"entry point, configuration, CI, instructions",GitHub
+.github/workflows/ci.yml,3426,tracked,2c6176d7162f68ac34acc13bd517510d5721ed862f2cbf9c8c1f4bd5ebf26926,"entry point, configuration, CI, instructions",GitHub
+.gitignore,464,tracked,d2eea9a1be8c2d6cbe09433f59e1bd8d29fb553195dc40e9fb88fdd229df70a0,"entry point, configuration, CI, instructions",GitHub
+.mcp.json,1015,not in git,b3295b51eea57e15d343fe6b2d15964ad847db1aacc09dd8845c679775c85e00,machine-specific configuration,local only
+.mcp.json.example,1339,tracked,f1c1b885177ca08c3de90ac62f898b9063eaf2524f8831bcbaeff4bc8114c8cb,"entry point, configuration, CI, instructions",GitHub
+_drive_staging/04_Photo/00_real_source/_contact.jpg,395828,not in git,46cf426cdc455593c4156f7cbaa3e9d5a0ed5fa8f3d654608a14374505cbcdd7,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-09-30 at 09.28.22.jpeg,312155,not in git,9bab34a9de98c27e6ebba5c54b74accb409e987e41acae943005f0ba57eff650,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-09-30 at 09.28.23 (1).jpeg,197302,not in git,a23f689d6512c0c35c8265cd181a17ca811cb41e02c752ae5bf95d3aee4b6b98,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-09-30 at 09.28.23.jpeg,269265,not in git,2051f8a92f6bf4f68d950a56a42a27ea182dd640a1b32a60815ccff13287a04e,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-09-30 at 09.28.24 (1).jpeg,220860,not in git,d0839d739f275baaea39673fd18ce1712d65bd9a3fb87eba99a0eb781dbceaa0,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-09-30 at 09.28.24.jpeg,444514,not in git,49cc0a6f628ade1de11f06fc9e50eec00975ecd0209218db225af602d859e532,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-09-30 at 09.28.25 (1).jpeg,291314,not in git,e7ca8a2a93db5d27a8e6d51579ba3b1683e322eb11aff25f61b3fb67a911bb42,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-09-30 at 09.28.25 (2).jpeg,289228,not in git,466fe7167431776812da198ece408b8b54343c9c9a7f93bce0064a36ebed8ec7,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-09-30 at 09.28.25.jpeg,285398,not in git,2380573f926c0bf30bba1d8d13722984ee56b11416e3dabca4752615031eb6c3,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-09-30 at 09.28.26.jpeg,354391,not in git,85fc22f2e5e7c132b37ad16ba979f5ce4f73cf8832326a35171ba9b27f452102,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-09-30 at 21.51.12.jpeg,297280,not in git,c1f21e49d89de1ce1c42e0bd42e6045ff52f51088da833bacf59302f5a474e93,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-02 at 23.41.48.jpeg,83674,not in git,f2641c1bf48650d1c33af6dc99626df654e056af957f1d10c35babf30756d087,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-02 at 23.44.03.jpeg,217101,not in git,eb1bfa389ce8811332181c008876b5caa70021857e8c3910abd32a6f41bc20e8,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-02 at 23.45.09.jpeg,152222,not in git,faa50999aab762831da60b25da55e060223af936896a0fc88b89f0d960b8f162,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-02 at 23.46.50.jpeg,74575,not in git,48fc8f2a3584829f8274c744d3891bbc646203973a74cf87ed0075d933eeb6f4,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-02 at 23.49.12.jpeg,91153,not in git,694d2450b5c3562462a5258b6a77db938cbb46beed0e93e6bf2fc89d8ee1e678,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-02 at 23.49.53.jpeg,106112,not in git,1f6059d3c803e759bbc3fd06f1ab8291a0f6842663ef32ae1b69956806f86a4f,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-02 at 23.52.32.jpeg,103228,not in git,0335af5ec6583ce183c1ac6907ee636975e1b078031579aa25bcd3420c5d8f53,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-03 at 00.04.59.jpeg,170551,not in git,553beac6a556b176b4622b04d4566a898838d29f98b6da29fa7f1d314463e1ec,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-03 at 00.05.00.jpeg,174342,not in git,08cfbc22ef6d0aa6a725c9c8bb05b38f0bc3f540dc00f055c8631f82b7b721d4,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-05 at 12.30.43.jpeg,308624,not in git,dff536fe816493b5ce829c8f6d5c597f1548cd13cb233566c617859f139a17b3,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-07 at 12.48.20.jpeg,259702,not in git,9f466784f7a98fd3a79bd13d03efdc71a4cf20dde45fbb514f0669a4e2cb82c7,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-07 at 12.48.21 (1).jpeg,255974,not in git,c8d78183e600696e1810b38275f038f06d1992a40d79f60b6c1c456eee95394e,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Image 2026-10-07 at 12.48.21.jpeg,274350,not in git,36c87869ca84746746be9ebd62d366fbd8041896c14f07032cb85d95e7d360c7,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/00_real_source/WhatsApp Video 2026-10-07 at 13.36.09.mp4,8025828,not in git,2cc2401904614bd7c6820d9e3b4285853a689d26781f3e1fd9dd4c5fef23692b,media: originals (plates and people visible),"Drive, restricted access"
+_drive_staging/04_Photo/02_stories/story-1-moskva-mercedes.jpg,366659,not in git,90e835840651cdec882457e6fe65bca3ed7e6ec3593cdef20cac6b33b8c5302e,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/02_stories/story-2-pogruzka.jpg,742411,not in git,a564e949adcc4ee5d87138aae55ace36f2ec13e278851734cf30ce3b221eeac0,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/02_stories/story-3-posle-dtp.jpg,414368,not in git,92f560e43ef134f2a8c5f0cafdaf4939eeb7d1a130fd8d1931a876a3640e3df4,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/02_stories/story-4-krossover.jpg,268513,not in git,286f705579bb4fb9564db62575e08bd2e0b39d0238e92ef11da4268b6e6c3d8f,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/02_stories/story-5-mikroavtobus.jpg,374804,not in git,8a19b8eea307e564472c2cc26dfa9d161679668b54cb6c1827b7c5f0f66fd1fe,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/03_video/evakuator-24-chasa-moskva-17s-1080p.mp4,12450863,not in git,c91b7a293d21688986dfdda6f34f7c028a63af3102b96844c98dc01d428fae3d,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/03_video/evakuator-24-chasa-moskva-17s-720p.mp4,3616805,not in git,c4df7d35df1893135962a5920e801b0024a27d0769933e16663f929a2afa9399,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/04_generated_mood/noch-kryuk-i-tros-lebedki-na-platforme.png,2014806,not in git,5e7a976f87a3bb57595d851f3df21ff9d997dc015ac60442e0406e7a7d9206d3,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/04_generated_mood/situaciya-kolesa-zakrepleny-remnem.png,2305612,not in git,2c376df4e1cc509d0a4a4a41422a9db2f58b606db0269489697cde397e080455,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/04_generated_mood/situaciya-koleso-na-podkatnoy-telezhke.png,2289500,not in git,ca5d5cf94e37865bfec7df97a449abeb9ace65a46799d9a3e976b2c74d3bf7a4,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/04_generated_mood/situaciya-ne-zavoditsya-dvor-vecher.png,2391486,not in git,dcf1a7fcf2c14e29a49a883eb57a787af902d8b85f7582fb6236dcb94ca17fcf,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/04_generated_mood/situaciya-posle-dtp-obochina.png,2497081,not in git,48e91626fbd0b45c1a2d37bc18678bb0a4faec8300b4baf0da83e0f2de899022,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/04_generated_mood/situaciya-zastryal-v-kyuvete-zima.png,2567216,not in git,fe509aa6034135d67f77f3862d2293e31ad882641d0a68a4cc828ae8f69177d7,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/05_hero_bg/hero-bg-mercedes-cla-source.png,2401967,not in git,19a30612f727b1fe242dace27b6214cdcbfbf7ce67792962e2727e4d10c6dc08,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/dostavka-avtomobilya-v-avtoservis.jpg,116966,not in git,407cbebc6427d0133f1bd9be15c79103f59c2afa208a2278849bd23834db0c04,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/evakuaciya-avtomobilya-moskva.jpg,99679,not in git,e0c47b7884f47ed97c11dafb147aa7a6a86cc92e1f6eac8020b1fcd1e15069f0,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/evakuator-gazel-next-moskva.jpg,206322,not in git,fcd08c2c185a039b02bd01e31fc8555f8ce15565551730f6078baed116bd2a33,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/evakuator-perevozka-mikroavtobusa-shosse.jpg,182590,not in git,3cbac7d6f453f14578d03ee2941ade904b8edbb2fb3f261468c03c46c195a736,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/evakuator-perevozka-mikroavtobusa.jpg,306030,not in git,13cf1ddfb4c43de23ce63a28ca3febcf995758cb78253c55106089660098d7c6,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/evakuator-pogruzka-po-apparelyam.jpg,213013,not in git,92b47f3ccca7558ae7368a40e73779e33f84d2bc35f71588d3ab0709d54e4647,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/evakuator-video-poster.jpg,197707,not in git,6abfe440fabbf8ab360ba9268fdf075dee1c2dba26f2ee3c41903efa9f3f3e0e,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/hero-2-mercedes-cla.jpg,267117,not in git,4bf64fefe25791ab50e4afd4b80d14508b085f69b4ff54fde10d3fccadeb0bcd,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/hero-3-bmw-x6.jpg,181429,not in git,c194bfb10f7a59d7fb41529ed44f386d43314f353a6c074924d159d3e9631e77,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/hero-noch-kryuk-lebedki.jpg,155385,not in git,1d6abc8fe2d5dadcb57ac8b2dc40c8be1d16c8c628df8845a4f0ec4438f4f112,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/oborudovanie-domkrat-ballonnyy-klyuch.jpg,56213,not in git,91434d33d9c3697a8c5437f4e3b8555669f67addb37abbb98eebab5e2ce77c62,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/oborudovanie-konusy-znak-avariynoy-ostanovki.jpg,52374,not in git,81534e70848c6806d7ff3cb2282fa71df62a89f9e7c6b8919a1d6d571fdc4660,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/oborudovanie-kryuk-buksirovochnyy.jpg,62091,not in git,bf2f173522fb089cb6552d05da594f1d8dff13355c9c4568c2db4d2019608a49,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/oborudovanie-lebedka.jpg,62661,not in git,719ce7eb18b384c5f1cd6cc9cb8b57dff96251969312e571196f08a5b09b02ee,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/oborudovanie-nabor-instrumenta.jpg,63661,not in git,09943de8805627e4cf2b24cc1589945ac2806c4be7bd8dffd3f5501cb6fa8a78,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/oborudovanie-podkatnye-telezhki.jpg,74320,not in git,41566dbd3d4335413f3ae9fa207115f47abdf39c6bd5e241bde6bf5a14c0aa25,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/oborudovanie-puskovoe-ustroystvo.jpg,56340,not in git,3f233de82bc35de0441069f6933bfddaaa46a471958fe5b215f39ff92f9ec183,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/oborudovanie-styazhnye-remni.jpg,55048,not in git,21bcfac8c72eaf5151aba481c87f9c4e8402bc075e3590858b27692366f33dcb,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/perevozka-ispravnogo-avtomobilya.jpg,90004,not in git,7774876bb79491ae0422cbb44917b08084536bb24be9110464c9e2251ef782b3,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/perevozka-neispravnogo-avtomobilya.jpg,141527,not in git,77352cb0e2b588574b034d638005be0e66e1530d5d46fd2767f42081fe20a140,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/rabota-09-vilochnyy-pogruzchik.jpg,36823,not in git,d113455d0d82d00be98d553a931fd387ae7a7f0169c80812b05f7927c8935967,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/README.md,842,not in git,2c896ae2758a27050feef70e78f4b779a27edd20fc4f90b1c47657806c469b29,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/situaciya-kolesa-zablokirovany.jpg,130934,not in git,80ac6bbc4af206fbbed18cf3e6f7b9de7370cbaa4d1c7c2d283f910c5412b781,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/situaciya-ne-zavoditsya.jpg,152201,not in git,b6f6a364674e6907ad00d7dca74e7561b723917f4790379a1129f27c698b7c17,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/situaciya-perevozka-remni.jpg,137128,not in git,e14e5a63f9d7a40133acd5ad5ae07317e7c3830e0afacc2345885aca249de266,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/situaciya-posle-dtp.jpg,143772,not in git,844de16d70be514b59a73171b2f5ef09d223aac71bfd9c9c30510665891f7bd1,"media, renders, mockups, archive",Drive
+_drive_staging/04_Photo/06_web_unused/situaciya-zastryal-v-kyuvete.jpg,151936,not in git,b2018959e73b99b130f3bdc85f92c7efd91bd025318e5e333e0ef70d04210fb5,"media, renders, mockups, archive",Drive
+_drive_staging/05_Offers_and_forms/address_video_guide/kryuk24_kak_snyat_video_dlya_yandeksa.mp4,3855607,not in git,5aeb49ad33b350093bda4f79e6b68e0f415a6bc3d3a55694056b581eb3c6ff63,"media, renders, mockups, archive",Drive
+_drive_staging/05_Offers_and_forms/address_video_guide/kryuk24_primer_prohoda_risunok.mp4,1188703,not in git,3b5a3462c35c82a8dfeee6094138fe8027b4b6501fd2fdfb4244940ca841410e,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/01_mark/mark_ink_on_white.svg,318302,not in git,1acf85cfc6d11e6a8279df8adb0137d6493e8449b1f275ca316b74a8158f4ba3,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/01_mark/mark_ink_transparent.svg,318231,not in git,ccfaa418af66757fc4ed4d3817cf001cf2858eebe09f193bb701b0e13af5e51b,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/01_mark/mark_orange_on_ink.svg,318302,not in git,dc5874c8691912121c95774327f2c1ced4535cd2e9bf6d0d334081240c4bc0e4,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/01_mark/mark_orange_transparent.svg,318231,not in git,bfb0f34ba94a59d16c599bf5209c8ce14757ff4b118dfb7a94293a8a19e20d5d,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/01_mark/mark_white_on_ink.svg,318302,not in git,405d08efda5171490ad34671af1c1e5287f5c0c842d4bab2026fcf9eed952ca9,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/01_mark/png/mark_ink_on_white.png,25219,not in git,faf709a5c378d1d955273112e749fdeb74853f97c9350d6a1b03278e8f735bd6,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/01_mark/png/mark_ink_transparent.png,27391,not in git,ad12a64865019886eb4f134e6e89858d158cfb9e43de77f91c595d5f18c59a2d,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/01_mark/png/mark_orange_on_ink.png,24905,not in git,49d26d3cd0b094157ea4a9924bd9a08f43ea4f9f377f928163005a06d96073e6,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/01_mark/png/mark_orange_transparent.png,25576,not in git,c72e0a2fb090123cd1ceaea7e384121065ba5d617e994b74ee4931e2cb95743c,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/01_mark/png/mark_white_on_ink.png,25872,not in git,0143d60b06f9f953b433e38206aad93b895f1b83d77484d81c4d00dd3d83a9be,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/lockup_horizontal_on_ink.svg,318735,not in git,e482e6202a0c655f291e3e12fcc5c315036621c931a810b1cf76b7820ffe5e89,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/lockup_horizontal_on_white.svg,318735,not in git,4d78efac4a13b54bd9047cdfd527812aaa21e07fc4ee17efb35ba100e21baa71,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/lockup_horizontal_transparent_dark.svg,318664,not in git,0565d9fdafdd846792ee3fac1c6125ab4c8eafba3a5763db22a6131d98dd409c,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/lockup_horizontal_transparent_light.svg,318664,not in git,0b1c8283e5c25c88233a3eb0339c4205f5a419d939da79a8196bb27680ad1351,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/lockup_vertical_on_ink.svg,318771,not in git,f2c84674bc46dcc6cff583580dba1cd3d42c091b01b739bf2f4b37c251fc2fdf,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/lockup_vertical_transparent_dark.svg,318700,not in git,3473e1ee8e93bf2d892affd275dbbaedd794238038e1173eb10e8a97ee4ed2f9,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/lockup_vertical_transparent_light.svg,318700,not in git,f299aab82f26b3542038256227a9adafa0ac3986f464bc8f0ee70117e96d4cb0,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/png/lockup_horizontal_on_ink.png,52341,not in git,392c1c7700426604dd175436f5c6f2007c728ab33eab2763f9ba7317392bd1ee,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/png/lockup_horizontal_on_white.png,51359,not in git,890d670f35a23cdc65355f46d51fb9c5b07f9d19a21bf7f8039671d3e31fe9a7,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/png/lockup_horizontal_transparent_dark.png,50973,not in git,577a2410cde9d7288c3148b25af6376206bc215bbc4662e6a9951b01730c9689,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/png/lockup_horizontal_transparent_light.png,55446,not in git,fdfc0951908be030ba5954335e02aa63710b2c00ceacdabfb9ba2ee92c84a123,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/png/lockup_vertical_on_ink.png,60774,not in git,fa501c110204c4e602821d608bbf7a7862216a9d3270084ba3b72010509c6ec8,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/png/lockup_vertical_transparent_dark.png,60516,not in git,14e702139f54c39584da9d84e4373d90bb4f227608cf5057e0524b7b558519ee,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/02_lockups/png/lockup_vertical_transparent_light.png,65342,not in git,cc8656599cf3582dc9a6dfd49c380bcb2a22db6c0d2527f9b7a7c16bcbc805a4,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/03_avatar/avatar_round.svg,32842,not in git,93d95b6490517971f0e670f507ca4619c31a1e5389dc1b6f2b71f5bd84743dc3,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/03_avatar/avatar_square.svg,32847,not in git,67963ccaaf4b66d61c7c0298e550f851440944fb6b46953a9924ca4a7ea3ad2c,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/03_avatar/avatar_yandex.svg,318289,not in git,77c39571e7342d5cbfcf674c7fc9c8eb22f26da288f9ec907f19edcd92454947,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/03_avatar/png/avatar_round.png,43424,not in git,d3d3dd265505453ff4c8862c87d398d35cb0e0737dd7e289a1529badcad47126,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/03_avatar/png/avatar_square.png,34294,not in git,7197c0b8f524e9189e218e227cff8b56ae5f66a6c992a6c175ef32554f074e22,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/03_avatar/png/avatar_yandex.png,23896,not in git,2434a2d4953f8f7ad61f691137f807cf9c0622e412d73403aed9fb1c55295098,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/04_livery/door_panel_black_truck.pdf,39873,not in git,82a8733a2d4d23ffb7a53e6b490c8414696048a72afa0e7ee096165f94c704f2,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/04_livery/door_panel_black_truck.svg,319247,not in git,7f166f7e8b7e0839640c164e202a7a926d67d1dc854275d02778500d7aefc3f6,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/04_livery/door_panel_white_truck.pdf,39863,not in git,d64345a6feef62fcd2d9e621acb3195df40e811a11f1c4e1c6d6e0d72029fafc,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/04_livery/door_panel_white_truck.svg,319247,not in git,1e778f03048ed0d640ec9dcb5b14e6cdd6c67db737239b724eab23c3077e6050,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/04_livery/png/door_panel_black_truck.png,79106,not in git,ccc5f564a4bf15085da5c245f44c2fabf44178b3c5dab44a326fb91b96e7b69a,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/04_livery/png/door_panel_white_truck.png,76694,not in git,febc8be87ff4dee0bf64ac29ecfae422122fc13e6f7e50f7f6fbd49c96e29a50,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/01_vyveska_fasad_2000x500mm.pdf,39068,not in git,86095411fd4c2ebdb06014b2c07b44e6c5b3cb636f73459c6f5913094915999d,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/01_vyveska_fasad_2000x500mm.svg,319223,not in git,9e5ad3dc1f8d532513299d176776b24514726e9bfdb4b52716103c764a82f7b8,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/02_tablichka_vhod_400x300mm.pdf,45143,not in git,8fd69eedd5ba135331cb79b9b5cdd6a27106987ca0b72fc504558873f37a6ecf,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/02_tablichka_vhod_400x300mm.svg,319627,not in git,5210db7650ddfddc7b5a25c24c2a4e61b7a705736fe42cb406e5757df9e39553,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/03_ukazatel_600x200mm_vlevo.pdf,34237,not in git,1e631a2fd3defde5e67944c68118c3abb042cb1eca1c8832cc8941e4c8c546e0,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/03_ukazatel_600x200mm_vlevo.svg,319060,not in git,2e015a80497f5979700bfb0c120745028db1854bff4a2316e02a195fb2ca83c8,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/03_ukazatel_600x200mm_vpravo.pdf,34234,not in git,92487d0ddc4410d65f6834f14adfa4330b74ad0e33098e5d4fcc1a5290e86b76,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/03_ukazatel_600x200mm_vpravo.svg,319064,not in git,072cb84a4ec09d7c8554b8dc71a6936921964f570946b28b250c1a6562c086af,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/04_logo_zona_priema_1200x380mm.pdf,33487,not in git,9ba8c751c562574c6b9c91c4c856230bccef8e9964f270de7ab34946cfced8f3,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/04_logo_zona_priema_1200x380mm.svg,318762,not in git,92953ec0b436ca51859e36195ad9afa54f76321175eeac002c28de530956ef81,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/05_stend_tarify_A3_297x420mm.pdf,108348,not in git,40f6eb87047a716ac4f5593564f9d100f007e9d9763ddf07327e7d7817ed290a,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/05_stend_tarify_A3_297x420mm.svg,331259,not in git,0615e717789719adde82fe5a5d56ceb39ba9846f7bda7d00bdef0ebbe540cd20,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/06_nastolnaya_tablichka_A5_210x148mm.pdf,52332,not in git,06a5286cd8a83a5eb93686c9ff5616cd51e7e8064b43ffd41b8d7e80feac5d48,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/06_nastolnaya_tablichka_A5_210x148mm.svg,319689,not in git,4ed2f1f10d4fa7bfde9cf76597810cd0cace77ef66c8491cd8299549f9b5ab3d,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/png/01_vyveska_fasad_2000x500mm.png,47706,not in git,483c4d1a8d5fec4af8117d9916b259c7cffc53696f835516d21cb4063cddc8e7,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/png/02_tablichka_vhod_400x300mm.png,105348,not in git,e1c6345dd082652acaeff6287dae01bb70c6948e8dbf827ff40b6bf81cf3e240,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/png/03_ukazatel_600x200mm_vlevo.png,46338,not in git,763fcf1b0c83a7f080265441860db0be0784ea1e8076bbafb274bb17eb9d3e41,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/png/03_ukazatel_600x200mm_vpravo.png,47204,not in git,cced5a856913eab3bafacdd52ebe1c1cdd2fe60ace290ec6aa6992d9ef3f54f9,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/png/04_logo_zona_priema_1200x380mm.png,39270,not in git,b11caad1deb37beada3a9bc1654194d4ee0cc9ead47c15d2c6272f183b3b0142,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/png/05_stend_tarify_A3_297x420mm.png,223849,not in git,4043ad6cff551aae256e71ef086fdb733c7f3cca1e09e523b99eb22a321933a9,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand/06_signage/png/06_nastolnaya_tablichka_A5_210x148mm.png,102189,not in git,c2c6579eb3bed6e1afb63b7bf20d9108af6645f173f2ec0d937359afd9fe6139,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/brand_preview.py,970,not in git,cb53e30b89ee9c291f48fa90aed58720e95f8e56680f6496dd42cd4c240fcd57,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/build.py,9721,not in git,ad815c9558862581f3c135ba5fefd72abfc90e03d62aa48d047c508568be6455,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/index-proof.html,54822,not in git,6710bc8baba67fddc5db4a63f0f63665dd589fdfd755380a6d190e2204c8db89,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/index-v2.html,53262,not in git,302da92d96d7197cd970e24254163ddf1654002994384cb501b5c82d8d997aef,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/index.html,51364,not in git,791aa3f456696c0358d1d85ab6f71265e0ebd466975fff3fb3e7581a8deb4012,"media, renders, mockups, archive",Drive
+_drive_staging/07_Mockups/navy-light/navy.css,8052,not in git,d8af28ac682ab0831263369ebb4f1553bf16418272007edb5760126b3c758989,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/img_2026-10-05/direct-draft.jpg,21928,not in git,461fa50788c19d56141ec2a8bf10932f5b32bba9b9227e59c6453174f530983b,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/img_2026-10-05/site-calc-m.jpg,131599,not in git,8ab0794c1b9f8ad674ce0460e34ff5d5866e4a449c4b55d21e2937c4aa00deac,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/img_2026-10-05/site-calc.jpg,80851,not in git,3c8de2b2194c6812cf6b62356e2aa71f210ab30723d2b182fa082bcf2024fd9a,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/img_2026-10-05/site-hero-m.jpg,155426,not in git,94e0570e92f5b2ddb24c52f3db4f369b4924018bf18e4f73d1d2e866b334592f,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/img_2026-10-05/site-hero.jpg,104634,not in git,fabcb9e07e9e05dfe3d2b149e8e4fdf34c0823e671ca247a215637e227e9ab59,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/img_2026-10-05/ya-maps.jpg,89353,not in git,69ea2b12090ad97e76f31000a4ef997debae72f4490661203e70f8a568db6ed5,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/img_2026-10-05/ya-rating.jpg,6867,not in git,7f965b539994e16b1d48f43cbb3561582ccddc130402cbfe38d7f06950538b38,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/img_2026-10-05/ya-reviews.jpg,44433,not in git,968d50a359ef68fc5059eb5584a00f698af1b8c91b93b70aec4ee019f1ef33d8,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/img_2026-10-05/ya-stat-kpi.jpg,31993,not in git,bf42ba5400f2593e8f53ecf045ce504d1fd3e418f02cfdbe8ad367f1d607fd72,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/img_2026-10-05/ya-stat-sources.jpg,34741,not in git,b522d6f5a7fc52b080966ff4912ef3ad20514891c74180eef4f81e589f6d7c55,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/KRYUK24_otchet_2026-10-05.html,1250890,not in git,7d741a34179d2f8ea7bf8ac6a84f78a704ce49a50de278928894424c4df4db4c,"media, renders, mockups, archive",Drive
+_drive_staging/08_Reports/report_2026-10-05.src.html,44629,not in git,92fd830a96c92310c710378a449320db5f3b66a5a4b0214664e76602097118eb,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/01_TASKS_2026-10-02.md,18477,not in git,7f9a48e66e7134801ceb4b5527dcfab13d70140936c9c0687f06658cea8edad6,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/01_mark/mark_ink_on_white.svg,506,not in git,932ff5568be31fe52f85a0ca58f8fafbaf0ee158bd573a5d4eb38657f8a50704,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/01_mark/mark_ink_transparent.svg,435,not in git,e9ef9ca4f6733c88a3e02c70ea4880eb7fdef4fd9106e9629640fa94a3926a7a,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/01_mark/mark_orange_on_ink.svg,506,not in git,eeff8dd05d6cd389930cc7696ba7734e89d4020afcce6e007f7fd556df063eec,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/01_mark/mark_orange_transparent.svg,435,not in git,dd418a18471d93e1a023be2187d3ea28150a22b45df9d735cf553a43d5404bd5,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/01_mark/mark_white_on_ink.svg,506,not in git,2b35667940218805bae260fd04c22da8005981c4c909da6d11fac1d1cc720b65,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/01_mark/png/mark_ink_on_white.png,16517,not in git,8309f5f7158299e8217827c240c867416ff056471f6eb80e30b24fd97e103e16,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/01_mark/png/mark_ink_transparent.png,17936,not in git,c59717f616493c49282f1eed6a9fb6477b67b0bdd61c12deca0b7a59a1e27c73,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/01_mark/png/mark_orange_on_ink.png,16689,not in git,2dce034fe1480508a0e516ca697ddc5ea2bb13f1f1eca25eaa632eacfd9ac32c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/01_mark/png/mark_orange_transparent.png,17856,not in git,0d922b7554790d4b888d24fbf4b0e06cc4d666d1d55835910ef136b8c487f97f,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/01_mark/png/mark_white_on_ink.png,16683,not in git,010645334c72402d712e575269b23697500c16d61a7006679548470859f188b8,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/02_lockups/lockup_horizontal_on_ink.svg,890,not in git,b2e71839bbb94a950872f90128035e9481d456953ded1df4bcf803b6b6f0cc0e,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/02_lockups/lockup_horizontal_on_white.svg,890,not in git,ec0609c48083fabd858ee73ca2a0d440f3e164dd130bf30f80b475e3a37d6aab,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/02_lockups/lockup_vertical_on_ink.svg,925,not in git,4873ca18c339c14aecd17e4fedbc70c39378c4d1ad0fdb6e740d5ae81ec00d4c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/02_lockups/png/lockup_horizontal_on_ink.png,35314,not in git,45a50c8ecea998fc686c6244c00d36795fd0678d9c93d818a2a7a3df0765a0fc,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/02_lockups/png/lockup_horizontal_on_white.png,34826,not in git,6a237f516f57e71263ab141d5bedba26fcca6179092dd2f0882e6e6c03114192,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/02_lockups/png/lockup_vertical_on_ink.png,57366,not in git,582e0d39020f2679ff28b161bae9644934367df7301f0df9f6177a54eb208122,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/03_avatar/avatar_round.svg,506,not in git,ec4f7b2ef390a19c22c2a3e8f332d7775534dd7abc37fc4cf666bd81de0d31ee,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/03_avatar/avatar_square.svg,505,not in git,5743955c1c36c82c6503896c7fa4d067ba6bdd6035fb4cbfa65edefe164ae6cd,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/03_avatar/avatar_yandex.svg,493,not in git,bd3edc6bf89d6eba086a29b131d509cccdc938e9ba5df44abde92e78143e0214,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/03_avatar/png/_compare_yandex_before_after.png,33693,not in git,60cb60e3170553a3056494f6c70113fda132ddd729c15032a7b18a8b53ea72a3,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/03_avatar/png/avatar_round.png,17184,not in git,cdf5c5f50d3ea34e0ce61c59bdae2e7ad61b475a7ed532c1f8795212b5cc2820,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/03_avatar/png/avatar_square.png,15569,not in git,d67ee296f617fecfdd4f1d68070124c12feb69b8a2adf0eade6b8548fd674e7e,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/03_avatar/png/avatar_yandex.png,19608,not in git,35f9cf2e8844050baac86f41ef902634e266235f95d0a5db53bb4ed21cf46606,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/04_livery/door_panel_black_truck.svg,1153,not in git,4bb4e499579124e3a669de77e04488f7fbdcfc304c211c388cb6657997fc710e,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/04_livery/door_panel_white_truck.svg,1153,not in git,120886156266dc12f6e52d4485cd6aebcdc6b80761a8151a840ed0c001a5ac80,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/04_livery/png/door_panel_black_truck.png,29244,not in git,f1d14dec785e9f1a80dbb9671258d4f9adf9fb529dd8812ecf8c21408358fbad,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/04_livery/png/door_panel_white_truck.png,28538,not in git,00a2eb3c0ae7e3cb1eca8eb2b232196b937adb18ef3894ce35aba70dace14446,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/_preview.png,14343,not in git,e5591c7d2178753c416f35e64237d655cc54de8a69ad570139630f84ee157a4a,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/_src_std.svg,505,not in git,d0e9220885fe3e21ae3fb7f13cf13020438a7425d52e827465296e8181e506ba,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/_src_tiny.svg,503,not in git,2cc07cd717a47e3b02a015f2ab3ef6c32d25da07a5658b54bf37a74904573177,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/_src_touch.svg,504,not in git,bb806177335962d488b68c5b632d2e70ac35b39895673d0f3e3cda71402e0935,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/apple-touch-icon-180.png,2260,not in git,a6b7f173d0bb580320efd228b5374ccafcc4a2d441f7e4c4a20326aedc76f06c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/favicon-16.png,325,not in git,97334ee00370a4e2a6021a5d4b0f9e5c6a1b9451d670e80d5dbb242e7f5c85a0,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/favicon-32.png,578,not in git,2a53d67a7c7a2277f71b24ff74ecb9dea9ad901ea592627754739fbea3162b96,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/favicon-48.png,813,not in git,0e2e864388ffd4a66e00b7ed4d98e41ddcff0eb25ddca8ccb91822fb4d2a5875,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/favicon-96.png,1925,not in git,d4ca48f9da2c5210e5eaec9edcbb24d091714d2cc4ebcca42d7eac8fc1d62a96,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/favicon.ico,336,not in git,6f837386c44a37eec76c62d86cbbee3442460a6485be4c3acadeae2af11a926d,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/HOWTO.md,1459,not in git,0d112644443c8ebeaff1c7c6d1f7ead447607f792f1afb225af44e56ee655449,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/icon-192.png,2398,not in git,d395b3a8a2dfa3eaf13210d2fc85c1a8b60eb6a928369ce2b514f902bfd9b3c6,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/icon-512.png,6790,not in git,e735561419d0a3eab5cde393c45a4e925617cb0ff74edb20822d8be8ce568656,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/05_favicon/site.webmanifest,409,not in git,f0c2164b52f9136f4e8df20a9232cd96c686c442ebf96e2ae8c529a196b9de54,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/01_vyveska_fasad_2000x500mm.pdf,25931,not in git,a012009fea91791f0aa7552d288edf0faeecf0487c62cf5f4790f83e89403ec4,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/01_vyveska_fasad_2000x500mm.svg,1445,not in git,ae91cb7f7ba73604050c49c3eb0143dfeb602d742ea2fff186ffd85cabe30c28,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/02_tablichka_vhod_400x300mm.pdf,30970,not in git,66d81e54dc9eebcda7d6a86f84d5e9d2f653db091b3d97a1129be74b3685bfe8,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/02_tablichka_vhod_400x300mm.svg,1875,not in git,b0124cc9786da2ed8602b81a1d044823418beedaffe3b47f50088725bc101978,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/03_ukazatel_600x200mm_vlevo.pdf,16746,not in git,a38e2434ae3c4da9655acf1b671576c00573bb2ce1cd55806c1153cc302eca7e,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/03_ukazatel_600x200mm_vlevo.svg,1062,not in git,4c2a32326e9b09749f3c63aa818dda092e24e88cd4124674bb3cbcbcc67a1844,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/03_ukazatel_600x200mm_vpravo.pdf,16746,not in git,5f92a4bde4f2afd0d17a158cac7057422455e48575ad85f3771bbcade063e996,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/03_ukazatel_600x200mm_vpravo.svg,1063,not in git,0a9ff64572c484be8691e6e080ab368c140d75bc8dc27cfb8bf3cb3e80820be7,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/04_logo_zona_priema_1200x380mm.pdf,19266,not in git,35764e80afdce0ca009f413d97b578f5b0c5d0d1326ce0a94042c53fc80ddcde,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/04_logo_zona_priema_1200x380mm.svg,1026,not in git,2a06242f4203f0d29e3ad14898cc0f7786d59a41528fbdb88670445668d41ae8,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/05_stend_tarify_A3_297x420mm.pdf,74455,not in git,e3a4239f3e8d93da382bbcc2581b70e88fdf66b737d1bb902806335a65db5807,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/05_stend_tarify_A3_297x420mm.svg,13322,not in git,f6f8f30048e689c707d0112b8edc3c011a4cbdadb622dba929dae5a036492d60,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/06_nastolnaya_tablichka_A5_210x148mm.pdf,35844,not in git,3d683f1438f0f2f1630809fb54eed6b21ca99c6605bd4b28ee2197436bc4c67c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/06_nastolnaya_tablichka_A5_210x148mm.svg,1714,not in git,e4f2cb6e60ee622e1df9a071866b7a78919dff227a073bcad400611aaf9e8d7e,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/png/01_vyveska_fasad_2000x500mm.png,44307,not in git,f639b3624e6afce559549e008c5dc9a85665a44b81b2f88a771937760b04c608,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/png/02_tablichka_vhod_400x300mm.png,98963,not in git,0dc0c35ddc4709c12f6bce05f183b48a10e87d60ddd4cd2c12665d30e73f2dc8,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/png/03_ukazatel_600x200mm_vlevo.png,36746,not in git,2495d0617d97f430c0c6e472d5de355b33b65e26992563d41f8cb035bdef476a,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/png/03_ukazatel_600x200mm_vpravo.png,35667,not in git,0e5f177d89db637a1739df31f3ba0cbdf78a0bb8d5bc20ada1261c228dcdeabf,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/png/04_logo_zona_priema_1200x380mm.png,36437,not in git,6ad9ccf0813e44d0e66fb073db9b2afb77e6aea14c691c9fde38a9c6a419934e,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/png/05_stend_tarify_A3_297x420mm.png,145911,not in git,558f912d3acb3687382381e7ea8030b9e568a217a5e3089f2e725992eb6add07,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/png/06_nastolnaya_tablichka_A5_210x148mm.png,77951,not in git,f5aa4510793627c87be14af71dd7ec2b853886aab4b2852bb821582feb4256d1,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/README.md,3540,not in git,6052c92c5149b446ab50a9d16f4822b531dac01557dbee7f5680e37338e6d081,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/КРЮК24_вывески_для_печати.zip,617589,not in git,b31e57eef6e136aad467edefa3056aa7cfe2b59b4da3239b3594bce37cf8d9c9,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/03_Brand/06_signage/КРЮК24_вывески_инструкция_для_печати.docx,477029,not in git,20cd6fea8d0f22ef069ad70363208e161a8fea3518ae9eb323c8631a5831f042,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/kryuk24_kak_snyat_video_dlya_yandeksa.mp4,3424972,not in git,4026830beb452b05c150b83ef6bb81631000cee9d915f709d35b7d3c713c3f2a,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/kryuk24_primer_prohoda_risunok.mp4,1103553,not in git,a3ca67099396466ff6b645d6e593d3f7622afc838db523a5e51dc733341972cf,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/slides/01.png,76127,not in git,792138d820ef3ed1d9c509bdbbb8bbc71ebffcdb54843dd10dac560748c4e8aa,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/slides/02.png,78210,not in git,4d1ed3183d1779cc4b1a8fef493451cffa16d9128cc044a8f1e5778dafae16c0,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/slides/03.png,80001,not in git,562d016968c77c4b979f927b946c70e37d0f979da35fe8376ee120761deae356,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/slides/04.png,95123,not in git,87ef5d7e6c3fe49a209dec73a3612b726421ee65b3bab2fc45cdf4267797e2c9,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/slides/05.png,106116,not in git,a77cd6e7b510dc91405cc7005a046298711bcfb796aa75dbfd6a60f0c4bf5e91,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/slides/06.png,126919,not in git,7646098c58e6d51c78cacbd65dd80b713f695715d5dc3737a24ec3cca67ddb8d,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/slides/07.png,98314,not in git,7345b07fb930820e83f60b8f209b520162144b197bf14977a4a016e0076d7a10,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/slides/08.png,81743,not in git,7ac64c4ee1caa7795ed2ebac1088f7d09fd666edba31b163d0af59b5b40447b2,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/address_video_guide/slides/09.png,86944,not in git,7db695ff70ad97dcea6e7f5e73c9333c0dd80ce35bce1be2dfdc30103abe7319,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/qr_promo/kryuk24_qr_ekran_telefona_1080x1920.png,53725,not in git,5e00030f1b7df5ed3c2c29af860e8c05c447318e09e64229cdade8c5837db1aa,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/qr_promo/kryuk24_qr_nakleyka_100x100mm_300dpi.png,28136,not in git,a4c1013d73f6da08f31d4579fdc23e7434bad1ccff977b4feb4d4b7b1fb239a8,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/qr_promo/kryuk24_qr_story_yandex_1080x1920.png,49178,not in git,c41f3527297acf9595d62f896e9ce4ba9f88d8da33001d37daf6209ee1ee4aef,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/qr_promo/kryuk24_qr_vizitka_90x50mm_300dpi.png,35170,not in git,15618857105fe88a51810e4aef69c8a5069280574594db1bc481cfcfdc32aa7a,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/qr_promo/README.md,6531,not in git,df648ea91a611edfc140afd4f0460e18c6ca0e491d3ba2ee23800d808bdd67c5,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/whatsapp_kit/foto-profilya-640.jpg,20466,not in git,eb9f3e92978bc887fa4ba5ad6ca5b2dafd3c422239665932ac4556cecceb277a,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/whatsapp_kit/status-1-legkovoy.jpg,418377,not in git,f853e83d3852af1290b015a49fd68267851a14641a02300af28b5b93fe8f1263,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/whatsapp_kit/status-2-krossover.jpg,316661,not in git,67c976e252fa4a3733f8a74e80fb16278f2c4616c8c05f29bef06d21f4731eb6,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/whatsapp_kit/status-3-mikroavtobus.jpg,384029,not in git,943456cef5d468e8e2111fbb27aa45b31384ac0d576febd2f8e740eb478efea8,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/whatsapp_kit/status-4-posle-dtp.jpg,454867,not in git,4cb9f94c8ad1bb8c1ee1e30fd8c5619e3531de6a40ab85678c8cfcb87a0362ef,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/whatsapp_kit/status-5-zastryal.jpg,345122,not in git,f4aeebc80f6fe9958cd89b49d1c88e6e845458fb5e0e700c0abeb67b5ee479e6,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/whatsapp_kit/status-6-spectehnika.jpg,392342,not in git,2e55e50d4795d76c21e6ef9f583281ae476549140b565017fc9b0df224155778,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/whatsapp_kit/status-7-sohranite-nomer.jpg,114301,not in git,07eea14e53fdbd3f453265f9c7d03533557f1bed19b11daaa74dd52caa682f4c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/whatsapp_kit/status-8-otzyv-qr.jpg,162546,not in git,3c730db328fcf179d2cdca4ad54dc42ca769a0ac78ec8e14b036ee7dbedaa71c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/05_Offers_and_forms/whatsapp_kit/КРЮК24_WhatsApp_что_делать.docx,39616,not in git,e9efb6dd01360e0850b825ca5070531faa3045f382396ecc9f11f24a3a4590aa,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/desktop_zips/КРЮК24_WhatsApp_набор.zip,2535736,not in git,54e214f5cd1430348655cce0936079ad12a717f1ef138e3fa110569eb92256e1,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/brand_v1_old_hook_2026-10-03/desktop_zips/КРЮК24_вывески_для_печати.zip,617589,not in git,b31e57eef6e136aad467edefa3056aa7cfe2b59b4da3239b3594bce37cf8d9c9,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/deploy_packages/kryuk24_v32_upload.zip,72713,not in git,8c970d4e523aa6e427162611e59ca1b525c0e7c551cdf332b8f4e7cc0abec767,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/deploy_packages/kryuk24_v32_upload_2026-10-05.zip,175767,not in git,4821e852b4e9085245d328ac63c0ba534ca2a95475cd97e11b7c107a5d8e2900,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/deploy_packages/kryuk24_v33_upload_2026-10-06.zip,67667,not in git,620b8b0da37dc113c37d46405075a0ae205360deeae22936d95e9393479b015d,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/app_v10_live_before_redesign_2026-10-03.js,19963,not in git,0583db19336cab23818f8d37db2c5791604bb044ebaf11ec9d607d46a47e7547,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/app_v1_live_2026-10-03.js,6435,not in git,8ac2e6ccb030c362cba9cdbef0264dc46d0958dc56cf33328374407e1605b4bd,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/app_v3_live_2026-10-03.js,9339,not in git,82261a9e36b9bf70bd2e4e7f58c1458dd4c5a69239286df1647d8c476aa1f3fd,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/app_v4_live_2026-10-03.js,10654,not in git,a8fafac14fc52890642debe82be973274ef4e9c3521c67a171da2753a8006758,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/app_v5_live_2026-10-03.js,13563,not in git,8f91f216da69d03711349e429085e62fefd2b082c567222de48c76ed364de9dc,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/app_v8_live_2026-10-03.js,15141,not in git,5dc4d622885af6298543829f589566ca404474f7f8a12729d347d5582fed2acc,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/app_v9_live_2026-10-03.js,15805,not in git,9fe2161fa1de7c94b204349050ee6ecdd12db9c1ff098d285534e4869dc1a264,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_before_live_redesign_2026-10-03.html,28531,not in git,f583527f509b44def9fc0a443b2db477947a07dd58aea0c7e287e1b18731c2ab,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_live_before_real_tariff_2026-10-02.html,27897,not in git,62c163a01246c98414d3ad95d8a123b331ad53c8d00ec55b6f75610550be7303,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v10_live_before_redesign_2026-10-03.html,41639,not in git,ca0a88a55055ec0940ba30c76bb24a6676d7ce550f0b2036a4c652088b4349e8,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v19_before_seo_links_2026-10-03.html,44411,not in git,4219a11b410a226890003445a7a6ec780eba2460287dd790214b034c63b1eebd,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v1_live_2026-10-03.html,35964,not in git,9ab99afdeb12a852a72d89b0cfcedaaf347cc76466876bed73fe75bcef4d9036,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v2_live_2026-10-03.html,48693,not in git,b40494362ebbfbf3bccc9051f38cb621a168949aa505fc0412dfd5ed8401f0b2,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v3_live_2026-10-03.html,49791,not in git,c711347475cc841136d3844bcc550d2022efa656bb3e7c1efb71afb823cebd32,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v4_live_2026-10-03.html,49271,not in git,67d84aec5789408a9b7b2ea881a594947e6c72e66a68af837d657c51976cc287,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v5_live_2026-10-03.html,50159,not in git,d745092ae29cace20d27e50503a23b91b7a2b5ff1eef62d8d7363ba938432c2d,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v6_live_2026-10-03.html,43105,not in git,9b62f472012a24ab455a3035a53a1c997cc5303c53a82c4b737f26dfb287961b,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v7_live_2026-10-03.html,42129,not in git,66a690fc88f81acdd862f7ca75f82265d86ba126ed916d65c84b50082f1e0f51,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v8_live_2026-10-03.html,41858,not in git,5c84f8a5feb901fd8071bc61c70996ec7c167a772367a78f37b7e43d11895120,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/index_v9_live_2026-10-03.html,41202,not in git,bcf3156a8509fa8f3fc40c22432b506040b3cdbba83bb753a6e532f5c2bbf821,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/sitemap_before_seo_pages_2026-10-03.xml,214,not in git,740916b01271ac365084a6ffa1db15431a47a6e9a52b9e2af1a1b1f768a1ff59,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/styles_before_live_redesign_2026-10-03.css,14995,not in git,bf5b2539b2290551cd2567f33471f3c705b6ad1a8d75c5c7369acb80144d4064,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/styles_v10_live_before_redesign_2026-10-03.css,31813,not in git,03d31966a70e19d1e6ff7355e68bf99d8a1a2663fba4c3ed964146ae82f13e5e,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/styles_v1_live_2026-10-03.css,21996,not in git,76fb6e3909bcb2b5e1568321ed04a2ac384e35b26d4abe5f1fc4d0364db0044c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/styles_v2_live_2026-10-03.css,27784,not in git,45cd0134187173c82da4b9d4a17e7c770f2bcf06d173260a0743a9f7ffbfd6f6,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/styles_v3_live_2026-10-03.css,27257,not in git,7e47c1d7eee05984a2e12857b8934f857082d916f55f9c583ae91c08d519c4e2,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/styles_v4_live_2026-10-03.css,29082,not in git,4b77730d8ec1aa7c3df33d5e5a8cdd955a4e74dd6c6d5883782bb420984a0fff,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/styles_v5_live_2026-10-03.css,30000,not in git,bae104299ebc1cf31ac3692cff2706ff9d7386b96823bcb56b37095575a234ca,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/styles_v6_live_2026-10-03.css,31198,not in git,8a44c25c96133c1045e44f3f9b20cbeec7773e9dcf862d1a01c54cf8e1ddfaef,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/styles_v8_live_2026-10-03.css,31105,not in git,92bb8e475f466b5623894b6b063fce83c6ec779fbe8fb2e2dcd0093931c8011f,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/styles_v9_live_2026-10-03.css,31103,not in git,6540acd5685a0e8c594048fcb3ebadc2255cb19013d9ae78f738302092800a84,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/app.js,20353,not in git,7c9bdc5179ea9e2d1c1635e22778fdc25339bbe39f1b55a6d82132ffe2871dad,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/apple-touch-icon-180.png,2260,not in git,a6b7f173d0bb580320efd228b5374ccafcc4a2d441f7e4c4a20326aedc76f06c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/assets/mark-orange.svg,384,not in git,e9af72808e20a627a4265ac227275fe965b3244980831747da2a71b804e1c9a0,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/favicon-16.png,325,not in git,97334ee00370a4e2a6021a5d4b0f9e5c6a1b9451d670e80d5dbb242e7f5c85a0,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/favicon-32.png,578,not in git,2a53d67a7c7a2277f71b24ff74ecb9dea9ad901ea592627754739fbea3162b96,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/favicon-48.png,813,not in git,0e2e864388ffd4a66e00b7ed4d98e41ddcff0eb25ddca8ccb91822fb4d2a5875,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/favicon-96.png,1925,not in git,d4ca48f9da2c5210e5eaec9edcbb24d091714d2cc4ebcca42d7eac8fc1d62a96,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/favicon.ico,336,not in git,6f837386c44a37eec76c62d86cbbee3442460a6485be4c3acadeae2af11a926d,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/icon-192.png,2398,not in git,d395b3a8a2dfa3eaf13210d2fc85c1a8b60eb6a928369ce2b514f902bfd9b3c6,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/icon-512.png,6790,not in git,e735561419d0a3eab5cde393c45a4e925617cb0ff74edb20822d8be8ce568656,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/index.html,42136,not in git,801c7811377cea1409f30c43d9f579ff757d0648b5d159c7b2ae85bace65ca3e,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/README.md,11514,not in git,05e3acd977c91263cd12a096942b1c6764f16344c169198ca5fa62ea911b272b,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/site.webmanifest,429,not in git,acb7f1b05e1d5b30ae1eb6f4574b2fab152efe59732f1bd0b055475029c72b3e,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v11_live_before_v17_2026-10-03/styles.css,16376,not in git,b979438a5863654ab6da75475a8f5f5f097f8d21faf7c5700a5e8d7d8654a7b0,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v12_live_v17_2026-10-03/app.js,22178,not in git,41d6869c25bd5f124bc425acdc3b9cccde1e6f56c205277d548ee55e0d3b20a6,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v12_live_v17_2026-10-03/index.html,39065,not in git,28d24d5a6d354cfddb12283ee7470acc58514f4ff3e224e3c781086a0a4a9fdf,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v12_live_v17_2026-10-03/styles.css,58843,not in git,18d1c089fd2ed361487fe2522ebc1e7f40d775dbd1d05cce5d48e5dcdd933b19,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v13_live_v18_2026-10-03/index.html,39113,not in git,740cb220c645120641767836eda5be4aff82ce046361300c9bc5274ef5c27702,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v13_live_v18_2026-10-03/styles.css,59820,not in git,bde2ee7247f5ab6af019f9b04dac1ef42f5fb01fd829b72f99bc775adc7d2c7a,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v14_before_ui21_2026-10-03/app.js,23122,not in git,75008b10b68cfffcb9e48bde2b1a2a08d4b459a10e159c4732c76a386e3c3be4,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v14_before_ui21_2026-10-03/index.html,44880,not in git,8748426a6261826172d14c9c93905d61271b49371edecda49f9db5d07936e4bf,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v14_before_ui21_2026-10-03/styles.css,64912,not in git,e6b572448605eb01642656c9952b3edcb59dd7b5b95c12b39f6116612e1c5ef2,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v15_live_v21_2026-10-03/app.js,23179,not in git,da08d17bdf1d4c05f6614e0208b61047e3b41227c311996324a8864ca04967ea,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v15_live_v21_2026-10-03/index.html,46023,not in git,09eeafcd87511e42612b7e69bb256353fa89c42927c133d9e09091b594f4a1d0,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v15_live_v21_2026-10-03/styles.css,38552,not in git,3c1aa746590ce73fa17ecd50e00b0bae0633a6d1928cadd67108f7b4b1a99953,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v16_before_when23/app.js,23345,not in git,a9836d4f846bd2b1ad71350018b8d788dc4bcca740cff475e0e8c553b1008bc2,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v16_before_when23/index.html,45890,not in git,50e80e5f80bc438e660fe683ed26b068cd5977163853ee1a72aa26af0179e11d,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v16_before_when23/styles.css,41458,not in git,054d690254a8200d2f79718476b5f9f481f620cc37ee34d16b38e5d7910a53dc,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v17_before_new_hook/404.html,1978,not in git,1ce28d2723db2eb8fe61461b3e5ba638a583328af291ae5c953d655447c80874,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v17_before_new_hook/assets/favicon.svg,10283,not in git,a957881b215ac1760189b8e82dbd81ffc0719f6d6bb000a26a9f675a625959b2,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v17_before_new_hook/assets/logo-dark.png,15258,not in git,df3d8bb5b1b193407e5fcacdd55282b0c87505868188633b75f631b8409e7609,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v17_before_new_hook/assets/logo-transparent.png,14303,not in git,f152f3234e2b868b3440a6cd2ddae5662845002c8fce8251b4b58419038570cf,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v17_before_new_hook/assets/mark-orange.svg,384,not in git,3d0f1377cc63e23567b9b4e045dda386fc12811057d403704138b9f4cea5e114,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v17_before_new_hook/index.html,46341,not in git,2555eb3165bac878afc40422c4549c8c672253742878218428c8174593553af6,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v17_before_new_hook/site.webmanifest,470,not in git,29a20d523c9dfb4601ffe9a1684d12d896a13243c1fb18167f577b852c0826ae,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v17_before_new_hook/styles.css,43199,not in git,43e21b310e96a7fbdf5aa9343f03dae8fde579200803b73f15bb534321671727,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v18_before_cal/404.html,1983,not in git,230ab49254c9c2a172e7be8f7a9cfa3ad94661dc17377646861e597d3a58f6f7,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v18_before_cal/app.js,26793,not in git,0e6f8ecda99b5405d5664fd05878e4f378f3fca92c5f56b922c2ad6563780414,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v18_before_cal/index.html,46341,not in git,874ad8707e9fb887367d3f5008d24431cac5c6c7c244856e3abc5364af84b56c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v18_before_cal/make_seo_pages.py,31813,not in git,d94edd2d6155512815b9090abf8f8a106a6f12854586e89323835cf96ab5e57a,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v18_before_cal/styles.css,43189,not in git,c32ab286c210088f615eb9792fce89a12fac3d7cbe34830284ec48d1d8999c71,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v19_before_cities/app.js,31321,not in git,c57ca740fb3353f295cf3aa0c43739f81ad0b6006ac8c0ac957c860db4a46464,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v19_before_cities/index.html,46341,not in git,4dd67c087a85d5cfb698b6819b6533a56813ba7dac6135ef9d3dd74d368e0d3c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v19_before_cities/index_v26a.html,48274,not in git,a1476aa7559d711120a3bd4bbefb643e2aaccd97502c5fd5adcb445db8ace25a,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_backups_v1-v25/v19_before_cities/styles.css,44768,not in git,f4b4d422998c37d446b858dec113ddfc1f89c71375d93cef47cb9733f543f926,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/landing_v17_package_README.md,8883,not in git,6d89bd88b3012cd17c1183ef9abbc28f3b8bc1a6d436b4cec893eecc6640763f,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/_final.png,76696,not in git,3c26b49d94ff92f9ee4dd7f7e6efad76162c305eb30663ffa0b41dd340f6821c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/B.svg,400,not in git,441cfbe4640ee8fdcf5d472a09a4eb76cb5fe0ea15ee95285ce1c587edf7af93,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/B_mono.svg,400,not in git,5ec355aef52a782ee73cb89dfe55c0c82f7dcc0f74293d90e11d8e98cd4b473e,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/B_rev.svg,400,not in git,ed11cd56351f68def7c9847bb650296d90c557d922631e241a0dcda6062d0109,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/C.svg,588,not in git,d17da13754cb2fc9d72246e97fdd44a38672da94a89c78906aef154a2d2fc14c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/C_mono.svg,588,not in git,d8d815e47d3d920d5692bcb4ffd4820196ad423d16e72a253ab2e96b34248346,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/C_rev.svg,588,not in git,803b7d8cba2e6bfff7b94c62e691b81bb304e12612c9658a586d1c14b05263ac,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/concept_B.png,40048,not in git,4bf9c81ae542a74df82eaf07fed2be2412b461fb787c5875fac28f59802b6acd,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/concept_C.png,44083,not in git,319aa9af2c7ece02221d2c01a69ebf77126eef6a0f94d5d5861e6dce70acd247,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/concept_E.png,32669,not in git,1ff030e937abbc40608fcc7c5578d0a6079fcd187420190f4f176a4298c58ae4,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/concept_G.png,34329,not in git,f905d5a8da1674fb9fdb466d4dfb51f36e573836c9a665ce11e745e391cdd205,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/E.svg,481,not in git,24efdc359057e3e9724869e2a50d17da82c9362cec59deb75bff8d72ba782f0c,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/E_mono.svg,481,not in git,bfdb01c3c6a40f597e9e42a029401f76d46b524c0d1c7503fbc45d27c3dc065b,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/E_rev.svg,481,not in git,3d12d22760942a49f18988874d6192dce9d35c5406f48e47fceee11177c7c7d6,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/G.svg,392,not in git,5d4f42d97d4ff824f444b4b283c39b74a0f66256125bc35594c5b8fcc6821971,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/G_mono.svg,392,not in git,0b8c65736b94bfc0a14fd4943301519a72f25c2701bc32529e2a454c661bcca3,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/rejected_logo_concepts/G_rev.svg,392,not in git,a32c6335c4ba5acb05b02a02789af54d9d76594d29b756fde705eac610985108,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/unused_scripts/br.py,3587,not in git,4c26ea5be912d22af9972a2841f266c7dc8600e79c4bc7cfdedd6a4c8b9a3f2b,"media, renders, mockups, archive",Drive
+_drive_staging/_ARCHIVE/unused_scripts/browser_start.ps1,1102,not in git,929ec3eb27a3f2343b2ff4f7e1322f4846de8f6783b2ff3938a5d2213eabcaca,"media, renders, mockups, archive",Drive
+_private/<file 346>.jpeg,73702,not in git,,private material,"local only, protected backup"
+_private/<file 347>.pub,103,not in git,,private material,"local only, protected backup"
+_private/<file 348>.md,92798,not in git,,private material,"local only, protected backup"
+_private/<file 349>.md,24998,not in git,,private material,"local only, protected backup"
+_private/<file 350>.md,6453,not in git,,private material,"local only, protected backup"
+_private/<file 351>.md,11348,not in git,,private material,"local only, protected backup"
+_private/<file 352>.md,16141,not in git,,private material,"local only, protected backup"
+_private/<file 353>.md,8264,not in git,,private material,"local only, protected backup"
+_private/<file 354>.md,6654,not in git,,private material,"local only, protected backup"
+_private/<file 355>.md,6581,not in git,,private material,"local only, protected backup"
+_private/<file 356>.md,17380,not in git,,private material,"local only, protected backup"
+_private/<file 357>.md,202368,not in git,,private material,"local only, protected backup"
+_private/<file 358>.md,19729,not in git,,private material,"local only, protected backup"
+_private/<file 359>.md,12484,not in git,,private material,"local only, protected backup"
+_private/<file 360>.md,10843,not in git,,private material,"local only, protected backup"
+_private/<file 361>.md,4709,not in git,,private material,"local only, protected backup"
+brand/00_hook_master/hook_path.txt,32607,tracked,5f3dc89824bf228848a1476df1fb065b102470c6d7ba6a9ee555d735b4865acc,brand assets: sources and renders used by the tools,GitHub
+brand/00_hook_master/kryuk24_hook_master.png,305229,tracked,e93751b775d22b1d12f46c6ac6c0c03f280dc94606250d2b4d7b5f67dfbe2739,brand assets: sources and renders used by the tools,GitHub
+brand/00_hook_master/kryuk24_hook_transparent.png,269273,tracked,49131117681845a88894238ff27cfe11a123cbab1625c0074df332290686046e,brand assets: sources and renders used by the tools,GitHub
+brand/00_hook_master/logo-transparent.png,22384,tracked,da8210afe3f21f43054d1d1ded4b6b85010201cb1d64d594c8c9ddf792350285,brand assets: sources and renders used by the tools,GitHub
+brand/01_mark/mark_ink_on_white.svg,318302,tracked,1acf85cfc6d11e6a8279df8adb0137d6493e8449b1f275ca316b74a8158f4ba3,brand assets: sources and renders used by the tools,GitHub
+brand/01_mark/mark_ink_transparent.svg,318231,tracked,ccfaa418af66757fc4ed4d3817cf001cf2858eebe09f193bb701b0e13af5e51b,brand assets: sources and renders used by the tools,GitHub
+brand/01_mark/mark_orange_on_ink.svg,318302,tracked,dc5874c8691912121c95774327f2c1ced4535cd2e9bf6d0d334081240c4bc0e4,brand assets: sources and renders used by the tools,GitHub
+brand/01_mark/mark_orange_transparent.svg,318231,tracked,bfb0f34ba94a59d16c599bf5209c8ce14757ff4b118dfb7a94293a8a19e20d5d,brand assets: sources and renders used by the tools,GitHub
+brand/01_mark/mark_white_on_ink.svg,318302,tracked,405d08efda5171490ad34671af1c1e5287f5c0c842d4bab2026fcf9eed952ca9,brand assets: sources and renders used by the tools,GitHub
+brand/01_mark/png/mark_ink_on_white.png,25219,tracked,faf709a5c378d1d955273112e749fdeb74853f97c9350d6a1b03278e8f735bd6,brand assets: sources and renders used by the tools,GitHub
+brand/01_mark/png/mark_ink_transparent.png,27391,tracked,ad12a64865019886eb4f134e6e89858d158cfb9e43de77f91c595d5f18c59a2d,brand assets: sources and renders used by the tools,GitHub
+brand/01_mark/png/mark_orange_on_ink.png,24905,tracked,49d26d3cd0b094157ea4a9924bd9a08f43ea4f9f377f928163005a06d96073e6,brand assets: sources and renders used by the tools,GitHub
+brand/01_mark/png/mark_orange_transparent.png,25576,tracked,c72e0a2fb090123cd1ceaea7e384121065ba5d617e994b74ee4931e2cb95743c,brand assets: sources and renders used by the tools,GitHub
+brand/01_mark/png/mark_white_on_ink.png,25872,tracked,0143d60b06f9f953b433e38206aad93b895f1b83d77484d81c4d00dd3d83a9be,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/lockup_horizontal_on_ink.svg,318735,tracked,e482e6202a0c655f291e3e12fcc5c315036621c931a810b1cf76b7820ffe5e89,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/lockup_horizontal_on_white.svg,318735,tracked,4d78efac4a13b54bd9047cdfd527812aaa21e07fc4ee17efb35ba100e21baa71,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/lockup_horizontal_transparent_dark.svg,318664,tracked,0565d9fdafdd846792ee3fac1c6125ab4c8eafba3a5763db22a6131d98dd409c,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/lockup_horizontal_transparent_light.svg,318664,tracked,0b1c8283e5c25c88233a3eb0339c4205f5a419d939da79a8196bb27680ad1351,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/lockup_vertical_on_ink.svg,318771,tracked,f2c84674bc46dcc6cff583580dba1cd3d42c091b01b739bf2f4b37c251fc2fdf,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/lockup_vertical_transparent_dark.svg,318700,tracked,3473e1ee8e93bf2d892affd275dbbaedd794238038e1173eb10e8a97ee4ed2f9,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/lockup_vertical_transparent_light.svg,318700,tracked,f299aab82f26b3542038256227a9adafa0ac3986f464bc8f0ee70117e96d4cb0,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/png/lockup_horizontal_on_ink.png,52341,tracked,392c1c7700426604dd175436f5c6f2007c728ab33eab2763f9ba7317392bd1ee,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/png/lockup_horizontal_on_white.png,51359,tracked,890d670f35a23cdc65355f46d51fb9c5b07f9d19a21bf7f8039671d3e31fe9a7,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/png/lockup_horizontal_transparent_dark.png,50973,tracked,577a2410cde9d7288c3148b25af6376206bc215bbc4662e6a9951b01730c9689,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/png/lockup_horizontal_transparent_light.png,55446,tracked,fdfc0951908be030ba5954335e02aa63710b2c00ceacdabfb9ba2ee92c84a123,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/png/lockup_vertical_on_ink.png,60774,tracked,fa501c110204c4e602821d608bbf7a7862216a9d3270084ba3b72010509c6ec8,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/png/lockup_vertical_transparent_dark.png,60516,tracked,14e702139f54c39584da9d84e4373d90bb4f227608cf5057e0524b7b558519ee,brand assets: sources and renders used by the tools,GitHub
+brand/02_lockups/png/lockup_vertical_transparent_light.png,65342,tracked,cc8656599cf3582dc9a6dfd49c380bcb2a22db6c0d2527f9b7a7c16bcbc805a4,brand assets: sources and renders used by the tools,GitHub
+brand/03_avatar/avatar_round.svg,32842,tracked,93d95b6490517971f0e670f507ca4619c31a1e5389dc1b6f2b71f5bd84743dc3,brand assets: sources and renders used by the tools,GitHub
+brand/03_avatar/avatar_square.svg,32847,tracked,67963ccaaf4b66d61c7c0298e550f851440944fb6b46953a9924ca4a7ea3ad2c,brand assets: sources and renders used by the tools,GitHub
+brand/03_avatar/avatar_yandex.svg,318289,tracked,77c39571e7342d5cbfcf674c7fc9c8eb22f26da288f9ec907f19edcd92454947,brand assets: sources and renders used by the tools,GitHub
+brand/03_avatar/png/avatar_round.png,43424,tracked,d3d3dd265505453ff4c8862c87d398d35cb0e0737dd7e289a1529badcad47126,brand assets: sources and renders used by the tools,GitHub
+brand/03_avatar/png/avatar_square.png,34294,tracked,7197c0b8f524e9189e218e227cff8b56ae5f66a6c992a6c175ef32554f074e22,brand assets: sources and renders used by the tools,GitHub
+brand/03_avatar/png/avatar_yandex.png,23896,tracked,2434a2d4953f8f7ad61f691137f807cf9c0622e412d73403aed9fb1c55295098,brand assets: sources and renders used by the tools,GitHub
+brand/04_livery/door_panel_black_truck.pdf,39873,tracked,b9eae6964d70a8449b053df23312d4dbc3fc2a9d6f879d6d3f4611ed5f3b20ab,brand assets: sources and renders used by the tools,GitHub
+brand/04_livery/door_panel_black_truck.svg,319247,tracked,7f166f7e8b7e0839640c164e202a7a926d67d1dc854275d02778500d7aefc3f6,brand assets: sources and renders used by the tools,GitHub
+brand/04_livery/door_panel_white_truck.pdf,39863,tracked,851c4740c4ebeb9d34db065c65d4bd7cbb93ef61784d0b3edf5cd1196cecc0e3,brand assets: sources and renders used by the tools,GitHub
+brand/04_livery/door_panel_white_truck.svg,319247,tracked,1e778f03048ed0d640ec9dcb5b14e6cdd6c67db737239b724eab23c3077e6050,brand assets: sources and renders used by the tools,GitHub
+brand/04_livery/png/door_panel_black_truck.png,79106,tracked,ccc5f564a4bf15085da5c245f44c2fabf44178b3c5dab44a326fb91b96e7b69a,brand assets: sources and renders used by the tools,GitHub
+brand/04_livery/png/door_panel_white_truck.png,76694,tracked,febc8be87ff4dee0bf64ac29ecfae422122fc13e6f7e50f7f6fbd49c96e29a50,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/apple-touch-icon-180.png,7342,tracked,c8519b9a4893add266da79041ed4201fa1d066230bbf2a1edd6034c0152b6ad1,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/favicon-16.png,510,tracked,512f718b70c0d0a121d4ab778e3e2505504b1fb26a1ba3f6cff83eed65be0dc5,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/favicon-32.png,1215,tracked,07229421be4f8ea18602fc60e23b2782b498a07ccd499e15a36ff264b1887490,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/favicon-48.png,2110,tracked,e87d0e1d76247cf92c976ce17a5c594ade974c910c879fec14efc9e913e8b426,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/favicon-96.png,4982,tracked,70556a43cdec6325c5c3d95b88efe33bad10d1b3bbed97d771f6b8a291d8424e,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/favicon.ico,3889,tracked,e4ce3a32d7262fc7450eae1f46eb87f4c91ad664b08ca72f3128e18de8c99dc3,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/favicon.svg,10283,tracked,a957881b215ac1760189b8e82dbd81ffc0719f6d6bb000a26a9f675a625959b2,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/HOWTO.md,1274,tracked,fed6f24f21495e5856f96cdbf7fff490ecf9bc2a445561feb7d051efa10483ad,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/icon-192.png,7123,tracked,498dbe4d12f4102cdef9932fb4737a176dbc8973f0e2c7124b081b27b41236a4,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/icon-512.png,34294,tracked,af98b633ec22afc47a48aa6a0cc80e9a1f8f84b0f468f6a4c33b8efe411fd4a9,brand assets: sources and renders used by the tools,GitHub
+brand/05_favicon/site.webmanifest,470,tracked,7b651abb8dfad4b34b77c6a8c6347899e59d9cf5e6b9c078642d76db0fc4b62a,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/01_vyveska_fasad_2000x500mm.pdf,39068,tracked,5002a234b327c95a16d4428c4e4849ed61192ea1a83aef8aa92f6bc502c2b329,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/01_vyveska_fasad_2000x500mm.svg,319223,tracked,9e5ad3dc1f8d532513299d176776b24514726e9bfdb4b52716103c764a82f7b8,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/02_tablichka_vhod_400x300mm.pdf,49721,tracked,d4eda745b3314e228c537e04fe8547aa4729c50bdc72e02c8c842a11cea06285,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/02_tablichka_vhod_400x300mm.svg,319835,tracked,f2ef9a57e18918de68ae5641e3f6c43312378ab6f0a9d012a0dbc832f3a03c76,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/03_ukazatel_600x200mm_vlevo.pdf,34237,tracked,3e3badd90cfe27425982a67e9740b449ad4e999e39340f65e71495faba4a1a2a,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/03_ukazatel_600x200mm_vlevo.svg,319060,tracked,2e015a80497f5979700bfb0c120745028db1854bff4a2316e02a195fb2ca83c8,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/03_ukazatel_600x200mm_vpravo.pdf,34234,tracked,62aab8670390e1f433f734a02772e1fe2708814bd724fcdd1cff7223020957f2,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/03_ukazatel_600x200mm_vpravo.svg,319064,tracked,072cb84a4ec09d7c8554b8dc71a6936921964f570946b28b250c1a6562c086af,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/04_logo_zona_priema_1200x380mm.pdf,33487,tracked,93757d4d7dd0a76aae5a75c4201e4fda0a82085754d6eba1eca0f0adb17965e8,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/04_logo_zona_priema_1200x380mm.svg,318762,tracked,92953ec0b436ca51859e36195ad9afa54f76321175eeac002c28de530956ef81,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/05_stend_tarify_A3_297x420mm.pdf,108850,tracked,a8586bb080661d18592d23eb89a0ae9807e48074545d754e1afc027d143a8259,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/05_stend_tarify_A3_297x420mm.svg,330852,tracked,1319ca2bb13fdef4b7934044acb56dde9b31e8d15dc515173907b3df5f62c5e7,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/06_nastolnaya_tablichka_A5_210x148mm.pdf,52332,tracked,060c5a3cf8b1dbbbac46fb9421757c7eed5795da743bb4970456495596bc6e4b,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/06_nastolnaya_tablichka_A5_210x148mm.svg,319689,tracked,4ed2f1f10d4fa7bfde9cf76597810cd0cace77ef66c8491cd8299549f9b5ab3d,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/png/01_vyveska_fasad_2000x500mm.png,47706,tracked,483c4d1a8d5fec4af8117d9916b259c7cffc53696f835516d21cb4063cddc8e7,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/png/02_tablichka_vhod_400x300mm.png,114197,tracked,6c831881c92e5d93e2ba210c8d2dd926b6298d8c80d7d2ea9da1a91910712e0b,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/png/03_ukazatel_600x200mm_vlevo.png,46338,tracked,763fcf1b0c83a7f080265441860db0be0784ea1e8076bbafb274bb17eb9d3e41,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/png/03_ukazatel_600x200mm_vpravo.png,47204,tracked,cced5a856913eab3bafacdd52ebe1c1cdd2fe60ace290ec6aa6992d9ef3f54f9,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/png/04_logo_zona_priema_1200x380mm.png,39270,tracked,b11caad1deb37beada3a9bc1654194d4ee0cc9ead47c15d2c6272f183b3b0142,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/png/05_stend_tarify_A3_297x420mm.png,222915,tracked,74dc7a23d71b7042d002c34ca579d8fe020926047e30bc859c22e9f79796d3c0,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/png/06_nastolnaya_tablichka_A5_210x148mm.png,102189,tracked,c2c6579eb3bed6e1afb63b7bf20d9108af6645f173f2ec0d937359afd9fe6139,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/README.md,3831,tracked,49d07cad94244de57106a03b6fb051762a13a41db85e2f195774d08a20bee8ce,brand assets: sources and renders used by the tools,GitHub
+brand/06_signage/КРЮК24_вывески_для_печати.zip,2518425,not in git,35be4f4fbab83eed5d11684d207dd66f0fa901fbbec3161a24b5b925505b279e,generated package,local only (Desktop\ZIP or Drive)
+brand/06_signage/КРЮК24_вывески_инструкция_для_печати.docx,624420,tracked,3b3c9ab7d1a2a592052280b3dbef5570a7dfd3e3663d90a0f55afb750bec831a,brand assets: sources and renders used by the tools,GitHub
+brand/README.md,4613,tracked,c00ebeaab98e36c6fe80fdc9385137deda84af5f07818ec06c7c9dad1ec86754,brand assets: sources and renders used by the tools,GitHub
+docs/ARCHITECTURE.md,35671,tracked,cee5e8df209f8361464dfa2f2290b2ae9232644811c0fa05c61f0e4efc5ff190,documentation,GitHub
+docs/cleanup/CLEANUP_STAGE1_REPORT.md,17668,tracked,3ebeee786bd7844bd2641b5d4a9db224195ae41fd4bbf43b585178d7b1f7b434,documentation,GitHub
+docs/cleanup/CLEANUP_STAGE2_REPORT.md,12904,tracked,32d5deb1e0f23058555471305e45c71f9cf975f55a7e512d240412d8a897a49e,documentation,GitHub
+docs/cleanup/LEGACY_BACKUPS_STEP.md,3536,tracked,2096142e2eaa5e992f37bc2b4f4e520251f88ae35afbe05fa09730126c98d0bc,documentation,GitHub
+docs/cleanup/MAPPING.csv,150411,tracked,aca4e124f83ad9cabe1ca0eba40e9cd5b4993796e7c7e8e6c0a051ac956c898f,documentation,GitHub
+docs/CURRENT_STATE.md,59140,tracked,d2197edf54f4795b86bfecee219ee43e37258a86ed435315a89b4251e9e34aca,documentation,GitHub
+docs/DECISIONS.md,38194,tracked,1680bd48f0f44f382b15ad77cb2819aea8e29eb6d20751183c663208dd1b7ea4,documentation,GitHub
+docs/inventory/FILES.csv,156264,tracked,ed97eaacac062a36f2a1b8624e24ef566515c20994337b807840cdf53078185c,documentation,GitHub
+docs/LESSONS.md,20724,tracked,930c753db380ede27685fe6d0d55f75a0a38cf0f2030e76f289c6456471c885d,documentation,GitHub
+docs/media-index.md,2931,tracked,34a857d10467f8dc9ba125ba891b53a59b6f65f95410412978e76189f386fe8b,documentation,GitHub
+docs/OPERATIONS.md,42456,tracked,c262aec546d85b1fa08f58ac1714c2945720e9e651b98f7e1607d4229fbace40,documentation,GitHub
+docs/ROADMAP.md,25836,tracked,236d2d8ea0faa83e6a490ea8c7e0b93fa1bc4c60791edb05daf4a55c53c97dd5,documentation,GitHub
+docs/SECURITY.md,34392,tracked,9675a9da0f914f587f16f643d9254d6d2426c2a2cf8b95698fa08e232e2c48c8,documentation,GitHub
+offers/address_video_guide/_panorama.png,236246,tracked,f607299f949d45e94de92ccc8a2fc3f618fed945a128d97f0145f968ee1fa467,offers and kits for the owner,GitHub
+offers/address_video_guide/slides/01.png,102579,tracked,32035a53d738ce26a41fe40ac62886835240c917234a04c86eb7960bac2934f5,offers and kits for the owner,GitHub
+offers/address_video_guide/slides/02.png,109585,tracked,41be933a813851ea086203c6e8f77cbbfd786b77de7ad44b0b66c6366ec990d8,offers and kits for the owner,GitHub
+offers/address_video_guide/slides/03.png,105051,tracked,f0fd6d030cbf3a2aa1d2e6206af49a05d9695101a4d4d0cbe3bed1a8f22be0d3,offers and kits for the owner,GitHub
+offers/address_video_guide/slides/04.png,122109,tracked,57fcc86c86f7d7f581e21e72ffbfdb81a58d14790a2b5a5a2519f8f3d1fc576b,offers and kits for the owner,GitHub
+offers/address_video_guide/slides/05.png,134889,tracked,997fd23e56bd0c56b8ff6098e1c4cebda7f2fe503e600ab66caba7cf97037bad,offers and kits for the owner,GitHub
+offers/address_video_guide/slides/06.png,171338,tracked,0eb1022747e67444814747bdd492ecc559bb1f701b4981f48bcd16cde0a94bd7,offers and kits for the owner,GitHub
+offers/address_video_guide/slides/07.png,136041,tracked,56a8db06df81dd75b738169a95256890d3062288f30acf113a1d1b04cdd35659,offers and kits for the owner,GitHub
+offers/address_video_guide/slides/08.png,115760,tracked,95eb71506564a380f6aba34478bcb7ac77775092f08a09370b887ee1f66997d4,offers and kits for the owner,GitHub
+offers/address_video_guide/slides/09.png,114115,tracked,674115514c7e519d1a48e115b7c7cac7fc49791838b00034ec3a4d31c1ee7ac9,offers and kits for the owner,GitHub
+offers/Anketa_evakuator_BLANK.xlsx,10357,tracked,61ec22069b9475df5003c1bdbb5e7ad99f26741097a44635e93fa9552eefef60,offers and kits for the owner,GitHub
+offers/armen_voprosy_usloviya_2026-10-04.txt,1145,tracked,3d4fecb260c0e7732a69870a65b1a00bf7a866bac9f14fe957c6b7151c5c778d,offers and kits for the owner,GitHub
+offers/Evakuator_Offer_and_Pricelist_FINAL_HY.pdf,85053,tracked,c11264dd4e2fde602681eb6121bd388eef296100f33ed0698ad3658be305efa3,offers and kits for the owner,GitHub
+offers/Evakuator_Offer_and_Pricelist_FINAL_RU.pdf,81550,tracked,ceefa210b95deec979efd8c83f79688ed512c8a5499b56e21b77f380bafbb9d7,offers and kits for the owner,GitHub
+offers/qr_promo/kryuk24_qr_ekran_telefona_1080x1920.png,82920,tracked,1129049119812922ef22d1a238db963dfaf89d305b7b465237b5df977d745b47,offers and kits for the owner,GitHub
+offers/qr_promo/kryuk24_qr_nakleyka_100x100mm_300dpi.png,52645,tracked,a863d5bc58c5fb5b108de8071593021af3e5036ff4f2cf05da5d1c89bc3d893e,offers and kits for the owner,GitHub
+offers/qr_promo/kryuk24_qr_story_yandex_1080x1920.png,72027,tracked,40dbc16b7d177352d6a4c6c226c5ba5efcd679fcb777f47623a2082ad2994b9e,offers and kits for the owner,GitHub
+offers/qr_promo/kryuk24_qr_vizitka_90x50mm_300dpi.png,49910,tracked,48959112d8c695ada85f1818bb1c2f1228b7e1755398e828fe7037d874295884,offers and kits for the owner,GitHub
+offers/qr_promo/README.md,6634,tracked,f430806d16c674ce587c1c67c296d1d694d43ee150085cb5005f65445dc68571,offers and kits for the owner,GitHub
+offers/whatsapp_business_setup_2026-10-07.md,6083,tracked,fa948e5b316a9da589a8d4297c13df8321ea79cc7816b5203d5b1eab23782558,offers and kits for the owner,GitHub
+offers/whatsapp_kit/foto-profilya-640.jpg,21988,tracked,fd6ce78268c4781a0928cfec99bf7cad595713adfbb4ead722e17bb91119ffeb,offers and kits for the owner,GitHub
+offers/whatsapp_kit/oblozhka-profilya-1600x900.jpg,281035,tracked,0ff7d20bbfb7c2395f729bc95d98cfd099bc8a0f351c05d7423fd4a1cdcfbae8,offers and kits for the owner,GitHub
+offers/whatsapp_kit/status-1-legkovoy.jpg,421986,tracked,cda3ed717f21b82a9b179ac2a2460a9bf4da0cb7aad6b826055a1507874a08e0,offers and kits for the owner,GitHub
+offers/whatsapp_kit/status-2-krossover.jpg,321853,tracked,fee3dc68ec7b7478337726f53a8548b2a6f24b789c434119660718200e53b8b5,offers and kits for the owner,GitHub
+offers/whatsapp_kit/status-3-mikroavtobus.jpg,389830,tracked,7ee6204124bf8f9d9a86bdae0acbce07ea4fafe605730ecc97a1ae4defe9310d,offers and kits for the owner,GitHub
+offers/whatsapp_kit/status-4-posle-dtp.jpg,458173,tracked,f241a5aed027fa5a9a1908df3e3c65603936e3efcf18a77fa93ad69b2661e925,offers and kits for the owner,GitHub
+offers/whatsapp_kit/status-5-zastryal.jpg,347968,tracked,999187ba06d36d210b4299fb1633f61f274a4783599115ec49b51329d6ff1532,offers and kits for the owner,GitHub
+offers/whatsapp_kit/status-6-spectehnika.jpg,394146,tracked,f9c0ebae7fbf8dec3146c84c6324b7a7292161b1eef712472552cb9734ab946f,offers and kits for the owner,GitHub
+offers/whatsapp_kit/status-7-sohranite-nomer.jpg,123144,tracked,98be9b04b738d3ceb25af843b247f346eea677a3135b082e4e14d6f93c6073b8,offers and kits for the owner,GitHub
+offers/whatsapp_kit/status-8-otzyv-qr.jpg,168455,tracked,8b9c08482ff8da43179a5186ec86920b772d2ccc45d527c36cd3a5384899316c,offers and kits for the owner,GitHub
+offers/whatsapp_kit/КРЮК24_WhatsApp_набор.zip,2578859,not in git,4e44bcea8e09bcc7b6683cf40cc377d0ff83ae01072392065dd9dcb431cf4f02,generated package,local only (Desktop\ZIP or Drive)
+offers/whatsapp_kit/КРЮК24_WhatsApp_что_делать.docx,39600,tracked,f5c01d650908ffa647e048581d6d0d9b6993b448c04a051c7c682b17dc0f6b8d,offers and kits for the owner,GitHub
+offers/zayavka_shablon_dlya_Armena.txt,1167,tracked,2d1b30f9a4852490ac5c16f23588660037a46b206a5d583f5fa7146256b94dab,offers and kits for the owner,GitHub
+photo/01_real_polished/evakuator-avtomobil-posle-dtp-bokovoy-udar.jpg,542816,tracked,9c2714e210e87b5a01b7b97fed7fdeef80a7cbffd5bed37c20629a2e976d6966,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-gazel-next-s-avtomobilem.jpg,437558,tracked,001df3b2041be216e33a92da32390b0b2b0f8f73a8692253d3a979cb422978f2,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-manipulyator-podem-avtomobilya-iz-kyuveta.jpg,184879,tracked,bc9d9dd2fec752c771906d325e0c79fb553d8c6eb525ca57a031167bf35bc1a0,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-manipulyator-pogruzka-avtomobilya-posle-dtp.jpg,110838,tracked,8468c68716340dfe5cf848677b5ae326fb338625e0a1d24d720fa5c58d3b427d,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-manipulyator-pogruzka-mercedes-gle.jpg,322696,tracked,67d3bf993f3aabc2dcc5158c97efd8b9b496577d170f8a6220e3cff1bfc2b556,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-mercedes-cla-moskva-avariyka.jpg,458780,tracked,95fdb8593298847dc501e3e528d8ffd7591f5bab95272a9f2db31d5ff6e2ae57,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-audi-a8-biznes-klass.jpg,440661,tracked,5efaef33f11a4285177c408605f8b9f34f60238b645f44af6eedbc3f9898b7dc,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-bmw-x6-krossover.jpg,313232,tracked,322823e0a66e833e17045f2a935ee9f8135ad5b5e6fc250eb204357855312cbf,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-gruzovogo-mikroavtobusa.jpg,413894,tracked,62c6f516a46eeb9d865dd71ebaa0f96080ee004e1978e9c5dbf120af0378702d,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-kia-carnival-miniven.jpg,359578,tracked,9fe95d65d2a113f3943445f408b0abbf29b2f9202538eac503b0c4b54151e475,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-mikroavtobusa-osen.jpg,486010,tracked,fc1081c3cb350174bfc1fb3a2b7a8b63b74ace62d8cb172a4be5f55d44e0a056,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-mini-pogruzchika-s-kovshom.jpg,145880,tracked,bbc83853e6e7940a72ab6d188ec93bfb48cf19068a0864111075bece3d6440a1,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-rolls-royce-wraith-kupe.jpg,122307,tracked,1e509e2eaeaa1e2793140679fe4939e32c6c1e73d89322d7546929ca2c6c89d2,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-spectehniki-mini-pogruzchik.jpg,169308,tracked,24b9139abaa8d568b5e8949693819d7cf758f95fbaddca466d02f7d0c3f8e18f,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-tank-500-vnedorozhnik.jpg,403148,tracked,53364724f80d47857e7af0ddb0e5acfd9beb72093c3a051be353ffc25c6d8a1c,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-vilochnogo-pogruzchika-5-tonn.jpg,277144,tracked,1ebb79688b526ec56e921cadab182366b72e590b31d9a7a5cbc836f2b416e9ad,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-vilochnogo-pogruzchika.jpg,154766,tracked,e60b5544d39bafc159711122742aa36ec49d9aa58ca92fb5f359c244d6e11c46,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-perevozka-volkswagen-golf.jpg,441993,tracked,c9f63dccb02473ab2dc2e66c7e1d4df20ad078d5c945ebb34242767fc9653ef1,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-pogruzka-lebedkoy-tank-500.jpg,257665,tracked,7a35d061b458add8a5a44a4f76bce8df72c6a9d38165f0ae3f7d326ebe83cc46,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-pogruzka-po-apparelyam-znak-avariynoy.jpg,675832,tracked,f773e95aa0d052a7240643386a7a984f5ea9af52bfb41436720f9e12bb2bdc29,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-pogruzka-vilochnogo-pogruzchika-na-platformu.jpg,277780,tracked,182a9aa6cd263682d0f8274bfc6d73cec4b2a1cf9eda8b1511fe6758f2ca9f9a,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-posle-dtp-lada-vesta-pogruzka.jpg,344769,tracked,f0ddd1b7c022af197d1b5cfa9438154ea9d6626bde401dde4be27408c5de1ccc,media: processed photos for publication,GitHub
+photo/01_real_polished/evakuator-tank-500-na-platforme-vid-szadi.jpg,273884,tracked,69437dce60808981ef3137eb87f03a871de897c5f1f51cff469502717f11741a,media: processed photos for publication,GitHub
+photo/CANON.md,5744,tracked,79dbd4fa0508164a8b2d5a0fe2687f848429b53f96329220e42832ec080a80b8,media: processed photos for publication,GitHub
+photo/DESIGN_SYSTEM.md,9616,tracked,e638f6fa86dd8ddc702df2399a1423c3d9fbb6a3b4d48dc74422ef2d2cd7ded2,media: processed photos for publication,GitHub
+photo/README.md,5331,tracked,03b2e008f9a2f77c8a31b5386e51c0bb936f043c1531449c35ea66d801d7d49e,media: processed photos for publication,GitHub
+README.md,19009,tracked,188a349faa151fa315e14eedf81333faa5393ff68d90b68294e521ad6e58ef57,"entry point, configuration, CI, instructions",GitHub
+research/Cabinet_action_plan.md,6652,tracked,aa0fa29939ce65a3000e319e8f7b6cf4bfe546538be9073d90a480bf9f0240df,"accepted source: prices, launch package",GitHub
+research/Direct_keywords_candidates_v2.md,6907,tracked,076acbe5b15fb53ca5843acad31f318a387ec6c86d2440d9a69ca3e8a71b3697,"accepted source: prices, launch package",GitHub
+research/Direct_landing_content_draft_RU.md,3600,tracked,96f3992d5008c302ad1617949402ba6e0bed659965529277fe72e66f5c4ecaf6,"accepted source: prices, launch package",GitHub
+research/Direct_launch_package_2026-10-04.md,13063,tracked,b808144940bdd8a827984a117cd493f2e450e0b1f2030474157b228c12beba9f,"accepted source: prices, launch package",GitHub
+research/Reviews_and_rating_rules_2026-10-02.md,14396,tracked,047f5bbba93fd7bb0c2a583d2b266557ccef8f007032c0b49d35383049d41098,"accepted source: prices, launch package",GitHub
+research/SMM_2026-10-03.md,8782,tracked,86af8c248daeba08b8ebf4dd7ab21b124936ebdf6ecc1fc201dae4882556987d,"accepted source: prices, launch package",GitHub
+research/Tariff_real_2026-10-02.md,4523,tracked,84276447b7525ff656c3b0342839e18df504618ff6fad34ca23c2b9092ec0948,"accepted source: prices, launch package",GitHub
+research/Tariff_real_source_2026-10-02.jpg,106651,tracked,ee512c89e92fe8b902afa23400181bb1929e4c0f42cfc25d98ce5fc73f0fa59c,"accepted source: prices, launch package",GitHub
+research/Wordstat_2026-10-02.md,7643,tracked,d4db927d7ff39d059aeff3bea5a1f444157fe32440ea7b84a6c889223f30a207,"accepted source: prices, launch package",GitHub
+research/Yandex_gaps_2026-10-03.md,10532,tracked,b5713ff46b459f2ba0c77213b6146a53fe0f59aa3ccdf4cc0c1d3e6c5e855977,"accepted source: prices, launch package",GitHub
+research/Yandex_rules_and_market_2026-09-30.md,12046,tracked,f15d4e5cb9d3d2b2fd38664693b602fbf87138e97a9a1c617b9acbdac3e5e879,"accepted source: prices, launch package",GitHub
+runtime/api_reader/bro_api_reader.py,21871,tracked,503e5d60e653126814498ec026969a54481c34af47631956cf2417bf55d59f67,canonical code: API reader (installed),GitHub
+runtime/api_reader/deploy/db_share_check.py,5590,tracked,51c5b994df8a0e506aa01a8cce0fec5576ad205c97eaee5eda4fba9b08463f95,canonical code: API reader (installed),GitHub
+runtime/api_reader/deploy/kryuk-api-read.service.example,1152,tracked,5a526982daf1d81d49593c4fc351f489c20f250e1d58855862e66034adf4e81d,canonical code: API reader (installed),GitHub
+runtime/api_reader/deploy/preinstall_facts.sh,2524,tracked,e5f966be94486ed0e88d7fd1236ef4ea4e0410571f24718d214c5243ee0e4d8c,canonical code: API reader (installed),GitHub
+runtime/api_reader/evidence/make_chain_evidence.py,4496,tracked,88485f2516b1409fdc9a020a8f62e72ab5038d21f758e2eaeaf551095ed6e393,test fixture or evidence,GitHub
+runtime/api_reader/evidence/real_chain_windows_20261007T112600Z.json,12127,tracked,d73ea9cbc2245fa7200458c28ce15ad74fd73e921efb684011b2497bfae69a5f,test fixture or evidence,GitHub
+runtime/api_reader/evidence/real_chain_windows_v032_20261007T123548Z.json,18406,tracked,0c5353e0118782147bcb29934fe281596fede4ae9edb27a106cb8ee242552324,test fixture or evidence,GitHub
+runtime/api_reader/evidence/real_readings_windows_v031_20261007T122005Z.json,4519,tracked,550e5d7379469c0ebba7b8bb4255bf6db49a4c087d76277062d13434bd20ba42,test fixture or evidence,GitHub
+runtime/api_reader/fixtures/server_base/bro_api.py,11430,tracked,23570810f056a04afc50fbc481bb70aaed59a67ac0c0af886001c84513f058c4,test fixture or evidence,GitHub
+runtime/api_reader/fixtures/server_base/bro_worker.py,7347,tracked,6c194cf99d75a063b41d5495432b11accd709e71bb6de42b86445c496167ec15,test fixture or evidence,GitHub
+runtime/api_reader/fixtures/server_base/contact_metrics.py,2761,tracked,410c31f7a1cb58087ab85f861a95e55c18c66495b646838e3cb6abc6553f9200,test fixture or evidence,GitHub
+runtime/api_reader/fixtures/server_base/ops_media.py,4427,tracked,5ca3e4dea8b0b11040a4a85ff0985c4c881ac80348abfaf7c8058cca2dbbda4c,test fixture or evidence,GitHub
+runtime/api_reader/fixtures/server_base/ops_work.py,10077,tracked,0c93a77a1e701352cef4ccfc68f3d836e47f357056599392fae1940d675d455d,test fixture or evidence,GitHub
+runtime/api_reader/fixtures/server_base/runtime.py,15896,tracked,bf938c7022eace87b6347dd9c6648cd4dc45c1210ccda73bb4af3dc8cbe5d1f0,test fixture or evidence,GitHub
+runtime/api_reader/fixtures/server_base/test_bro_http.py,9823,tracked,8f6135953991d3a2958e64860588a14737938feea705d84f0a56ffa5740653a8,test fixture or evidence,GitHub
+runtime/api_reader/install_patch.py,10308,tracked,4818a7b0afadc9050d8786b427e9b16d1297206b9e3fb8b4d9d0b168feb06e69,canonical code: API reader (installed),GitHub
+runtime/api_reader/ops_api.py,7082,tracked,f194e425fe12c3725b04ed1c4bd0a78a661e0ba2b35af75944bbacc6fb093469,canonical code: API reader (installed),GitHub
+runtime/api_reader/provision_from_windows.ps1,1912,tracked,2b3629dfb7a0df0fc376d605e87c2a42eb0c06710773b732e030f3e7ce217d65,canonical code: API reader (installed),GitHub
+runtime/api_reader/reader_provision.py,3051,tracked,157f7df23feee71a881cdfb88f71d0dcbf037904d59f321f6b4411702c8a164c,canonical code: API reader (installed),GitHub
+runtime/api_reader/README.md,33076,tracked,b72c0507bd617f5e82f878247e33bdf54a28e7b7b833173a7e541f8b94ab061c,canonical code: API reader (installed),GitHub
+runtime/api_reader/SHA256SUMS.txt,2222,tracked,a76b35fc2e3b710d285ccfc49b8185c2baefe9fce3e3a55b22922a3cec664f37,canonical code: API reader (installed),GitHub
+runtime/api_reader/test_bro_api_reader.py,26193,tracked,7e8fc688d8fb4aca5ff9238e56ef71afc7a8c84d6120c96fa7ef21c6839fe7e8,canonical code: API reader (installed),GitHub
+runtime/api_reader/test_ops_api.py,29840,tracked,0a785dcae8f13bf726c7e6a9228986a433117f3b44667227a4410fc74dbc5707,canonical code: API reader (installed),GitHub
+runtime/api_reader/YANDEX_BUSINESS_MAIL_PROPOSAL.md,2902,tracked,08cbd14d37fceca52655d120c9c95449ef033dcec3c5c598797c14df6bc159c3,canonical code: API reader (installed),GitHub
+runtime/received/bro_bridge_v0.1.0/BRO_PATCH_SHA256.txt,257,tracked,c6d340876cdae22cf5634e887458d1cd50f6ea9b08621982fc3f499a4b3b0b60,reference: packages as received,GitHub
+runtime/received/bro_bridge_v0.1.0/bro_worker.py,7347,tracked,6c194cf99d75a063b41d5495432b11accd709e71bb6de42b86445c496167ec15,reference: packages as received,GitHub
+runtime/received/bro_bridge_v0.1.0/operations/BRO_INSTALL.md,7171,tracked,ac8ed806b5663964608443cbd21bd2e187134f6fd68e5d110bc7cf070c21a891,reference: packages as received,GitHub
+runtime/received/bro_bridge_v0.1.0/test_bro_worker.py,4791,tracked,d892f8bb796ed969d7f332cfe1d21c15cb96a319d697674176db119a2271fb20,reference: packages as received,GitHub
+runtime/received/bro_bridge_v0.1.1/BRO_PATCH_SHA256.txt,163,tracked,fd8dce838a38d43b3153e7a1f3eda37522064f1603f9942df5af5541180a2b49,reference: packages as received,GitHub
+runtime/received/bro_bridge_v0.1.1/BRO_V011_PATCH.md,2871,tracked,21a3d514fe4d968030bfde7f7c0eb9be5269548f62d68fd4317dae6d8a0f3f87,reference: packages as received,GitHub
+runtime/received/bro_bridge_v0.1.1/ops_work.py,10077,tracked,0c93a77a1e701352cef4ccfc68f3d836e47f357056599392fae1940d675d455d,reference: packages as received,GitHub
+runtime/received/bro_bridge_v0.1.1/test_bro_worker.py,5419,tracked,6cea7e9eec2810372e24448c9fcfb4ee6e8d424777e510e1a975995b891e031c,reference: packages as received,GitHub
+runtime/received/bro_edge_v0.2.0/bro_edge_check.py,3567,tracked,62b20c1d3aaf5fa736ae530e1cfb553a33e0935de55124b0f7c8e20f2ea810d6,reference: packages as received,GitHub
+runtime/received/bro_edge_v0.2.0/check_htpasswd_names.py,949,tracked,bfa3a574a0532d8a63ba2499a31ac8dbf9592fc5d0daaae8f9aa8f979e929a84,reference: packages as received,GitHub
+runtime/received/bro_edge_v0.2.0/README.md,3499,tracked,bb5dea35dac934c9cedb1d948df3d9efb1fb50d5ca7d4302193aea78dd7243b4,reference: packages as received,GitHub
+runtime/received/bro_edge_v0.2.0/SHA256SUMS.txt,335,tracked,0ce0d845c78db97ae390bd8d5c65739bad74185176e13515b96d4b0384411b77,reference: packages as received,GitHub
+runtime/received/bro_edge_v0.2.0/test_edge_check.py,1236,tracked,c0eb6f505eb444f1b0266782ab2ec73cee8ee8e4ccbfbbeaffefbf5b6865fb15,reference: packages as received,GitHub
+runtime/received/bro_edge_v0.2.1/bro_edge_check.py,3969,tracked,297616c101fd5d36c612ad0fbd9e1aaab14a6d56a24df5e066cb5ec13e424698,reference: packages as received,GitHub
+runtime/received/bro_edge_v0.2.1/check_htpasswd_names.py,949,tracked,bfa3a574a0532d8a63ba2499a31ac8dbf9592fc5d0daaae8f9aa8f979e929a84,reference: packages as received,GitHub
+runtime/received/bro_edge_v0.2.1/README.md,3733,tracked,f39b9280e896026e9f9dc0a0b1fd6cb1b95ff7188d2b0865ff3e9952b75a5bb6,reference: packages as received,GitHub
+runtime/received/bro_edge_v0.2.1/SHA256SUMS.txt,335,tracked,b71f2e285a8e3246e94aa5e95443dc4e27e0b1ddb4ef07c2b8d5b63188526d04,reference: packages as received,GitHub
+runtime/received/bro_edge_v0.2.1/test_edge_check.py,2717,tracked,7dc411c53bce99421bba77ecaea3a4d7aca8cc65ea4d56af09b42e5281278f58,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/bro_api.py,11430,tracked,23570810f056a04afc50fbc481bb70aaed59a67ac0c0af886001c84513f058c4,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/bro_provision.py,1134,tracked,4f3b5305aaf24b22b8c5c0d1e37854e66686cd358048380427a023a73efe6ad4,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/bro_pull.py,8030,tracked,e2a5fd1984849682f49c7ddbe81fa2d3193f9e7cabe6c4c162c4702840b1396b,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/bro_snapshot.py,1330,tracked,863781491ef8046b50520643cfef25bb7bbd0f9a862665de700b1744dc7bddc9,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/CLAUDE_INSTALL.md,13330,tracked,8c3ae77cef715b45bc52f7c315b8086eca9a8a6f66c797a1e3ddf0a8a1827298,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/deploy/kryuk-bro-api.service.example,589,tracked,d1a3c6217784316a62591336e8d0997148ca16b8c0b8beafaf6c6903a49fe081,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/deploy/nginx-bro-location.conf.example,654,tracked,79b9a53f4c6349e0d6ca6d6c84c1299721ccb059d8300d6b73f945246e622e7c,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/NEXT_CHAT.md,2194,tracked,2b59bc183ed210ded8edf4fc7295aff9daeb0a696006eff83b12cf0f1c46a787,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/README.md,1949,tracked,631cd4a3648a05f41f4bfdc489a38d2f4522c11505e0142e3c44249540b073d6,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/reference_archives/KRYUK24_Bro_Queue_Bridge_v0.1.0.zip,8597,not in git,36ae48705be075e989e9a05d4e1e671d17c6eec1dc095282123d19c799011caa,generated package,local only (Desktop\ZIP or Drive)
+runtime/received/bro_http_v0.2.0/reference_archives/KRYUK24_Bro_Queue_Bridge_v0.1.1_patch.zip,7233,not in git,6ed66bbb15f39c0f2f86c6831e42fed7686abcd50fdfb3080aa91087294a2285,generated package,local only (Desktop\ZIP or Drive)
+runtime/received/bro_http_v0.2.0/SHA256SUMS.txt,1178,tracked,a7d407f634a58b437d345bcd08797dc1612922230e2da6d69288fc92877d75e2,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/test_bro_http.py,9823,tracked,8f6135953991d3a2958e64860588a14737938feea705d84f0a56ffa5740653a8,reference: packages as received,GitHub
+runtime/received/bro_http_v0.2.0/VALIDATION.md,3126,tracked,d697106c9537d92c3d328f6c7403854d79ac14b9e886427ef6289fe75c9003f2,reference: packages as received,GitHub
+runtime/received/MAPPING.md,1798,tracked,d5eede089fbe57c5b44116e1b7bf589c0c782cf3b8f0eb330b7dae7f085f6927,reference: packages as received,GitHub
+runtime/received/runtime_v0.7.0/CLAUDE_DAILY_REHEARSAL.md,1954,tracked,54b3af7f1db9700bfa70cc6632d5a384e3acce8634203159bfe039ba71bfa664,reference: packages as received,GitHub
+runtime/received/runtime_v0.7.0/CONTACT_BUTTON_INVENTORY.json,1016,tracked,1c55deeca578d52448593a8e07744e0b2c57bfc0c6c71a9511b1e95247e2bfe5,reference: packages as received,GitHub
+runtime/received/runtime_v0.7.0/DAILY_OPERATIONS.md,5327,tracked,87567549954c3ac4e234e6a3eff3dab3d58200fc2e72e4218ba7e6df743d6c39,reference: packages as received,GitHub
+runtime/received/runtime_v0.7.0/MASTER_ROADMAP.md,6141,tracked,d24d9ed92e374db412c6c71afa4dc7badc2db07ad49079247ebf6f14fc8ae105,reference: packages as received,GitHub
+runtime/received/runtime_v0.8.0/CLAUDE_DAILY_REHEARSAL.md,1954,tracked,54b3af7f1db9700bfa70cc6632d5a384e3acce8634203159bfe039ba71bfa664,reference: packages as received,GitHub
+runtime/received/runtime_v0.8.0/DAILY_OPERATIONS.md,5327,tracked,87567549954c3ac4e234e6a3eff3dab3d58200fc2e72e4218ba7e6df743d6c39,reference: packages as received,GitHub
+runtime/received/runtime_v0.8.0/MASTER_ROADMAP.md,7229,tracked,771c92003eab3f2b34f3370e25004c8c9cb7223009deb7202263db5d788acc31,reference: packages as received,GitHub
+runtime/received/runtime_v0.8.0/STAGING_WITH_DYNAMIC_IP.md,3127,tracked,75dc4da9c639c00b43ed59e4ed2ae743400d36330b461569676215b117beb0ca,reference: packages as received,GitHub
+runtime/received/runtime_v0.8.0/V080_HANDOFF.md,8333,tracked,97ea0cd8aba99776dd62dbe103146ba1649dade9f8875553f1f35b77902daa0c,reference: packages as received,GitHub
+runtime/received/runtime_v0.8.1/KRYUK24_STAGING_Acceptance_v0.8.1.md,3747,tracked,80e8467a212d7fa8068fa5c4eac1dd5ae275bdab7677b49e3abcbfbbb15becc6,reference: packages as received,GitHub
+runtime/server/bro_api.py,11483,tracked,ebc5cd54d4873b638179862d5cfadbeec1780cc753bd2453c0ba290ea0b7e320,canonical code: as installed on the VPS,GitHub
+runtime/server/bro_api_reader.py,21871,tracked,503e5d60e653126814498ec026969a54481c34af47631956cf2417bf55d59f67,canonical code: as installed on the VPS,GitHub
+runtime/server/bro_provision.py,1134,tracked,4f3b5305aaf24b22b8c5c0d1e37854e66686cd358048380427a023a73efe6ad4,canonical code: as installed on the VPS,GitHub
+runtime/server/bro_pull.py,8030,tracked,e2a5fd1984849682f49c7ddbe81fa2d3193f9e7cabe6c4c162c4702840b1396b,canonical code: as installed on the VPS,GitHub
+runtime/server/bro_snapshot.py,1330,tracked,863781491ef8046b50520643cfef25bb7bbd0f9a862665de700b1744dc7bddc9,canonical code: as installed on the VPS,GitHub
+runtime/server/bro_worker.py,7375,tracked,e5c123894874d9b17136c52cedc2be2498fb2c4113f27a9d03e6324af9ce4e91,canonical code: as installed on the VPS,GitHub
+runtime/server/contact-clicks.js,3664,tracked,9e3cfc89b4b2912dbe06dd0dd62f98e410fa94fc8aca5844a1d239e89e1661a0,canonical code: as installed on the VPS,GitHub
+runtime/server/contact_metrics.py,2761,tracked,410c31f7a1cb58087ab85f861a95e55c18c66495b646838e3cb6abc6553f9200,canonical code: as installed on the VPS,GitHub
+runtime/server/demo_server.py,5116,tracked,5f47afdb311a672686376f955e01c1cd6ee196eabe1ef306b97d83f2820e17ab,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/backup_daily.py,941,tracked,ec84e1c93530e2b8417ae090269dd217f2b57657017aa87fef171267b9a29e23,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/capture.env.example,232,tracked,4d14a6a089510176dc29e9889c1d89f8b2347d42b942cc4cd6b6342e72787465,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/FINISH_ON_VPS.md,3305,tracked,4c5c43e38b443ad2b6bf1a0165ceb060355bc4b89ada2ee0c27af16993c69d12,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/kryuk-backup.service,335,tracked,4b5c649267a3850994acf2385c1931f1644429fffa5f209d8ff7ae26cfa9f803,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/kryuk-backup.timer,139,tracked,cb36b0e50153bc7fada0655e2e953bd8f13e3c529a2563acfe44c03c98f56a6a,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/kryuk-capture.service,483,tracked,9688f1eac02660e079e511009f41a91205959dd9cf13229050b2044237b9ba95,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/kryuk-operations.service,489,tracked,6e621f32686db8c86662cd545d993da665076444ff6400654b784b053bac168b,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/kryuk-operations.timer,217,tracked,d9825e6bc24fe64d5134768549559c5b281587cc989ca7076f2837463303e223,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/make_staging_password.py,1700,tracked,e750b05db5ecdb2a314e0d2a2def29589c64aea6b7915eb2c25e47a41768cbf0,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/nginx-https.conf.example,1659,tracked,92de86caafa524cab532e80dad02cbe04952eacb6e22d71b42ddd872741c54e6,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/STAGING.md,3251,tracked,8b9a04da76a0ce7b76f58e7c905e379f63a1cb9a017af5610f085e00817c5558,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/V061_PATCH.md,1867,tracked,67f3fe4fcd241fd5e0655dccd7214ce666b269180b1ef97b8319361d80701da3,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/V062_PATCH.md,991,tracked,39ebe664f0a47339be8149eda79442e3ffec7174f41ab4f790f42cceb3d26d2d,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/V070_PATCH.md,6113,tracked,8915b04e914c38f3bfcce915964e6ccd19c82599e59ff583d815e924e4a37413,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/V071_PATCH.md,3713,tracked,be2899cf1bb92228e6c01b05eafbe8a8ee7c734a7880d14dba50932c24d076e5,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/V072_PATCH.md,3943,tracked,6f5a698fa7dd2cb2cb7516f84a3f9d578433b49959a4c9179eb68f24f2d0e8d2,canonical code: as installed on the VPS,GitHub
+runtime/server/deploy/V081_PATCH.md,4631,tracked,be13b75626d47430eb1d0227ba5f93f5dd5db5d7acdc281bb7ac147542f2a571,canonical code: as installed on the VPS,GitHub
+runtime/server/GOOGLE_SHEET.json,353,tracked,cd77431a2b61e7a2350ef5dbce8794bba281ac8d68b4ee1e851b796fafe39fa8,canonical code: as installed on the VPS,GitHub
+runtime/server/handoff-preview.html,1319,tracked,8db52cdfdd2493c80fa2cd00e9fa1fda0a5476caa9d49ea3260368b0a0f2c0d2,canonical code: as installed on the VPS,GitHub
+runtime/server/html_dom_fixture.py,1127,tracked,63ce29665060f3af76bb6a347ed78891d77be23a8f18f561c8599f58b0eaf90b,canonical code: as installed on the VPS,GitHub
+runtime/server/kryuk_operator.py,4492,tracked,a9377add862bb7800eecd5d29817a536baffa1aa565a9ad4eed9af50ef77f871,canonical code: as installed on the VPS,GitHub
+runtime/server/MANIFEST.md,17001,tracked,491ff1de12e826d2df55d772c21761fe2d2c745c7cbfea68a8c93850f9ece08d,canonical code: as installed on the VPS,GitHub
+runtime/server/NEXT_HANDOFF.md,3964,tracked,66112b057ce3c9a756896a38c85e2ffb705fa0afe1c8453527e66b8fddb8e901,canonical code: as installed on the VPS,GitHub
+runtime/server/operations/BRO_INSTALL.md,7171,tracked,ac8ed806b5663964608443cbd21bd2e187134f6fd68e5d110bc7cf070c21a891,canonical code: as installed on the VPS,GitHub
+runtime/server/operations/BRO_V011_PATCH.md,2871,tracked,21a3d514fe4d968030bfde7f7c0eb9be5269548f62d68fd4317dae6d8a0f3f87,canonical code: as installed on the VPS,GitHub
+runtime/server/operations/BRO_V020_INSTALL.md,13330,tracked,8c3ae77cef715b45bc52f7c315b8086eca9a8a6f66c797a1e3ddf0a8a1827298,canonical code: as installed on the VPS,GitHub
+runtime/server/operations/CLAUDE_DAILY_REHEARSAL.md,1954,tracked,54b3af7f1db9700bfa70cc6632d5a384e3acce8634203159bfe039ba71bfa664,canonical code: as installed on the VPS,GitHub
+runtime/server/operations/CONTACT_BUTTON_INVENTORY.json,1016,tracked,1c55deeca578d52448593a8e07744e0b2c57bfc0c6c71a9511b1e95247e2bfe5,canonical code: as installed on the VPS,GitHub
+runtime/server/operations/DAILY_OPERATIONS.md,5327,tracked,87567549954c3ac4e234e6a3eff3dab3d58200fc2e72e4218ba7e6df743d6c39,canonical code: as installed on the VPS,GitHub
+runtime/server/operations/MASTER_ROADMAP.md,7229,tracked,771c92003eab3f2b34f3370e25004c8c9cb7223009deb7202263db5d788acc31,canonical code: as installed on the VPS,GitHub
+runtime/server/operations/STAGING_WITH_DYNAMIC_IP.md,3127,tracked,75dc4da9c639c00b43ed59e4ed2ae743400d36330b461569676215b117beb0ca,canonical code: as installed on the VPS,GitHub
+runtime/server/operations/V080_HANDOFF.md,8333,tracked,97ea0cd8aba99776dd62dbe103146ba1649dade9f8875553f1f35b77902daa0c,canonical code: as installed on the VPS,GitHub
+runtime/server/ops_api.py,7082,tracked,f194e425fe12c3725b04ed1c4bd0a78a661e0ba2b35af75944bbacc6fb093469,canonical code: as installed on the VPS,GitHub
+runtime/server/ops_backup.py,1987,tracked,21739d62a1747c0d85f2930659c20a645be126aba49488eeeca495fc6a6dcea5,canonical code: as installed on the VPS,GitHub
+runtime/server/ops_cli.py,3640,tracked,e05b5b6a4a6cf517ca9531b19f011379f13daf50d40932a69f030d5e23bce3f0,canonical code: as installed on the VPS,GitHub
+runtime/server/ops_daily.py,1535,tracked,b00a415b7d31f0d8130539ff72fbd615fe9f19431afd4300b909052152937278,canonical code: as installed on the VPS,GitHub
+runtime/server/ops_local.py,2766,tracked,7f7b2556486ffe08d82dad6033dbcf1e7d52d0bf833326ef8f9497bbb7672ffa,canonical code: as installed on the VPS,GitHub
+runtime/server/ops_media.py,4427,tracked,5ca3e4dea8b0b11040a4a85ff0985c4c881ac80348abfaf7c8058cca2dbbda4c,canonical code: as installed on the VPS,GitHub
+runtime/server/ops_views.py,65185,tracked,f5f6e9d8a8d87ae3dadb7a9ccc2a990040e455a5d06394c9d0a810c0a5cf8752,canonical code: as installed on the VPS,GitHub
+runtime/server/ops_work.py,10092,tracked,d1e6a2dfa653f40ddbf886c170e8c0d143b1750ad59c1703c647313f7e8818d6,canonical code: as installed on the VPS,GitHub
+runtime/server/reader_provision.py,3051,tracked,157f7df23feee71a881cdfb88f71d0dcbf037904d59f321f6b4411702c8a164c,canonical code: as installed on the VPS,GitHub
+runtime/server/README.md,11004,tracked,be1af05e27fec218900e28c18b86a536dba877b3a0b4c9e307bba90cc780349d,canonical code: as installed on the VPS,GitHub
+runtime/server/recovery.py,1316,tracked,ca7ae2664d11d004c77fc4140c6dec7c0b033b542a17d81e9531bb46f4a7149a,canonical code: as installed on the VPS,GitHub
+runtime/server/RELEASE_SHA256.txt,13468,tracked,20a0bc0a9a2955ff6e59ee9c89a049968666b33d6324e0db648d5c33f824515e,canonical code: as installed on the VPS,GitHub
+runtime/server/report_html.py,3854,tracked,6814523e5f3b376de05c7742b3014ecce0074cfe7163c0759ccf9e1c02fa007b,canonical code: as installed on the VPS,GitHub
+runtime/server/runtime.py,15896,tracked,bf938c7022eace87b6347dd9c6648cd4dc45c1210ccda73bb4af3dc8cbe5d1f0,canonical code: as installed on the VPS,GitHub
+runtime/server/secure_server.py,10986,tracked,06ed93fc884bd9e2e579af7405737a439a197c85100acf9eb9e1d37785cb909a,canonical code: as installed on the VPS,GitHub
+runtime/server/sheets_plan.py,2670,tracked,57d6f1b3753693b9b2f832a888a3e99de0b62c048cb7140727956e32b1fdd616,canonical code: as installed on the VPS,GitHub
+runtime/server/site/.htaccess,1380,tracked,397032d042c1fa41bbe99b490ec85d5c53cd479161c02b5a93f677120b3a196a,canonical code: as installed on the VPS,GitHub
+runtime/server/site/404.html,1983,tracked,a15265fda715c76738f83667b8f8e12e290366c0c9878a112509ec08ef170724,canonical code: as installed on the VPS,GitHub
+runtime/server/site/app.js,32249,tracked,33e5ed6aa3237a5685db82c04711b25e331228b44ece68e77a22f8266d598db6,canonical code: as installed on the VPS,GitHub
+runtime/server/site/apple-touch-icon-180.png,7342,tracked,c8519b9a4893add266da79041ed4201fa1d066230bbf2a1edd6034c0152b6ad1,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/favicon.svg,10283,tracked,a957881b215ac1760189b8e82dbd81ffc0719f6d6bb000a26a9f675a625959b2,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/fonts/golos-400-cyrillic.woff2,22032,tracked,17d048ca05cb1218af3c0d6dcdf882989e6d1cc5dcb598ea50eaf54850ff7229,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/fonts/golos-400-latin.woff2,37916,tracked,9a69d0aa4734c4022224c002a3d944a702e0204972a49d892789f5668b922c2a,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/fonts/golos-500-cyrillic.woff2,22032,tracked,17d048ca05cb1218af3c0d6dcdf882989e6d1cc5dcb598ea50eaf54850ff7229,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/fonts/golos-500-latin.woff2,37916,tracked,9a69d0aa4734c4022224c002a3d944a702e0204972a49d892789f5668b922c2a,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/fonts/golos-700-cyrillic.woff2,22032,tracked,17d048ca05cb1218af3c0d6dcdf882989e6d1cc5dcb598ea50eaf54850ff7229,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/fonts/golos-700-latin.woff2,37916,tracked,9a69d0aa4734c4022224c002a3d944a702e0204972a49d892789f5668b922c2a,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/fonts/robotocond-700-cyrillic.woff2,12144,tracked,7b9ef131039e058b622d4da5cbb6d2e783526d137cbf74738f8984c25c2d3fbf,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/fonts/robotocond-700-latin.woff2,21128,tracked,ab74f0c2d7ec37e44e017b9586675dd00c519591207dc3bbc8e003c5628dc9b7,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/fonts.css,2308,tracked,d7843d21337308a2785acf10b4e52b1473b39dacf0d9866936ccf6d8ed39b6ce,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/evakuator-24-chasa-moskva-oblozhka.jpg,207459,tracked,ea6e0d38ed5e18c9415eb866f0d63c6dcc38da763034f964e2d8b8050f415316,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/hero-bg-desktop.jpg,264344,tracked,964a8d8a1bd8766db873975a699c39b6530b7711959cfd20f35072a9e68b2dad,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/hero-bg-mobile.jpg,161120,tracked,1536b52ab5330c3891525df20d7adb5fd324e3116eb6b0d3c8df26191a6bee58,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-01-mercedes-cla.jpg,96297,tracked,a4da0f22698a837b6f35f3a05c59fda76ff58a8c70d30056ae64a2cce337dcae,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-02-iz-kyuveta.jpg,90624,tracked,e9aeb293d3dcb6784ca33a9e06b7e4a6a5a9673a3496e692bfd2a5edc34fc836,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-03-bmw-x6.jpg,70925,tracked,7f37d4a770fd7b691999acd034b6f2af82a5221dd4a42407dc42c1bf91f1f8c6,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-04-mini-pogruzchik.jpg,112450,tracked,202ebcbcc0799a1e6220bca655fb8db9ce809f6a0b439c8d4bedd1582bca290a,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-05-audi-a8.jpg,97593,tracked,2cd2ebce116db43e44fb77167fd2fa26fc4b16cf2845e6798e2e6da587c4ead4,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-06-posle-dtp.jpg,117318,tracked,4e778488f2119256b387884a0bc242104d2ece0c4323b12b0ccd6a1b573856ac,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-07-mikroavtobus.jpg,94627,tracked,95c21e04f071717680e2a74105215a25f2f5f42d300ff97f9684607056bafc0f,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-08-rolls-royce.jpg,79586,tracked,a445df5dab37d6fcb39b72dcabf442576f7f44b11bbdf795b5bc4c00f3f96972,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-10-volkswagen-golf.jpg,101658,tracked,fc1a6dc9bcc371911783488769fe7040560f47b44b7c96cbe7d4178b30924c14,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-11-manipulyator.jpg,41765,tracked,73bc6e5330101df055d263409a71afb88246ba4ab7942d8df70de37db26ef677,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-12-posle-dtp-pogruzka.jpg,45556,tracked,b9162d7656e6d9cb78da07f668551f583ea0262cbf1c899c4a6fe53cc5693d92,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-13-mikroavtobus-osen.jpg,104484,tracked,a033a33c32f9ed4c09a315cdab233c7e2246623fd6e8a2c88776eba15b5de76a,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-14-manipulyator-posle-dtp.jpg,82016,tracked,5f4ada5553bac626a7dde712835fc786933ae9023da2c5836d9a70ddbeb7f33d,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-15-mini-pogruzchik-s-kovshom.jpg,84987,tracked,620b279544620200dd768acc9fd2f6eb0f518f68ca1286c911a7a5a449845226,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-16-vilochnyy-pogruzchik.jpg,78516,tracked,6dbfb05ff5781340d86d2637dfceb0b659549917fa0e7cddbaa73cceaa812588,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-17-pogruzka-po-apparelyam.jpg,79275,tracked,aad8ebaf8d87ae85ce1b3c0ee5c54e14e94b73477ae3b46b936985e3c58aceb4,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-18-pogruzchik-na-platformu.jpg,39922,tracked,85ad6d7205e52674864a6263a07255f1e006475950d8cee061fcb3cef27b4278,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/img/rabota-19-miniven-kia.jpg,102779,tracked,ef24bb8d0b9e21a5a42675c38ec26de125e24e5ab8193876cbb4ebc8dd2f4495,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/logo-dark.png,20243,tracked,d57a13eb8bf0b17c2d00b9445904d9312fa2904651f028c7d7f5bc4d67645a11,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/mark-orange.svg,31480,tracked,052f342936553070f03d7358ba97005db3a540f255b288e1840a8ff86a444f22,canonical code: as installed on the VPS,GitHub
+runtime/server/site/assets/pages.css,2045,tracked,78a02a7cdc7cd8b5e883305186ca449403126d2769e9ac133d55914290184ff5,canonical code: as installed on the VPS,GitHub
+runtime/server/site/evakuator-balashikha/index.html,22039,tracked,f4c444a900e9fa4568388c0236674aea760db62371ad08c864c11a914b333504,canonical code: as installed on the VPS,GitHub
+runtime/server/site/evakuator-domodedovo/index.html,22205,tracked,4dd0d58713e1e236ea3d6d678a8d45e85752ec9c37c541ffbba0535205fa3236,canonical code: as installed on the VPS,GitHub
+runtime/server/site/evakuator-khimki/index.html,21893,tracked,d439f157555097ddd8b421c0fd6e2d44db2ba06c66c3a09ac1b6667cfeec3019,canonical code: as installed on the VPS,GitHub
+runtime/server/site/evakuator-lyubertsy/index.html,22067,tracked,07c4c5610d8573895ad01eca2607bdff016afe5892284dda27939068c78aad9c,canonical code: as installed on the VPS,GitHub
+runtime/server/site/evakuator-podolsk/index.html,22196,tracked,10c37722bdf1e27c11d60a9e0f192c654784f979bbe06bfda2c5454e814520ae,canonical code: as installed on the VPS,GitHub
+runtime/server/site/favicon-16.png,510,tracked,512f718b70c0d0a121d4ab778e3e2505504b1fb26a1ba3f6cff83eed65be0dc5,canonical code: as installed on the VPS,GitHub
+runtime/server/site/favicon-32.png,1215,tracked,07229421be4f8ea18602fc60e23b2782b498a07ccd499e15a36ff264b1887490,canonical code: as installed on the VPS,GitHub
+runtime/server/site/favicon-48.png,2110,tracked,e87d0e1d76247cf92c976ce17a5c594ade974c910c879fec14efc9e913e8b426,canonical code: as installed on the VPS,GitHub
+runtime/server/site/favicon-96.png,4982,tracked,70556a43cdec6325c5c3d95b88efe33bad10d1b3bbed97d771f6b8a291d8424e,canonical code: as installed on the VPS,GitHub
+runtime/server/site/favicon.ico,3889,tracked,e4ce3a32d7262fc7450eae1f46eb87f4c91ad664b08ca72f3128e18de8c99dc3,canonical code: as installed on the VPS,GitHub
+runtime/server/site/google60aaad671c02b3da.html,53,tracked,5f1ac586adbda5697b090abfbec2830e3ac18ce89f3780c631bd6dbf652788ab,canonical code: as installed on the VPS,GitHub
+runtime/server/site/icon-192.png,7123,tracked,498dbe4d12f4102cdef9932fb4737a176dbc8973f0e2c7124b081b27b41236a4,canonical code: as installed on the VPS,GitHub
+runtime/server/site/icon-512.png,34294,tracked,af98b633ec22afc47a48aa6a0cc80e9a1f8f84b0f468f6a4c33b8efe411fd4a9,canonical code: as installed on the VPS,GitHub
+runtime/server/site/index.html,53788,tracked,5c6438c77203f52d2a5f6c95321d962d911c170da2645f6d24e8a2e49dc5afef,canonical code: as installed on the VPS,GitHub
+runtime/server/site/manipulyator/index.html,21350,tracked,f74d4abfd5ff39142d80f9d5f75716a774889f631b031654c600804c8f4cf499,canonical code: as installed on the VPS,GitHub
+runtime/server/site/perevozka-spetstekhniki/index.html,21475,tracked,d91cde23b582b3b24d180392d87fa15e236ebe44a1ea028e0407d86b9006bbe6,canonical code: as installed on the VPS,GitHub
+runtime/server/site/README.md,2771,tracked,308d54cacb8dfb0c660fc6c9d8b9a675838c1a89a0ccfef93b314a5d5db714ee,canonical code: as installed on the VPS,GitHub
+runtime/server/site/robots.txt,86,tracked,60d76e5df4451669261740f1efca53e8c1f9e104593f25015ab1262e6c6aa274,canonical code: as installed on the VPS,GitHub
+runtime/server/site/site.webmanifest,470,tracked,7b651abb8dfad4b34b77c6a8c6347899e59d9cf5e6b9c078642d76db0fc4b62a,canonical code: as installed on the VPS,GitHub
+runtime/server/site/sitemap.xml,1044,tracked,102c96f2083b8b963e101190f01e67893732be566342c9130586e998112ad59a,canonical code: as installed on the VPS,GitHub
+runtime/server/site/styles.css,55181,tracked,8c876f640761221391745aef37c686dc7219ef81b15728af5d05422b28636d7b,canonical code: as installed on the VPS,GitHub
+runtime/server/SOURCE_SHA256.txt,5894,tracked,336f7a9576c11d923cc3a964e33ca623e7b16cfda9145c488d7eb96f5cee3171,canonical code: as installed on the VPS,GitHub
+runtime/server/staging-form.html,3223,tracked,4490eed7d4ef14f6cea920d72cdfad50fc54dcdbcfa9022ab3b804cbb6468c5d,canonical code: as installed on the VPS,GitHub
+runtime/server/staging_site.py,2427,tracked,d574b929ca98e252f0c22ed2e8a90108b4e61ddb21459671d3cbf2aa3b3d4918,canonical code: as installed on the VPS,GitHub
+runtime/server/test-intake.js,2537,tracked,0cc7a70fa57f244ae570e9bdda10a4ad48b0e98ed040a413e048dc3ca5238548,canonical code: as installed on the VPS,GitHub
+runtime/server/test-orders.html,8192,tracked,d331362cb81cccdeabd4df20ef3ef6e17f926d75f012b64c584ee8874f42bff7,canonical code: as installed on the VPS,GitHub
+runtime/server/test_adapter.py,2823,tracked,19277af5c892f72f40600bd6f5f269379d8e9b20ddadb2a3475baa08c908eefd,canonical code: as installed on the VPS,GitHub
+runtime/server/test_bro_http.py,9829,tracked,60d08729512e459cc8d551f42e56f424ff38161fe5969767b8d322ac312125cb,canonical code: as installed on the VPS,GitHub
+runtime/server/test_bro_worker.py,5419,tracked,6cea7e9eec2810372e24448c9fcfb4ee6e8d424777e510e1a975995b891e031c,canonical code: as installed on the VPS,GitHub
+runtime/server/test_contact_clicks_js.cjs,3541,tracked,26a6ca14064fb769c3030248bc1940c809f72a33b73cbdc15053cfc6131f1b16,canonical code: as installed on the VPS,GitHub
+runtime/server/test_contact_metrics.py,3932,tracked,33ab6113fb84cd1863a51308ab80e2b2df79bf970f3e23b8459ef09fe424ca5b,canonical code: as installed on the VPS,GitHub
+runtime/server/test_fixture_encoding.py,571,tracked,425598d815ce4836b6762e962f2c5a515f0a29a6dc87ff6a6462202215ea92f1,canonical code: as installed on the VPS,GitHub
+runtime/server/test_handoff.py,2037,tracked,d92112ddd192a1a8cfda0df163de9e89dd93efc5147d645f06211b135e47490b,canonical code: as installed on the VPS,GitHub
+runtime/server/test_handoff_js.cjs,2807,tracked,539fbbc5d8534edb1d8f84fa7cf069f53938b7ce88a3f946c292f599e60b32cc,canonical code: as installed on the VPS,GitHub
+runtime/server/test_handoff_persistence.cjs,4926,tracked,4dc2ce907803f3be3afc735d74857f5b529f52ff199b5897e8031c46800b521f,canonical code: as installed on the VPS,GitHub
+runtime/server/test_notifications.py,1910,tracked,d00a9684c536f7d1660bfd65f87efc8716e616960a33351fdcef301f3c740292,canonical code: as installed on the VPS,GitHub
+runtime/server/test_ops.py,9955,tracked,015e7b748784269913470d8a79c881cf0c46bc9ff8d5ac97326ef725a32766f2,canonical code: as installed on the VPS,GitHub
+runtime/server/test_real_markup_contacts.cjs,6156,tracked,d1b54bd2b857034b23a6b92f228a5a3a35f13ce694a5bd4dbbfb3f4edb4cf10b,canonical code: as installed on the VPS,GitHub
+runtime/server/test_recovery_report.py,1473,tracked,a5dda449fc4dd56c4c768cad10c90017fce7495a0f7b3c29bda2c2e725d42a14,canonical code: as installed on the VPS,GitHub
+runtime/server/test_runtime.py,2838,tracked,fa3d2caaefa948d9d341897340665f01634c7f67aa8568ee36733227df858d04,canonical code: as installed on the VPS,GitHub
+runtime/server/test_secure_server.py,6801,tracked,834c6b1993bf587d2501b8bd13949189256c9bc0374b6beb9b91be823a81589e,canonical code: as installed on the VPS,GitHub
+runtime/server/test_sheets_plan.py,1405,tracked,4c8d2ad0f746a102b9e1f426484a124b2c1171df06b896203a9cd4cebef98b0f,canonical code: as installed on the VPS,GitHub
+runtime/server/VALIDATION.txt,766,tracked,a87d28425d658e79b62655a0ba1c81ae3288a469423cc54d9d31cf480efbe982,canonical code: as installed on the VPS,GitHub
+runtime/server/VALIDATION_V080.md,1128,tracked,8d865e37007bd531ad3d6de15245596e64b3917caceed0899816715fa046144a,canonical code: as installed on the VPS,GitHub
+runtime/server/VALIDATION_V081.md,1557,tracked,cada550a710a4d0b0135c5f335a69db6ac1ca2ca955c41782cf8b94d10fb1ac0,canonical code: as installed on the VPS,GitHub
+runtime/server/whatsapp-handoff.js,7150,tracked,90b0938e03f50ab4be4d4ea6bdddcb248a4888c0ef059f5fac02a2518683058a,canonical code: as installed on the VPS,GitHub
+runtime/server_patches/bro_edge_check.py,3716,tracked,65d94da91b5163648cfdc73980af93600732c326f923d542adea2f4aa25c95c7,canonical code: copies of server patches,GitHub
+runtime/server_patches/ops_views.py,65185,tracked,f5f6e9d8a8d87ae3dadb7a9ccc2a990040e455a5d06394c9d0a810c0a5cf8752,canonical code: copies of server patches,GitHub
+runtime/wip/adapter_preflight/bro_gate_hook.py,20372,tracked,ded62a77f8e8e4b29fb514fcb3da5bee90d5fc4345e1854885654ff6ef0be35e,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/adapter_preflight/browser_tool_schemas.json,7147,tracked,df92a934724b1227b7d01812f59470f37e2ce703d5d6af378024d3f5ecec8f6a,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/adapter_preflight/policy.example.json,241,tracked,01a5c4619e3fe192b9dd199bde9c5193e8e5578e9fad7663478ac228bba950be,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/adapter_preflight/README.md,11854,tracked,c542a91a7ad6e19022864d5465d44f6b42b54c3d2d1cfbb8a263c2ea647ae84c,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/adapter_preflight/REPORT_DRAFT_staleness.md,3117,tracked,6c4fbda841e20d748adcb2f22040d20539e98cfb514abcd856a7180fe0e6a22c,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/adapter_preflight/settings.trial.example.json,1375,tracked,8436b617de410510d88955fb748443b359b4a69c59ea75db0e02b9430f6efd0a,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/adapter_preflight/SHA256SUMS.txt,770,tracked,1724ebabc60b382b1901c1a1e034d26d6ecb0b2065fe19a094ef038a84f09bf7,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/adapter_preflight/test_bro_gate_hook.py,31107,tracked,053864479a5bd518a7d082c72880c2661c048fff665e449947138b7884773181,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/adapter_preflight/test_win_job.py,16848,tracked,4116f321857609096f5ab1a45b67ccad9872ceb5ca6a72b7de47decd91441837,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/adapter_preflight/win_job.py,14542,tracked,2549f922a1933055127fec326673665615ed7bce7aa3396d15a8eb2e2ea9a6f2,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/chrome_proxy/bro_chrome_proxy.py,12416,tracked,54e50f8be9c7c1adea02e3d82dbbc3909608f8b399e17e67fed97ea24e0e0baf,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/chrome_proxy/fake_upstream.py,3043,tracked,f4d68c6d0b733728d493114795f511329637a543fb62ee7435e87604f5414a54,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/chrome_proxy/README.md,8453,tracked,6251c50c1690faca0f8c5767a7f233b808293b0af5abb21496ceda1450a6a0d3,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/chrome_proxy/SHA256SUMS.txt,336,tracked,8d0a04d76a0d0b8715983a228cc86fa07f27bc248460ea1835d9709a879ecd7b,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/chrome_proxy/test_bro_chrome_proxy.py,12895,tracked,d4f2ea18636e2808b9d20c2bbbd3a2d11b2dbcb762413221a2bf69ed21ae2ff4,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/README.md,1385,tracked,99e8b40772763bc1347b336683ba38c556a055dece67c2b4a7e548935b020ba2,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/trial/fake_claude.py,11658,tracked,9ed58a2282cbd19935fd8d695e7c3a888725e1a34432b7476304e72648508baa,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/trial/fixture_server.py,7289,tracked,1ddd44a6d82ec51549ff4f0209be680834cd7661c2e011b64344568227b1b113,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/trial/launch_case.ps1,3466,tracked,bcaf78af5dca4d33df12a7dbc2c8b5f560d08c8b3b76a8f9265eea8c34eff81f,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/trial/run_trial.py,98725,tracked,2001cecebf17cfc2e028ec15e56128cd6ce9a4dc0c8101351a88e3e7e1183b02,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/trial/SHA256SUMS.txt,574,tracked,95e7ab59a729bfeb1b6ab76cbe03a5cad0e327312ba072d57b9f01a8e6438ef1,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/trial/test_trial_harness.py,62542,tracked,4c46bf9dc8fab2e9afefea66531e553730b742dc5421aac64571165dadbe152a,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/trial/trial_hook.py,3455,tracked,1753b0eecb15533b82addd9d6bba0ec7ce55380e306b4c251256a83ddf3311b9,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+runtime/wip/trial/TRIAL_PLAN.md,52420,tracked,707ebc3e9b427200b5dbe1c3eea8b950189813324f36a4e2b432056a9dfad502,"work in progress: proxy, gate, trial","GitHub, marked WIP"
+site/.htaccess,1380,tracked,397032d042c1fa41bbe99b490ec85d5c53cd479161c02b5a93f677120b3a196a,canonical code: the live site,GitHub
+site/404.html,1983,tracked,a15265fda715c76738f83667b8f8e12e290366c0c9878a112509ec08ef170724,canonical code: the live site,GitHub
+site/app.js,32249,tracked,33e5ed6aa3237a5685db82c04711b25e331228b44ece68e77a22f8266d598db6,canonical code: the live site,GitHub
+site/apple-touch-icon-180.png,7342,tracked,c8519b9a4893add266da79041ed4201fa1d066230bbf2a1edd6034c0152b6ad1,canonical code: the live site,GitHub
+site/assets/favicon.svg,10283,tracked,a957881b215ac1760189b8e82dbd81ffc0719f6d6bb000a26a9f675a625959b2,canonical code: the live site,GitHub
+site/assets/fonts/golos-400-cyrillic.woff2,22032,tracked,17d048ca05cb1218af3c0d6dcdf882989e6d1cc5dcb598ea50eaf54850ff7229,canonical code: the live site,GitHub
+site/assets/fonts/golos-400-latin.woff2,37916,tracked,9a69d0aa4734c4022224c002a3d944a702e0204972a49d892789f5668b922c2a,canonical code: the live site,GitHub
+site/assets/fonts/golos-500-cyrillic.woff2,22032,tracked,17d048ca05cb1218af3c0d6dcdf882989e6d1cc5dcb598ea50eaf54850ff7229,canonical code: the live site,GitHub
+site/assets/fonts/golos-500-latin.woff2,37916,tracked,9a69d0aa4734c4022224c002a3d944a702e0204972a49d892789f5668b922c2a,canonical code: the live site,GitHub
+site/assets/fonts/golos-700-cyrillic.woff2,22032,tracked,17d048ca05cb1218af3c0d6dcdf882989e6d1cc5dcb598ea50eaf54850ff7229,canonical code: the live site,GitHub
+site/assets/fonts/golos-700-latin.woff2,37916,tracked,9a69d0aa4734c4022224c002a3d944a702e0204972a49d892789f5668b922c2a,canonical code: the live site,GitHub
+site/assets/fonts/robotocond-700-cyrillic.woff2,12144,tracked,7b9ef131039e058b622d4da5cbb6d2e783526d137cbf74738f8984c25c2d3fbf,canonical code: the live site,GitHub
+site/assets/fonts/robotocond-700-latin.woff2,21128,tracked,ab74f0c2d7ec37e44e017b9586675dd00c519591207dc3bbc8e003c5628dc9b7,canonical code: the live site,GitHub
+site/assets/fonts.css,2308,tracked,d7843d21337308a2785acf10b4e52b1473b39dacf0d9866936ccf6d8ed39b6ce,canonical code: the live site,GitHub
+site/assets/img/evakuator-24-chasa-moskva-oblozhka.jpg,207459,tracked,ea6e0d38ed5e18c9415eb866f0d63c6dcc38da763034f964e2d8b8050f415316,canonical code: the live site,GitHub
+site/assets/img/hero-bg-desktop.jpg,264344,tracked,964a8d8a1bd8766db873975a699c39b6530b7711959cfd20f35072a9e68b2dad,canonical code: the live site,GitHub
+site/assets/img/hero-bg-mobile.jpg,161120,tracked,1536b52ab5330c3891525df20d7adb5fd324e3116eb6b0d3c8df26191a6bee58,canonical code: the live site,GitHub
+site/assets/img/rabota-01-mercedes-cla.jpg,96297,tracked,a4da0f22698a837b6f35f3a05c59fda76ff58a8c70d30056ae64a2cce337dcae,canonical code: the live site,GitHub
+site/assets/img/rabota-02-iz-kyuveta.jpg,90624,tracked,e9aeb293d3dcb6784ca33a9e06b7e4a6a5a9673a3496e692bfd2a5edc34fc836,canonical code: the live site,GitHub
+site/assets/img/rabota-03-bmw-x6.jpg,70925,tracked,7f37d4a770fd7b691999acd034b6f2af82a5221dd4a42407dc42c1bf91f1f8c6,canonical code: the live site,GitHub
+site/assets/img/rabota-04-mini-pogruzchik.jpg,112450,tracked,202ebcbcc0799a1e6220bca655fb8db9ce809f6a0b439c8d4bedd1582bca290a,canonical code: the live site,GitHub
+site/assets/img/rabota-05-audi-a8.jpg,97593,tracked,2cd2ebce116db43e44fb77167fd2fa26fc4b16cf2845e6798e2e6da587c4ead4,canonical code: the live site,GitHub
+site/assets/img/rabota-06-posle-dtp.jpg,117318,tracked,4e778488f2119256b387884a0bc242104d2ece0c4323b12b0ccd6a1b573856ac,canonical code: the live site,GitHub
+site/assets/img/rabota-07-mikroavtobus.jpg,94627,tracked,95c21e04f071717680e2a74105215a25f2f5f42d300ff97f9684607056bafc0f,canonical code: the live site,GitHub
+site/assets/img/rabota-08-rolls-royce.jpg,79586,tracked,a445df5dab37d6fcb39b72dcabf442576f7f44b11bbdf795b5bc4c00f3f96972,canonical code: the live site,GitHub
+site/assets/img/rabota-10-volkswagen-golf.jpg,101658,tracked,fc1a6dc9bcc371911783488769fe7040560f47b44b7c96cbe7d4178b30924c14,canonical code: the live site,GitHub
+site/assets/img/rabota-11-manipulyator.jpg,41765,tracked,73bc6e5330101df055d263409a71afb88246ba4ab7942d8df70de37db26ef677,canonical code: the live site,GitHub
+site/assets/img/rabota-12-posle-dtp-pogruzka.jpg,45556,tracked,b9162d7656e6d9cb78da07f668551f583ea0262cbf1c899c4a6fe53cc5693d92,canonical code: the live site,GitHub
+site/assets/img/rabota-13-mikroavtobus-osen.jpg,104484,tracked,a033a33c32f9ed4c09a315cdab233c7e2246623fd6e8a2c88776eba15b5de76a,canonical code: the live site,GitHub
+site/assets/img/rabota-14-manipulyator-posle-dtp.jpg,82016,tracked,5f4ada5553bac626a7dde712835fc786933ae9023da2c5836d9a70ddbeb7f33d,canonical code: the live site,GitHub
+site/assets/img/rabota-15-mini-pogruzchik-s-kovshom.jpg,84987,tracked,620b279544620200dd768acc9fd2f6eb0f518f68ca1286c911a7a5a449845226,canonical code: the live site,GitHub
+site/assets/img/rabota-16-vilochnyy-pogruzchik.jpg,78516,tracked,6dbfb05ff5781340d86d2637dfceb0b659549917fa0e7cddbaa73cceaa812588,canonical code: the live site,GitHub
+site/assets/img/rabota-17-pogruzka-po-apparelyam.jpg,79275,tracked,aad8ebaf8d87ae85ce1b3c0ee5c54e14e94b73477ae3b46b936985e3c58aceb4,canonical code: the live site,GitHub
+site/assets/img/rabota-18-pogruzchik-na-platformu.jpg,39922,tracked,85ad6d7205e52674864a6263a07255f1e006475950d8cee061fcb3cef27b4278,canonical code: the live site,GitHub
+site/assets/img/rabota-19-miniven-kia.jpg,102779,tracked,ef24bb8d0b9e21a5a42675c38ec26de125e24e5ab8193876cbb4ebc8dd2f4495,canonical code: the live site,GitHub
+site/assets/logo-dark.png,20243,tracked,d57a13eb8bf0b17c2d00b9445904d9312fa2904651f028c7d7f5bc4d67645a11,canonical code: the live site,GitHub
+site/assets/mark-orange.svg,31480,tracked,052f342936553070f03d7358ba97005db3a540f255b288e1840a8ff86a444f22,canonical code: the live site,GitHub
+site/assets/pages.css,2045,tracked,78a02a7cdc7cd8b5e883305186ca449403126d2769e9ac133d55914290184ff5,canonical code: the live site,GitHub
+site/evakuator-balashikha/index.html,22039,tracked,f4c444a900e9fa4568388c0236674aea760db62371ad08c864c11a914b333504,canonical code: the live site,GitHub
+site/evakuator-domodedovo/index.html,22205,tracked,4dd0d58713e1e236ea3d6d678a8d45e85752ec9c37c541ffbba0535205fa3236,canonical code: the live site,GitHub
+site/evakuator-khimki/index.html,21893,tracked,d439f157555097ddd8b421c0fd6e2d44db2ba06c66c3a09ac1b6667cfeec3019,canonical code: the live site,GitHub
+site/evakuator-lyubertsy/index.html,22067,tracked,07c4c5610d8573895ad01eca2607bdff016afe5892284dda27939068c78aad9c,canonical code: the live site,GitHub
+site/evakuator-podolsk/index.html,22196,tracked,10c37722bdf1e27c11d60a9e0f192c654784f979bbe06bfda2c5454e814520ae,canonical code: the live site,GitHub
+site/favicon-16.png,510,tracked,512f718b70c0d0a121d4ab778e3e2505504b1fb26a1ba3f6cff83eed65be0dc5,canonical code: the live site,GitHub
+site/favicon-32.png,1215,tracked,07229421be4f8ea18602fc60e23b2782b498a07ccd499e15a36ff264b1887490,canonical code: the live site,GitHub
+site/favicon-48.png,2110,tracked,e87d0e1d76247cf92c976ce17a5c594ade974c910c879fec14efc9e913e8b426,canonical code: the live site,GitHub
+site/favicon-96.png,4982,tracked,70556a43cdec6325c5c3d95b88efe33bad10d1b3bbed97d771f6b8a291d8424e,canonical code: the live site,GitHub
+site/favicon.ico,3889,tracked,e4ce3a32d7262fc7450eae1f46eb87f4c91ad664b08ca72f3128e18de8c99dc3,canonical code: the live site,GitHub
+site/google60aaad671c02b3da.html,53,tracked,5f1ac586adbda5697b090abfbec2830e3ac18ce89f3780c631bd6dbf652788ab,canonical code: the live site,GitHub
+site/icon-192.png,7123,tracked,498dbe4d12f4102cdef9932fb4737a176dbc8973f0e2c7124b081b27b41236a4,canonical code: the live site,GitHub
+site/icon-512.png,34294,tracked,af98b633ec22afc47a48aa6a0cc80e9a1f8f84b0f468f6a4c33b8efe411fd4a9,canonical code: the live site,GitHub
+site/index.html,53788,tracked,5c6438c77203f52d2a5f6c95321d962d911c170da2645f6d24e8a2e49dc5afef,canonical code: the live site,GitHub
+site/manipulyator/index.html,21350,tracked,f74d4abfd5ff39142d80f9d5f75716a774889f631b031654c600804c8f4cf499,canonical code: the live site,GitHub
+site/perevozka-spetstekhniki/index.html,21475,tracked,d91cde23b582b3b24d180392d87fa15e236ebe44a1ea028e0407d86b9006bbe6,canonical code: the live site,GitHub
+site/README.md,2771,tracked,308d54cacb8dfb0c660fc6c9d8b9a675838c1a89a0ccfef93b314a5d5db714ee,canonical code: the live site,GitHub
+site/robots.txt,86,tracked,60d76e5df4451669261740f1efca53e8c1f9e104593f25015ab1262e6c6aa274,canonical code: the live site,GitHub
+site/site.webmanifest,470,tracked,7b651abb8dfad4b34b77c6a8c6347899e59d9cf5e6b9c078642d76db0fc4b62a,canonical code: the live site,GitHub
+site/sitemap.xml,1044,tracked,102c96f2083b8b963e101190f01e67893732be566342c9130586e998112ad59a,canonical code: the live site,GitHub
+site/styles.css,55181,tracked,8c876f640761221391745aef37c686dc7219ef81b15728af5d05422b28636d7b,canonical code: the live site,GitHub
+tools/api_setup/avito_keys.ps1,3361,tracked,7252c68b52beacc88a7ea884e5de8df0b7d580c67167564b53ef7fd54f8decba,tools: generators and checks,GitHub
+tools/api_setup/beget_api_password.ps1,3954,tracked,751176ec2e9fc41da00fdd1e0f8cc6be1b56cc76f6ad3cb2d6657a267db316d3,tools: generators and checks,GitHub
+tools/api_setup/direct_api_spec.html,5193,tracked,c5c2b7be360d950351dbd89ab4e1e33c37a82916089ff323db03a9b8cba52097,tools: generators and checks,GitHub
+tools/api_setup/direct_api_spec.pdf,87288,tracked,a51c3f6ec9b5a91ebcc0ff8b5d0654589dc60f3775d0255704b2406cf1a99e9d,tools: generators and checks,GitHub
+tools/api_setup/yandex_check.ps1,4094,tracked,6b310ae69e2c4c31c0f87a4f74a4ccd2e8a5ebb98e82b8609bdbfab7ce81a030,tools: generators and checks,GitHub
+tools/api_setup/yandex_token.ps1,2994,tracked,cc0315e0501cf52dd3145ed0bbb5c3a7f6232d6bbde3c7fdb071d0759df183c6,tools: generators and checks,GitHub
+tools/brand.py,12652,tracked,355ce5942889688d2d8528f56dcf1b81d8a4b7757b6bd2a16506ec0e4084465e,tools: generators and checks,GitHub
+tools/check_commit_identity.py,1836,tracked,32fe8976bc510c510cedf72b7adaaf2bf8b81ff9f2446d30da3de88eafe84d24,tools: generators and checks,GitHub
+tools/check_site_assets.py,2568,tracked,2d1b9bd48bf0e631f2eae5b58253f92dda6d53e4c81febae27f23d68bc9c80c8,tools: generators and checks,GitHub
+tools/css_clean.py,12215,tracked,4bf4a013f2d8201f5ae6eff4a150dabeecd5dc33f7e4ea8b1a3237d39ad89c52,tools: generators and checks,GitHub
+tools/css_clean_probe.py,5875,tracked,4b656a2c8fec56ba5f4884666fdab5147faaf484e6e677c180b893960ddc3789,tools: generators and checks,GitHub
+tools/make_address_guide.py,11889,tracked,74bf127de9444fc5eaf887ea691be8146bfa26c7005584f8727fc2a491029917,tools: generators and checks,GitHub
+tools/make_address_walkthrough.py,9810,tracked,4ec0115b1a185a5b63beb2c70bb6813369dedcb4473bef0286fb2f445ecb5fc5,tools: generators and checks,GitHub
+tools/make_brand.py,5453,tracked,93067b68688d5aa95831042a4b1bbd402e7770166fa1310a046f004f07b1199a,tools: generators and checks,GitHub
+tools/make_inventory.py,4171,tracked,e64a9f445cc3905500fac193f26780c601300390dacf65029421f9a151ffddc4,tools: generators and checks,GitHub
+tools/make_landing_images.py,3322,tracked,016d15cd97e04d507c72398b1288aca114fffebf855ed72491e336bd3e4189d1,tools: generators and checks,GitHub
+tools/make_landing_mood.py,2740,tracked,9b6c56407c5873c357b37cef7b8353aaf724d210e690420c2d2bbd78255906d2,tools: generators and checks,GitHub
+tools/make_logo_lockup.py,2523,tracked,98813b1ead9f9034452ddac6af639301e08a50b640d263be0f09777d60ddff3b,tools: generators and checks,GitHub
+tools/make_qr_promo.py,6246,tracked,5f52bbdaaf9ded69273be38700648da728e364ad2478d469a40de7dc3d20b4ee,tools: generators and checks,GitHub
+tools/make_report.py,3875,tracked,c97d7eb4d2c0331f413c57c71f941e885bae73f341a8dde9ed270ca01c422365,tools: generators and checks,GitHub
+tools/make_seo_pages.py,37298,tracked,a139770e7cc10b77771763b13008e7aa082f1b51fbd179829bc9ebf2269cc83b,tools: generators and checks,GitHub
+tools/make_signage.py,8428,tracked,de0bd1d823a2c0405b61ccbbf4da9db30dc42a6d9ec3c5a8f56fad7d4dc9a119,tools: generators and checks,GitHub
+tools/make_signage_docx.py,9605,tracked,93424c0a06806e56cf41205bc6ad2649d567e7466720d09151ff674abeb2c29d,tools: generators and checks,GitHub
+tools/make_story.py,2089,tracked,19362cfba5fc7b4dea031e0e5ca4d13f4ebc5d90d709cef937e327b65f12341b,tools: generators and checks,GitHub
+tools/make_video.py,4327,tracked,6189f2792b1b9769ec043322fda6d5f0194ab7c412364e646262b9811f3be091,tools: generators and checks,GitHub
+tools/make_whatsapp_kit.py,7104,tracked,154383d9d9e3b24bbc17de0baf9863b6aa04704766fbe94a892ca1589351f42f,tools: generators and checks,GitHub
+tools/polish_real.py,9824,tracked,2b422a4efda265f11ec486828eba2a59a60f92d3cb982673270ae7cb6ba6cf37,tools: generators and checks,GitHub
+tools/requirements.txt,580,tracked,a10ac3c19312a97be8a0ff4e16199bda3d1f829b09d4e136de7057ff4f4f8bf5,tools: generators and checks,GitHub
+tools/shot.py,691,tracked,9c3777c4e2d8bc43ecdcd23e61e8956bcff93a87b584d8a5711e20391ba35e61,tools: generators and checks,GitHub
+tools/svg2png.py,1406,tracked,e3162175bc66a9fd5031d636168e7a7a2231bbc7392b611e5e54e3110fa37746,tools: generators and checks,GitHub
+tools/tests/cal_check.py,3459,tracked,8eda577cbc9e1232707569f255b3948f1f009625574e507e4db0b500aed7fe0f,tests: site checks,GitHub
+tools/tests/cities_check.py,2404,tracked,5a191ef7238a0cdd46fea39a5f6a6f559c645e900c2d3d110ac62be041942fd7,tests: site checks,GitHub
+tools/tests/common.py,3212,tracked,c433b32b5d537daac66d4514bc7653440ddef82ad3172e37363135cc6ae36830,tests: site checks,GitHub
+tools/tests/faq_check.py,4479,tracked,da6318164ba647deb1c3efa2f0ab5fdb14f026a76aceaca70e4a3210f4e43300,tests: site checks,GitHub
+tools/tests/final_check.py,7161,tracked,4ac601dfcaac8f5d4ec3b3c78c9ef68227480ca1073072f96039a61e48a4398f,tests: site checks,GitHub
+tools/tests/footer_check.py,3621,tracked,ea4448f6aaff3fe64b78476b473769ca11b0babc552bf677b5d49f987bac3c7c,tests: site checks,GitHub
+tools/tests/header_check.py,5232,tracked,9b051ecae23fea2f57d86e7bcccc2fbf7957e1679916936457a934753660df35,tests: site checks,GitHub
+tools/tests/message_check.py,4395,tracked,68508aacda1a0d94f593694b1417518c279be942dac7ee46ab3ff76d65731bb1,tests: site checks,GitHub
+tools/tests/route_check.py,2621,tracked,345b85c2169a68c78af2f7507b65732c611486f0a48f422e7069bc9fce57498e,tests: site checks,GitHub
+tools/tests/run_checks.py,2518,tracked,a80fc06b3f4d13563720818c20f5be4c1d6aeb0d3684a07235d13b014b355b96,tests: site checks,GitHub
+tools/tests/seo_check.py,1582,tracked,4c4c832d2619e631d5e5a346d22910ad8ac4937c13710ee061194b7359a2b1dc,tests: site checks,GitHub
+tools/tests/tariff_scroll.py,1303,tracked,45f0d4297861d6fd35cd5ca3794fbce10328aac722d0551c27838ba29320b59f,tests: site checks,GitHub
+tools/trace_hook.py,3891,tracked,0b7a544cfe0f151caf5be1ef3b13a4fe3b3c337467d6461bd6d57cea5a42279f,tools: generators and checks,GitHub

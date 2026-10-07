@@ -1,0 +1,22 @@
+[Unit]
+Description=KRYUK24 capture staging service
+After=network.target
+
+[Service]
+Type=simple
+User=kryuk
+Group=kryuk
+WorkingDirectory=/opt/kryuk24
+EnvironmentFile=/etc/kryuk24/capture.env
+ExecStart=/usr/bin/python3 /opt/kryuk24/secure_server.py --db /var/lib/kryuk24/runtime.sqlite --port 8788
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/kryuk24
+
+[Install]
+WantedBy=multi-user.target

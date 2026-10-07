@@ -1,0 +1,17 @@
+# Insert ONLY inside existing HTTPS server after inspecting nginx -T.
+# Keep all existing operator/capture gates and htpasswd files unchanged.
+# Never add bro-win to the owner htpasswd file. No IP restriction added.
+location ^~ /bro/v1/ {
+    auth_basic "KRYUK24 operator";
+    auth_basic_user_file /etc/kryuk24/bro.htpasswd;
+    satisfy all;
+    client_max_body_size 32k;
+    proxy_connect_timeout 3s;
+    proxy_read_timeout 15s;
+    proxy_send_timeout 15s;
+    proxy_set_header Host $host;
+    proxy_set_header Authorization $http_authorization;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_pass http://127.0.0.1:8789;
+    access_log off;
+}

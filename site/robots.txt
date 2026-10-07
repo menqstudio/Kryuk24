@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kryuk24.ru/sitemap.xml
+Host: kryuk24.ru

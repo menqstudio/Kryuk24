@@ -1,0 +1,460 @@
+{
+ "what": "real read-only API readings through claim -> lease -> observe into a THROWAWAY database on Windows; server and its database not touched",
+ "collector_version": "0.3.0",
+ "started": "2026-10-07T11:26:11+00:00",
+ "day": "2026-10-07",
+ "counts_observations_events_revisions": {
+  "before": [
+   0,
+   10,
+   0
+  ],
+  "after_dry_run": [
+   0,
+   10,
+   0
+  ],
+  "after_write": [
+   3,
+   16,
+   6
+  ]
+ },
+ "dry_run": {
+  "day": "2026-10-07",
+  "dry_run": true,
+  "database_opened": "read-only",
+  "results": [
+   {
+    "job": "HOSTING_DEADLINES",
+    "reading": {
+     "status": "OK",
+     "evidence": {
+      "source": "beget user/getAccountInfo",
+      "account": "amo777z0",
+      "balance": {
+       "value": 1961.56,
+       "unit": "RUB"
+      },
+      "days_to_block": {
+       "value": 40,
+       "unit": "days",
+       "meaning": "the API's estimate at the current rate, not a guaranteed payment deadline"
+      },
+      "rate_per_day": {
+       "value": 49.1,
+       "unit": "RUB/day"
+      },
+      "rate_per_month": {
+       "value": 1493.0,
+       "unit": "RUB/month"
+      },
+      "plan": "Blog"
+     },
+     "fetched_at": "2026-10-07T11:26:02+00:00"
+    },
+    "summary_characters": 411,
+    "would_set": "DONE",
+    "task_id": "WORK-ce5eb3a9ecda53c2a10fec8714ffd587",
+    "task_kind": "API_READ",
+    "task_status": "PENDING",
+    "would_write": true
+   },
+   {
+    "job": "METRICA",
+    "reading": {
+     "status": "OK",
+     "sections": {
+      "site": {
+       "status": "OK",
+       "evidence": {
+        "source": "metrica stat/v1/data",
+        "counter": 113277361,
+        "goal_ids": {
+         "phone_click": 666763225,
+         "whatsapp_click": 666763625,
+         "telegram_click": 666763940
+        },
+        "meaning": "goal_clicks are clicks on a contact button (conversions), not calls, leads or orders",
+        "yesterday": {
+         "date_from": "2026-10-06",
+         "date_to": "2026-10-06",
+         "timezone": "Europe/Moscow",
+         "values": {
+          "visits": 15,
+          "users": 11,
+          "goal_clicks": {
+           "phone_click": 0,
+           "whatsapp_click": 0,
+           "telegram_click": 0
+          }
+         },
+         "units": "counts",
+         "sampled": false,
+         "sample_share": 1.0
+        },
+        "last_7_days": {
+         "date_from": "2026-09-30",
+         "date_to": "2026-10-06",
+         "timezone": "Europe/Moscow",
+         "values": {
+          "visits": 415,
+          "users": 364,
+          "goal_clicks": {
+           "phone_click": 9,
+           "whatsapp_click": 15,
+           "telegram_click": 3
+          }
+         },
+         "units": "counts",
+         "sampled": false,
+         "sample_share": 1.0
+        }
+       },
+       "fetched_at": "2026-10-07T11:26:03+00:00"
+      },
+      "yandex_maps_card": {
+       "status": "OK",
+       "evidence": {
+        "source": "metrica stat/v1/data",
+        "counter": 86067232,
+        "goal_ids": {
+         "call_click": 223475037,
+         "route_build": 223475038,
+         "to_site": 398183355
+        },
+        "meaning": "goal_clicks are clicks on a contact button (conversions), not calls, leads or orders",
+        "yesterday": {
+         "date_from": "2026-10-06",
+         "date_to": "2026-10-06",
+         "timezone": "Europe/Moscow",
+         "values": {
+          "visits": 12,
+          "users": 12,
+          "goal_clicks": {
+           "call_click": 0,
+           "route_build": 0,
+           "to_site": 0
+          }
+         },
+         "units": "counts",
+         "sampled": false,
+         "sample_share": 1.0
+        },
+        "last_7_days": {
+         "date_from": "2026-09-30",
+         "date_to": "2026-10-06",
+         "timezone": "Europe/Moscow",
+         "values": {
+          "visits": 141,
+          "users": 92,
+          "goal_clicks": {
+           "call_click": 4,
+           "route_build": 0,
+           "to_site": 0
+          }
+         },
+         "units": "counts",
+         "sampled": false,
+         "sample_share": 1.0
+        }
+       },
+       "fetched_at": "2026-10-07T11:26:04+00:00"
+      }
+     },
+     "note": "the two sections are separate audiences and are never added together",
+     "fetched_at": "2026-10-07T11:26:04+00:00"
+    },
+    "summary_characters": 1747,
+    "would_set": "DONE",
+    "task_id": "WORK-9eb219fae6df5ce88606cd998b89e7a6",
+    "task_kind": "API_READ",
+    "task_status": "PENDING",
+    "would_write": true
+   },
+   {
+    "job": "WEBMASTER",
+    "reading": {
+     "status": "OK",
+     "evidence": {
+      "source": "webmaster hosts/<host>/summary",
+      "host_id": "https:kryuk24.ru:443",
+      "pages_in_search": {
+       "value": 1,
+       "unit": "pages"
+      },
+      "pages_excluded": {
+       "value": 0,
+       "unit": "pages"
+      },
+      "sqi": {
+       "value": 0,
+       "unit": "index"
+      },
+      "site_problems": {
+       "POSSIBLE_PROBLEM": 1
+      },
+      "meaning": "a zero here does not by itself prove a site-wide problem"
+     },
+     "fetched_at": "2026-10-07T11:26:06+00:00"
+    },
+    "summary_characters": 374,
+    "would_set": "DONE",
+    "task_id": "WORK-dff7638fcead568486603f05e3d63126",
+    "task_kind": "API_READ",
+    "task_status": "PENDING",
+    "would_write": true
+   }
+  ]
+ },
+ "write_run": {
+  "day": "2026-10-07",
+  "worker": "API_READ",
+  "results": [
+   {
+    "job": "METRICA",
+    "task_id": "WORK-9eb219fae6df5ce88606cd998b89e7a6",
+    "outcome": "DONE",
+    "reading": "OK",
+    "error_code": null
+   },
+   {
+    "job": "WEBMASTER",
+    "task_id": "WORK-dff7638fcead568486603f05e3d63126",
+    "outcome": "DONE",
+    "reading": "OK",
+    "error_code": null
+   },
+   {
+    "job": "HOSTING_DEADLINES",
+    "task_id": "WORK-ce5eb3a9ecda53c2a10fec8714ffd587",
+    "outcome": "DONE",
+    "reading": "OK",
+    "error_code": null
+   }
+  ],
+  "external_writes": false
+ },
+ "tasks_after_write": [
+  {
+   "job": "METRICA",
+   "kind": "API_READ",
+   "status": "DONE",
+   "revision": 2,
+   "observations": [
+    {
+     "source": "Yandex Metrica API: stat/v1/data, site counter and Yandex Maps card counter",
+     "observed_at": "2026-10-07T11:26:08+00:00",
+     "trust": "MACHINE_OBSERVED",
+     "actor": "API_READ:4bf46298572c42e9b669182e5f17b292",
+     "summary": {
+      "status": "OK",
+      "sections": {
+       "site": {
+        "status": "OK",
+        "evidence": {
+         "source": "metrica stat/v1/data",
+         "counter": 113277361,
+         "goal_ids": {
+          "phone_click": 666763225,
+          "whatsapp_click": 666763625,
+          "telegram_click": 666763940
+         },
+         "meaning": "goal_clicks are clicks on a contact button (conversions), not calls, leads or orders",
+         "yesterday": {
+          "date_from": "2026-10-06",
+          "date_to": "2026-10-06",
+          "timezone": "Europe/Moscow",
+          "values": {
+           "visits": 15,
+           "users": 11,
+           "goal_clicks": {
+            "phone_click": 0,
+            "whatsapp_click": 0,
+            "telegram_click": 0
+           }
+          },
+          "units": "counts",
+          "sampled": false,
+          "sample_share": 1.0
+         },
+         "last_7_days": {
+          "date_from": "2026-09-30",
+          "date_to": "2026-10-06",
+          "timezone": "Europe/Moscow",
+          "values": {
+           "visits": 415,
+           "users": 364,
+           "goal_clicks": {
+            "phone_click": 9,
+            "whatsapp_click": 15,
+            "telegram_click": 3
+           }
+          },
+          "units": "counts",
+          "sampled": false,
+          "sample_share": 1.0
+         }
+        },
+        "fetched_at": "2026-10-07T11:26:08+00:00"
+       },
+       "yandex_maps_card": {
+        "status": "OK",
+        "evidence": {
+         "source": "metrica stat/v1/data",
+         "counter": 86067232,
+         "goal_ids": {
+          "call_click": 223475037,
+          "route_build": 223475038,
+          "to_site": 398183355
+         },
+         "meaning": "goal_clicks are clicks on a contact button (conversions), not calls, leads or orders",
+         "yesterday": {
+          "date_from": "2026-10-06",
+          "date_to": "2026-10-06",
+          "timezone": "Europe/Moscow",
+          "values": {
+           "visits": 12,
+           "users": 12,
+           "goal_clicks": {
+            "call_click": 0,
+            "route_build": 0,
+            "to_site": 0
+           }
+          },
+          "units": "counts",
+          "sampled": false,
+          "sample_share": 1.0
+         },
+         "last_7_days": {
+          "date_from": "2026-09-30",
+          "date_to": "2026-10-06",
+          "timezone": "Europe/Moscow",
+          "values": {
+           "visits": 141,
+           "users": 92,
+           "goal_clicks": {
+            "call_click": 4,
+            "route_build": 0,
+            "to_site": 0
+           }
+          },
+          "units": "counts",
+          "sampled": false,
+          "sample_share": 1.0
+         }
+        },
+        "fetched_at": "2026-10-07T11:26:08+00:00"
+       }
+      },
+      "note": "the two sections are separate audiences and are never added together",
+      "fetched_at": "2026-10-07T11:26:08+00:00"
+     }
+    }
+   ]
+  },
+  {
+   "job": "WEBMASTER",
+   "kind": "API_READ",
+   "status": "DONE",
+   "revision": 2,
+   "observations": [
+    {
+     "source": "Yandex Webmaster API v4: summary of the verified host",
+     "observed_at": "2026-10-07T11:26:10+00:00",
+     "trust": "MACHINE_OBSERVED",
+     "actor": "API_READ:fe4bc0f1ed9b48bfa3012741518e057b",
+     "summary": {
+      "status": "OK",
+      "evidence": {
+       "source": "webmaster hosts/<host>/summary",
+       "host_id": "https:kryuk24.ru:443",
+       "pages_in_search": {
+        "value": 1,
+        "unit": "pages"
+       },
+       "pages_excluded": {
+        "value": 0,
+        "unit": "pages"
+       },
+       "sqi": {
+        "value": 0,
+        "unit": "index"
+       },
+       "site_problems": {
+        "POSSIBLE_PROBLEM": 1
+       },
+       "meaning": "a zero here does not by itself prove a site-wide problem"
+      },
+      "fetched_at": "2026-10-07T11:26:10+00:00"
+     }
+    }
+   ]
+  },
+  {
+   "job": "HOSTING_DEADLINES",
+   "kind": "API_READ",
+   "status": "DONE",
+   "revision": 2,
+   "observations": [
+    {
+     "source": "Beget API: user/getAccountInfo",
+     "observed_at": "2026-10-07T11:26:11+00:00",
+     "trust": "MACHINE_OBSERVED",
+     "actor": "API_READ:c4c2d9d290f94817b382406b2019cd2a",
+     "summary": {
+      "status": "OK",
+      "evidence": {
+       "source": "beget user/getAccountInfo",
+       "account": "amo777z0",
+       "balance": {
+        "value": 1961.56,
+        "unit": "RUB"
+       },
+       "days_to_block": {
+        "value": 40,
+        "unit": "days",
+        "meaning": "the API's estimate at the current rate, not a guaranteed payment deadline"
+       },
+       "rate_per_day": {
+        "value": 49.1,
+        "unit": "RUB/day"
+       },
+       "rate_per_month": {
+        "value": 1493.0,
+        "unit": "RUB/month"
+       },
+       "plan": "Blog"
+      },
+      "fetched_at": "2026-10-07T11:26:11+00:00"
+     }
+    }
+   ]
+  }
+ ],
+ "second_write_run": {
+  "day": "2026-10-07",
+  "worker": "API_READ",
+  "results": [
+   {
+    "job": "METRICA",
+    "task_id": "WORK-9eb219fae6df5ce88606cd998b89e7a6",
+    "outcome": "NOT_CLAIMABLE",
+    "task_status": "DONE"
+   },
+   {
+    "job": "WEBMASTER",
+    "task_id": "WORK-dff7638fcead568486603f05e3d63126",
+    "outcome": "NOT_CLAIMABLE",
+    "task_status": "DONE"
+   },
+   {
+    "job": "HOSTING_DEADLINES",
+    "task_id": "WORK-ce5eb3a9ecda53c2a10fec8714ffd587",
+    "outcome": "NOT_CLAIMABLE",
+    "task_status": "DONE"
+   }
+  ],
+  "external_writes": false
+ }
+}

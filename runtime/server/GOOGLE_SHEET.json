@@ -1,0 +1,7 @@
+{
+ "_fixture": "TEST FIXTURE, not the file on the server. The real file holds an account-specific sheet id and is not in the repository. Never copy this one to the server.",
+ "spreadsheet_id": "TEST-FIXTURE-NOT-A-REAL-SHEET",
+ "url": "https://example.invalid/test-fixture",
+ "tabs": {"Website": 1, "WhatsApp": 2, "Phone": 3},
+ "automatic_sync": false
+}

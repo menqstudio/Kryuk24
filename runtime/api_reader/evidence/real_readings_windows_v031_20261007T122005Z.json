@@ -1,0 +1,177 @@
+{
+ "collector": "bro_api_reader",
+ "version": "0.3.1",
+ "started": "2026-10-07T12:20:05+00:00",
+ "jobs": {
+  "HOSTING_DEADLINES": {
+   "status": "OK",
+   "evidence": {
+    "source": "beget user/getAccountInfo",
+    "account": "amo777z0",
+    "balance": {
+     "value": 1960.22,
+     "unit": "RUB"
+    },
+    "days_to_block": {
+     "value": 40,
+     "unit": "days",
+     "meaning": "the API's estimate at the current rate, not a guaranteed payment deadline"
+    },
+    "rate_per_day": {
+     "value": 49.1,
+     "unit": "RUB/day"
+    },
+    "rate_per_month": {
+     "value": 1493.0,
+     "unit": "RUB/month"
+    },
+    "plan": "Blog"
+   },
+   "fetched_at": "2026-10-07T12:20:07+00:00"
+  },
+  "METRICA": {
+   "status": "OK",
+   "sections": {
+    "site": {
+     "status": "OK",
+     "evidence": {
+      "source": "metrica stat/v1/data",
+      "counter": 113277361,
+      "goal_ids": {
+       "phone_click": 666763225,
+       "whatsapp_click": 666763625,
+       "telegram_click": 666763940
+      },
+      "meaning": "goal_clicks are clicks on a contact button (conversions), not calls, leads or orders",
+      "yesterday": {
+       "date_from": "2026-10-06",
+       "date_to": "2026-10-06",
+       "timezone": "Europe/Moscow",
+       "utc_offset": "+03:00",
+       "values": {
+        "visits": 15,
+        "users": 11,
+        "goal_clicks": {
+         "phone_click": 0,
+         "whatsapp_click": 0,
+         "telegram_click": 0
+        }
+       },
+       "units": "counts",
+       "exact": true,
+       "sampled": false,
+       "sample_share": 1.0
+      },
+      "last_7_days": {
+       "date_from": "2026-09-30",
+       "date_to": "2026-10-06",
+       "timezone": "Europe/Moscow",
+       "utc_offset": "+03:00",
+       "values": {
+        "visits": 415,
+        "users": 364,
+        "goal_clicks": {
+         "phone_click": 9,
+         "whatsapp_click": 15,
+         "telegram_click": 3
+        }
+       },
+       "units": "counts",
+       "exact": true,
+       "sampled": false,
+       "sample_share": 1.0
+      }
+     },
+     "fetched_at": "2026-10-07T12:20:07+00:00"
+    },
+    "yandex_maps_card": {
+     "status": "OK",
+     "evidence": {
+      "source": "metrica stat/v1/data",
+      "counter": 86067232,
+      "goal_ids": {
+       "call_click": 223475037,
+       "route_build": 223475038,
+       "to_site": 398183355
+      },
+      "meaning": "goal_clicks are clicks on a contact button (conversions), not calls, leads or orders",
+      "yesterday": {
+       "date_from": "2026-10-06",
+       "date_to": "2026-10-06",
+       "timezone": "Europe/Moscow",
+       "utc_offset": "+03:00",
+       "values": {
+        "visits": 12,
+        "users": 12,
+        "goal_clicks": {
+         "call_click": 0,
+         "route_build": 0,
+         "to_site": 0
+        }
+       },
+       "units": "counts",
+       "exact": true,
+       "sampled": false,
+       "sample_share": 1.0
+      },
+      "last_7_days": {
+       "date_from": "2026-09-30",
+       "date_to": "2026-10-06",
+       "timezone": "Europe/Moscow",
+       "utc_offset": "+03:00",
+       "values": {
+        "visits": 141,
+        "users": 92,
+        "goal_clicks": {
+         "call_click": 4,
+         "route_build": 0,
+         "to_site": 0
+        }
+       },
+       "units": "counts",
+       "exact": true,
+       "sampled": false,
+       "sample_share": 1.0
+      }
+     },
+     "fetched_at": "2026-10-07T12:20:08+00:00"
+    }
+   },
+   "note": "the two sections are separate audiences and are never added together",
+   "fetched_at": "2026-10-07T12:20:08+00:00"
+  },
+  "WEBMASTER": {
+   "status": "OK",
+   "evidence": {
+    "source": "webmaster hosts/<host>/summary",
+    "host_id": "https:kryuk24.ru:443",
+    "pages_in_search": {
+     "value": 1,
+     "unit": "pages"
+    },
+    "pages_excluded": {
+     "value": 0,
+     "unit": "pages"
+    },
+    "sqi": {
+     "value": 0,
+     "unit": "index"
+    },
+    "site_problems": {
+     "POSSIBLE_PROBLEM": 1
+    },
+    "meaning": "a zero here does not by itself prove a site-wide problem"
+   },
+   "fetched_at": "2026-10-07T12:20:09+00:00"
+  },
+  "YANDEX_DIRECT": {
+   "status": "NOT_READY",
+   "reason": "API access request sent on 07.10.2026 is not approved (API error 58)"
+  },
+  "AVITO": {
+   "status": "ON_HOLD",
+   "reason": "keys exist; the owner said not to touch Avito yet"
+  }
+ },
+ "finished": "2026-10-07T12:20:09+00:00"
+}

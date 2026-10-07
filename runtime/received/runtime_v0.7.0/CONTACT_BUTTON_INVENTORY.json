@@ -1,0 +1,66 @@
+[
+  {
+    "page": "evakuator-balashikha/index.html",
+    "contact_links": {
+      "call": 4,
+      "wa": 3,
+      "tg": 1
+    }
+  },
+  {
+    "page": "evakuator-domodedovo/index.html",
+    "contact_links": {
+      "call": 4,
+      "wa": 3,
+      "tg": 1
+    }
+  },
+  {
+    "page": "evakuator-khimki/index.html",
+    "contact_links": {
+      "call": 4,
+      "wa": 3,
+      "tg": 1
+    }
+  },
+  {
+    "page": "evakuator-lyubertsy/index.html",
+    "contact_links": {
+      "call": 4,
+      "wa": 3,
+      "tg": 1
+    }
+  },
+  {
+    "page": "evakuator-podolsk/index.html",
+    "contact_links": {
+      "call": 4,
+      "wa": 3,
+      "tg": 1
+    }
+  },
+  {
+    "page": "index.html",
+    "contact_links": {
+      "call": 6,
+      "wa": 4,
+      "tg": 4
+    }
+  },
+  {
+    "page": "manipulyator/index.html",
+    "contact_links": {
+      "call": 4,
+      "wa": 3,
+      "tg": 1
+    }
+  },
+  {
+    "page": "perevozka-spetstekhniki/index.html",
+    "contact_links": {
+      "call": 4,
+      "wa": 3,
+      "tg": 1
+    }
+  }
+]

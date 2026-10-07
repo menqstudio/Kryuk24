@@ -1,0 +1,80 @@
+# Checks that need no secret, no server, no real API and no deployment. Nothing here writes to the repository:
+# the token is read-only and no job creates a commit.
+# Every test command was run by hand from a fresh checkout on 07.10.2026 (Windows, Python 3.12; Linux, Python 3.14).
+# Actions are pinned to full commit SHAs (the repository refuses unpinned ones).
+name: checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+env:
+  COMMIT_NAME: "MenQ"
+  COMMIT_EMAIL: "300099401+menqstudio@users.noreply.github.com"
+jobs:
+  commit-identity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Author and committer of every new commit
+        env:
+          BEFORE: ${{ github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ -n "$BASE" ]; then range="$BASE..$HEAD_SHA"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then range="$BEFORE..$GITHUB_SHA"
+          else range="$GITHUB_SHA"; fi
+          echo "range: $range"
+          python3 tools/check_commit_identity.py "$range" "$COMMIT_NAME" "$COMMIT_EMAIL"
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: API reader (collector, queue side, installer)
+        working-directory: runtime/api_reader
+        run: |
+          python -m unittest test_bro_api_reader
+          python -m unittest test_ops_api
+      - name: Server code as installed (its own suites)
+        working-directory: runtime/server
+        # GOOGLE_SHEET.json in that folder is a test fixture, not the server's file
+        run: python -m unittest discover -p "test_*.py"
+      - name: Package manifest matches the files
+        working-directory: runtime/api_reader
+        run: sha256sum -c SHA256SUMS.txt
+      - name: Site, static references
+        run: python tools/check_site_assets.py
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - name: API reader
+        working-directory: runtime/api_reader
+        run: |
+          python -m unittest test_bro_api_reader
+          python -m unittest test_ops_api
+      - name: WIP, gate hook and Windows job object
+        working-directory: runtime/wip/adapter_preflight
+        run: |
+          python -m unittest test_bro_gate_hook
+          python -m unittest test_win_job
+      - name: WIP, Chrome proxy (stand-in upstream, no browser)
+        working-directory: runtime/wip/chrome_proxy
+        run: python -m unittest test_bro_chrome_proxy
+      - name: WIP, trial harness self-test (stand-in for the model, no model run)
+        working-directory: runtime/wip/trial
+        run: python -m unittest test_trial_harness

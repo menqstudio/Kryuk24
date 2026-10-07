@@ -1,0 +1,304 @@
+{
+ "source": "Tool definitions delivered to an interactive Claude Code 2.1.289 session (VS Code extension host) on Gev's Windows machine, 07.10.2026, with the Claude in Chrome extension connected. Parameter names, types, required lists and enums are copied exactly; description texts are left out. Whether a headless `claude -p --chrome` run exposes the same names and schemas is NOT VERIFIED.",
+ "prefix": "mcp__claude-in-chrome__",
+ "count": 22,
+ "tools": {
+  "list_connected_browsers": {
+   "properties": {},
+   "required": [],
+   "class": "profile",
+   "note": "returns per browser: deviceId, name, osPlatform, connectedAt, isLocal, and inUse on the one actions go to"
+  },
+  "select_browser": {
+   "properties": {
+    "deviceId": "string"
+   },
+   "required": [
+    "deviceId"
+   ],
+   "class": "profile"
+  },
+  "switch_browser": {
+   "properties": {},
+   "required": [],
+   "class": "profile",
+   "note": "broadcasts a connection request to every Chrome with the extension and waits up to 2 minutes for a human click"
+  },
+  "tabs_context_mcp": {
+   "properties": {
+    "createIfEmpty": "boolean"
+   },
+   "required": [],
+   "class": "tab",
+   "note": "createIfEmpty=true creates a new window, tab group and empty tab"
+  },
+  "tabs_create_mcp": {
+   "properties": {},
+   "required": [],
+   "class": "tab"
+  },
+  "tabs_close_mcp": {
+   "properties": {
+    "tabId": "integer"
+   },
+   "required": [
+    "tabId"
+   ],
+   "class": "tab"
+  },
+  "navigate": {
+   "properties": {
+    "tabId": "number",
+    "url": "string"
+   },
+   "required": [
+    "url"
+   ],
+   "class": "navigate",
+   "note": "tabId optional when called standalone: a tab is then created for the call. url also accepts \"back\" and \"forward\"; a URL without protocol defaults to https://"
+  },
+  "get_page_text": {
+   "properties": {
+    "tabId": "number"
+   },
+   "required": [
+    "tabId"
+   ],
+   "class": "read"
+  },
+  "read_page": {
+   "properties": {
+    "tabId": "number",
+    "depth": "number",
+    "filter": {
+     "type": "string",
+     "enum": [
+      "interactive",
+      "all"
+     ]
+    },
+    "max_chars": "number",
+    "ref_id": "string"
+   },
+   "required": [
+    "tabId"
+   ],
+   "class": "read"
+  },
+  "find": {
+   "properties": {
+    "tabId": "number",
+    "query": "string"
+   },
+   "required": [
+    "query",
+    "tabId"
+   ],
+   "class": "read"
+  },
+  "read_console_messages": {
+   "properties": {
+    "tabId": "number",
+    "pattern": "string",
+    "limit": "number",
+    "onlyErrors": "boolean",
+    "clear": "boolean"
+   },
+   "required": [
+    "tabId"
+   ],
+   "class": "read-debug"
+  },
+  "read_network_requests": {
+   "properties": {
+    "tabId": "number",
+    "urlPattern": "string",
+    "limit": "number",
+    "clear": "boolean"
+   },
+   "required": [
+    "tabId"
+   ],
+   "class": "read-debug",
+   "note": "returns request URLs of the page, including cross-origin ones"
+  },
+  "computer": {
+   "properties": {
+    "action": {
+     "type": "string",
+     "enum": [
+      "left_click",
+      "right_click",
+      "type",
+      "screenshot",
+      "wait",
+      "scroll",
+      "key",
+      "left_click_drag",
+      "double_click",
+      "triple_click",
+      "zoom",
+      "scroll_to",
+      "hover"
+     ]
+    },
+    "tabId": "number",
+    "action_summary": "string",
+    "coordinate": "array[number,number]",
+    "duration": "number (max 10)",
+    "modifiers": "string",
+    "ref": "string",
+    "region": "array[number x4]",
+    "repeat": "number",
+    "save_to_disk": "boolean",
+    "scale": "number 0.1..1",
+    "scroll_amount": "number",
+    "scroll_direction": {
+     "type": "string",
+     "enum": [
+      "up",
+      "down",
+      "left",
+      "right"
+     ]
+    },
+    "start_coordinate": "array[number,number]",
+    "text": "string"
+   },
+   "required": [
+    "action",
+    "tabId"
+   ],
+   "class": "act",
+   "note": "screenshot and click live in the same tool; it cannot be split by tool name"
+  },
+  "javascript_tool": {
+   "properties": {
+    "action": "string (must be 'javascript_exec')",
+    "tabId": "number",
+    "text": "string"
+   },
+   "required": [
+    "action",
+    "text",
+    "tabId"
+   ],
+   "class": "act"
+  },
+  "form_input": {
+   "properties": {
+    "tabId": "number",
+    "ref": "string",
+    "value": "string | boolean | number",
+    "action_summary": "string"
+   },
+   "required": [
+    "ref",
+    "value",
+    "tabId"
+   ],
+   "class": "act"
+  },
+  "file_upload": {
+   "properties": {
+    "tabId": "number",
+    "ref": "string",
+    "paths": "array[string]"
+   },
+   "required": [
+    "paths",
+    "ref",
+    "tabId"
+   ],
+   "class": "act"
+  },
+  "upload_image": {
+   "properties": {
+    "tabId": "number",
+    "imageId": "string",
+    "ref": "string",
+    "coordinate": "array[number]",
+    "filename": "string"
+   },
+   "required": [
+    "imageId",
+    "tabId"
+   ],
+   "class": "act"
+  },
+  "browser_batch": {
+   "properties": {
+    "actions": "array[{name: string, input: object}] (min 1)"
+   },
+   "required": [
+    "actions"
+   ],
+   "class": "act",
+   "note": "wraps other browser tools by short name; a name-based allow-list on the outer call does not see the inner ones"
+  },
+  "shortcuts_list": {
+   "properties": {
+    "tabId": "number"
+   },
+   "required": [
+    "tabId"
+   ],
+   "class": "act"
+  },
+  "shortcuts_execute": {
+   "properties": {
+    "tabId": "number",
+    "command": "string",
+    "shortcutId": "string"
+   },
+   "required": [
+    "tabId"
+   ],
+   "class": "act"
+  },
+  "gif_creator": {
+   "properties": {
+    "action": {
+     "type": "string",
+     "enum": [
+      "start_recording",
+      "stop_recording",
+      "export",
+      "clear"
+     ]
+    },
+    "tabId": "number",
+    "download": "boolean",
+    "filename": "string",
+    "options": "object"
+   },
+   "required": [
+    "action",
+    "tabId"
+   ],
+   "class": "act"
+  },
+  "resize_window": {
+   "properties": {
+    "tabId": "number",
+    "width": "number",
+    "height": "number"
+   },
+   "required": [
+    "width",
+    "height",
+    "tabId"
+   ],
+   "class": "act"
+  }
+ },
+ "observed_result_shapes": {
+  "list_connected_browsers": "[{\"deviceId\":\"<uuid>\",\"name\":\"Browser 1\",\"osPlatform\":\"Windows\",\"connectedAt\":<ms>,\"isLocal\":true},{\"deviceId\":\"<uuid>\",\"name\":\"Browser 2\",...,\"inUse\":true}] followed by a sentence: 2 browsers are connected; \"Browser 2\" (deviceId <uuid>) is the one picked last and will be used.",
+  "tabs_context_mcp": "{\"availableTabs\":[{\"tabId\":<int>,\"title\":\"...\",\"url\":\"...\"}],\"tabGroupId\":<int>} followed by a text list of tabs",
+  "navigate": "\"Navigated to <url>\" followed by a tab context block listing tabId, title and url",
+  "tabs_close_mcp": "\"Closed tab <id>. Group is now empty (auto-removed).\"",
+  "tabs_create_mcp": "NOT OBSERVED in this session",
+  "note": "Payload shapes seen as rendered tool results in an interactive session. The envelope a headless hook receives in tool_response for these MCP tools is NOT VERIFIED. get_page_text, read_page, find, tabs_create_mcp and select_browser results were not observed in this session; the gate takes no fact from them.",
+  "get_page_text / read_page / find": "NOT OBSERVED in this session"
+ }
+}

@@ -1,0 +1,37 @@
+/* Страницы городов и услуг КРЮК24 (tools/make_seo_pages.py) */
+.pg .hero__fig img{aspect-ratio:4/3;object-fit:cover}
+.pg-crumbs{font-size:13px;color:#aab2b7;margin-bottom:18px}
+.pg-crumbs a{color:#ff9c60;text-decoration:none}
+.pg-lead{color:#c6cbce;font-size:17px;max-width:52ch;margin-top:22px}
+.pg-lead b{color:#fff}
+.pg-sec{padding-block:64px}
+.pg-sec--paper{background:#F5F6F7}
+.pg-sec--dark{background:var(--ink);color:#fff}
+.pg-sec--dark .sec__lead{color:#b5bec3}
+.pg-kicker{font-size:13px;font-weight:700;letter-spacing:.15em;color:#ab4000;margin-bottom:12px}
+.pg-two{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.pg-two>*{min-width:0}
+.pg-two p{margin-bottom:14px;max-width:60ch}
+.pg-list{padding-left:20px;margin:0 0 18px}
+.pg-list li{margin-bottom:8px}
+.pg-table-wrap{overflow-x:auto;margin:8px 0 18px}
+.pg-table{width:100%;border-collapse:collapse;font-size:16px;min-width:420px}
+.pg-table th,.pg-table td{padding:14px 12px;border-bottom:1px solid #D1D7DC;text-align:left;vertical-align:top}
+.pg-table thead th{font-size:13px;color:#555d61;font-weight:700}
+.pg-table td strong{font-family:var(--display);font-size:22px;white-space:nowrap}
+.pg-note{font-size:14px;color:#555d61;max-width:80ch;margin-bottom:22px;padding-left:14px;border-left:2px solid var(--orange)}
+.pg-photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.pg-photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px}
+.pg-photos figcaption{font-size:14px;color:#d6dde1;margin-top:10px}
+.pg-links{padding-block:40px;background:#F5F6F7}
+.pg-links p{margin-bottom:10px;line-height:1.9}
+.pg-links a{color:var(--ink);text-underline-offset:4px}
+@media (max-width:699px){
+  .pg-sec{padding-block:44px}
+  .pg-two{grid-template-columns:1fr;gap:28px}
+  .pg-photos{grid-template-columns:1fr}
+  .pg-table td strong{font-size:19px}
+  .pg-table{min-width:0}
+  .pg-table thead th:nth-child(2),.pg-city .pg-table td:nth-child(2){display:none}
+}
+.pg .faq__list{display:grid;grid-template-columns:1fr;gap:10px}

@@ -1,0 +1,22 @@
+# One supervised run of the API_READ jobs. Started by hand: systemctl start kryuk-api-read
+# There is no timer and no [Install] section on purpose: nothing starts this by itself.
+[Unit]
+Description=KRYUK24 API_READ jobs: Beget, Metrica, Webmaster (read-only)
+After=network-online.target
+[Service]
+Type=oneshot
+# The collector has its own user. Its credentials live in their own folder (/etc/kryuk24-api-read, 0750
+# root:kryuk-api-read, files 0640), readable by this user's own group only; kryuk-run (kryuk-capture,
+# kryuk-bro-api) is not in that group. /etc/kryuk24-bro (the Bro server credential) is not touched and not entered.
+User=kryuk-api-read
+Group=kryuk-api-read
+# kryuk-db is the group of the database folder and file. Members: kryuk-run and kryuk-api-read, nobody else.
+SupplementaryGroups=kryuk-db
+WorkingDirectory=/opt/kryuk24
+ExecStart=/usr/bin/python3 /opt/kryuk24/ops_api.py --db /var/lib/kryuk24/runtime.sqlite --secrets /etc/kryuk24-api-read/beget-read.json --secrets /etc/kryuk24-api-read/yandex-read.json --write
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/kryuk24
+PrivateTmp=true

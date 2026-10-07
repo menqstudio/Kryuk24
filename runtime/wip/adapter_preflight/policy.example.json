@@ -1,0 +1,10 @@
+{
+ "job": "WEBMASTER",
+ "tool_prefix": "mcp__claude-in-chrome__",
+ "device_id": "00000000-0000-0000-0000-000000000000",
+ "allowed_hosts": [
+  "webmaster.yandex.ru"
+ ],
+ "state_file": "C:\\PRIVATE_RUN_DIR\\gate_state.json",
+ "max_calls": 40
+}

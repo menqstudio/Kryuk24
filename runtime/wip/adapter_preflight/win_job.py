@@ -1,0 +1,351 @@
+"""Run a command inside a Windows Job Object so that the whole process tree can be ended (v3).
+
+The target never runs outside the job: a small gate stub is started first, assigned to the job,
+and only then released to start the real command, so every descendant is born inside the job.
+The job is created with KILL_ON_JOB_CLOSE and without BREAKAWAY_OK.
+
+v2: a cleaned environment is mandatory, the output limit is enforced while the command runs,
+and cleanup also happens when starting, assigning, releasing or terminating fails.
+
+v3: an error in the thread that reads the output or feeds the input is never swallowed.
+It ends the run and comes back as JobIOError, so the caller cannot mistake it for success.
+
+Standard library only (ctypes). Windows only.
+"""
+import ctypes
+import os
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from ctypes import wintypes
+from pathlib import Path
+
+k32 = ctypes.WinDLL('kernel32', use_last_error=True)
+
+JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x2000
+JobObjectBasicAccountingInformation = 1
+JobObjectBasicProcessIdList = 3
+JobObjectExtendedLimitInformation = 9
+PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+STILL_ACTIVE = 259
+TARGET_START_FAILED_EXIT = 96
+GATE_TIMEOUT_EXIT = 97
+
+# Names a child may receive. Anything else must be named explicitly by the caller in `extra_env_names`.
+BASE_ENV_NAMES = frozenset({'SYSTEMROOT', 'WINDIR', 'PYTHONIOENCODING', 'PYTHONUTF8'})
+# Never passed, whatever the caller says.
+SECRET_NAME = re.compile(r'TOKEN|SECRET|PASSW|CREDENTIAL|API_?KEY|AUTHORI[SZ]ATION|COOKIE|SESSION_?KEY|PRIVATE_?KEY', re.I)
+
+
+class OutputLimit(ValueError):
+    def __init__(self, result):
+        super().__init__('output too large')
+        self.result = result
+
+
+class JobIOError(RuntimeError):
+    """The output could not be read or the input could not be delivered. The run is a failure."""
+
+    def __init__(self, result):
+        super().__init__('adapter input/output failed: ' + ', '.join(result['io_errors']))
+        self.result = result
+
+
+class IO_COUNTERS(ctypes.Structure):
+    _fields_ = [(n, ctypes.c_ulonglong) for n in ('ReadOperationCount', 'WriteOperationCount', 'OtherOperationCount',
+                                                  'ReadTransferCount', 'WriteTransferCount', 'OtherTransferCount')]
+
+
+class JOBOBJECT_BASIC_LIMIT_INFORMATION(ctypes.Structure):
+    _fields_ = [('PerProcessUserTimeLimit', wintypes.LARGE_INTEGER), ('PerJobUserTimeLimit', wintypes.LARGE_INTEGER),
+                ('LimitFlags', wintypes.DWORD), ('MinimumWorkingSetSize', ctypes.c_size_t),
+                ('MaximumWorkingSetSize', ctypes.c_size_t), ('ActiveProcessLimit', wintypes.DWORD),
+                ('Affinity', ctypes.c_size_t), ('PriorityClass', wintypes.DWORD), ('SchedulingClass', wintypes.DWORD)]
+
+
+class JOBOBJECT_EXTENDED_LIMIT_INFORMATION(ctypes.Structure):
+    _fields_ = [('BasicLimitInformation', JOBOBJECT_BASIC_LIMIT_INFORMATION), ('IoInfo', IO_COUNTERS),
+                ('ProcessMemoryLimit', ctypes.c_size_t), ('JobMemoryLimit', ctypes.c_size_t),
+                ('PeakProcessMemoryUsed', ctypes.c_size_t), ('PeakJobMemoryUsed', ctypes.c_size_t)]
+
+
+class JOBOBJECT_BASIC_ACCOUNTING_INFORMATION(ctypes.Structure):
+    _fields_ = [('TotalUserTime', wintypes.LARGE_INTEGER), ('TotalKernelTime', wintypes.LARGE_INTEGER),
+                ('ThisPeriodTotalUserTime', wintypes.LARGE_INTEGER), ('ThisPeriodTotalKernelTime', wintypes.LARGE_INTEGER),
+                ('TotalPageFaultCount', wintypes.DWORD), ('TotalProcesses', wintypes.DWORD),
+                ('ActiveProcesses', wintypes.DWORD), ('TotalTerminatedProcesses', wintypes.DWORD)]
+
+
+k32.CreateJobObjectW.restype = wintypes.HANDLE
+k32.CreateJobObjectW.argtypes = [ctypes.c_void_p, wintypes.LPCWSTR]
+k32.SetInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD]
+k32.QueryInformationJobObject.argtypes = [wintypes.HANDLE, ctypes.c_int, ctypes.c_void_p, wintypes.DWORD, ctypes.c_void_p]
+k32.AssignProcessToJobObject.argtypes = [wintypes.HANDLE, wintypes.HANDLE]
+k32.TerminateJobObject.argtypes = [wintypes.HANDLE, wintypes.UINT]
+k32.IsProcessInJob.argtypes = [wintypes.HANDLE, wintypes.HANDLE, ctypes.POINTER(wintypes.BOOL)]
+k32.OpenProcess.restype = wintypes.HANDLE
+k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
+k32.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
+k32.CloseHandle.argtypes = [wintypes.HANDLE]
+
+
+def _check(ok, what):
+    if not ok:
+        raise OSError(ctypes.get_last_error(), what)
+
+
+def pid_alive(pid):
+    handle = k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+    if not handle:
+        return False
+    try:
+        code = wintypes.DWORD()
+        return bool(k32.GetExitCodeProcess(handle, ctypes.byref(code))) and code.value == STILL_ACTIVE
+    finally:
+        k32.CloseHandle(handle)
+
+
+def clean_env(env, extra_env_names=()):
+    """Validate the environment a child will get. There is no default: the caller must pass it."""
+    if not isinstance(env, dict):
+        raise ValueError('explicit environment required; the parent environment is never inherited')
+    allowed = BASE_ENV_NAMES | {str(n).upper() for n in extra_env_names}
+    out = {}
+    for name, value in env.items():
+        if not isinstance(name, str) or not isinstance(value, str):
+            raise ValueError('environment must map text to text')
+        if SECRET_NAME.search(name):
+            raise ValueError('secret-like environment name refused: ' + name)
+        if name.upper() not in allowed:
+            raise ValueError('environment name outside the allow-list: ' + name)
+        out[name] = value
+    if 'SYSTEMROOT' not in {n.upper() for n in out}:
+        raise ValueError('SystemRoot is required to start a process on Windows')
+    return out
+
+
+class Job:
+    def __init__(self):
+        self.handle = k32.CreateJobObjectW(None, None)
+        _check(self.handle, 'CreateJobObject')
+        try:
+            info = JOBOBJECT_EXTENDED_LIMIT_INFORMATION()
+            info.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            _check(k32.SetInformationJobObject(self.handle, JobObjectExtendedLimitInformation, ctypes.byref(info), ctypes.sizeof(info)),
+                   'SetInformationJobObject')
+        except BaseException:
+            self.close()
+            raise
+
+    def assign(self, process_handle):
+        _check(k32.AssignProcessToJobObject(self.handle, wintypes.HANDLE(int(process_handle))), 'AssignProcessToJobObject')
+        inside = wintypes.BOOL()
+        _check(k32.IsProcessInJob(wintypes.HANDLE(int(process_handle)), self.handle, ctypes.byref(inside)), 'IsProcessInJob')
+        if not inside.value:
+            raise OSError('process is not in the job')
+
+    def active(self):
+        info = JOBOBJECT_BASIC_ACCOUNTING_INFORMATION()
+        _check(k32.QueryInformationJobObject(self.handle, JobObjectBasicAccountingInformation, ctypes.byref(info), ctypes.sizeof(info), None),
+               'QueryInformationJobObject')
+        return info.ActiveProcesses
+
+    def pids(self):
+        class LIST(ctypes.Structure):
+            _fields_ = [('NumberOfAssignedProcesses', wintypes.DWORD), ('NumberOfProcessIdsInList', wintypes.DWORD),
+                        ('ProcessIdList', ctypes.c_size_t * 1024)]
+        info = LIST()
+        _check(k32.QueryInformationJobObject(self.handle, JobObjectBasicProcessIdList, ctypes.byref(info), ctypes.sizeof(info), None),
+               'QueryInformationJobObject list')
+        return [int(info.ProcessIdList[i]) for i in range(info.NumberOfProcessIdsInList)]
+
+    def terminate(self, wait=5.0):
+        """End every process in the job. Returns the number still active after `wait` seconds (0 = clean)."""
+        _check(k32.TerminateJobObject(self.handle, 1), 'TerminateJobObject')
+        deadline = time.monotonic() + wait
+        while self.active() and time.monotonic() < deadline:
+            time.sleep(0.05)
+        return self.active()
+
+    def close(self):
+        if self.handle:
+            k32.CloseHandle(self.handle)
+            self.handle = None
+
+
+def _read_block(stream):
+    """One block of the command's output. Separate so that tests can make it fail."""
+    return stream.read1(4096)
+
+
+def _write_all(stream, data):
+    """Deliver the whole input and close it. Separate so that tests can make it fail."""
+    stream.write(data)
+    stream.close()
+
+
+def _release(gate):
+    """Let the stub start the real command. Separate so that tests can make it fail."""
+    Path(gate).write_bytes(b'1')
+
+
+def _cleanup(job, process, seen, wait=5.0):
+    """End everything, whatever already failed. Returns (survivors, how)."""
+    how = 'job'
+    remaining = None
+    try:
+        seen.update(job.pids())
+    except OSError:
+        pass
+    try:
+        remaining = job.terminate(wait)
+    except OSError:
+        how = 'fallback'
+    # Closing the last handle ends the job's processes too (KILL_ON_JOB_CLOSE); also covers a failed terminate.
+    job.close()
+    if process is not None:
+        try:
+            process.kill()
+        except OSError:
+            pass
+        try:
+            process.wait(timeout=wait)
+        except subprocess.TimeoutExpired:
+            pass
+        seen.add(process.pid)
+    deadline = time.monotonic() + wait
+    alive = [p for p in seen if pid_alive(p)]
+    while alive and time.monotonic() < deadline:
+        time.sleep(0.05)
+        alive = [p for p in alive if pid_alive(p)]
+    return max(len(alive), remaining or 0), how
+
+
+def run_in_job(argv, stdin=b'', timeout=300, env=None, cwd=None, max_output=32768, extra_env_names=(), stderr_path=None):
+    """Run argv inside a fresh job with a cleaned environment. Never leaves a process of the job running.
+
+    Returns: returncode (None on timeout), stdout, timed_out, survivors, peak_pids, cleanup ('job' or 'fallback'),
+    io_errors (always [] in a returned success).
+    Raises OutputLimit (with .result) as soon as the command writes more than max_output bytes.
+    Raises JobIOError (with .result) when reading the output or delivering the input failed.
+    stderr_path: file that receives the command's stderr (trial diagnostics); default is to discard it.
+    """
+    if not isinstance(argv, list) or not argv or any(not isinstance(a, str) for a in argv) or not Path(argv[0]).is_absolute():
+        raise ValueError('absolute executable argv required')
+    if type(timeout) is not int or not 1 <= timeout <= 600:
+        raise ValueError('timeout 1..600 seconds')
+    if type(max_output) is not int or not 1 <= max_output <= 1048576:
+        raise ValueError('max_output 1..1048576 bytes')
+    env = clean_env(env, extra_env_names)
+
+    private = None
+    seen = set()
+    process = None
+    chunks = []
+    overflow = threading.Event()
+    io_failed = threading.Event()
+    io_errors = []
+    threads = []
+    timed_out = False
+    survivors, how = 0, 'job'
+    job = Job()
+    errors = None
+    try:
+        errors = open(stderr_path, 'wb') if stderr_path else None
+        private = tempfile.mkdtemp(prefix='bro-job-')
+        gate = Path(private) / 'go'
+        stub = [sys.executable, '-I', str(Path(__file__).resolve()), '--stub', str(gate)] + argv
+        process = subprocess.Popen(stub, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=errors or subprocess.DEVNULL,
+                                   cwd=cwd, env=env, close_fds=True)
+        job.assign(process._handle)
+        _release(gate)
+
+        def read():
+            total = 0
+            try:
+                while True:
+                    block = _read_block(process.stdout)
+                    if not block:
+                        return
+                    total += len(block)
+                    if total > max_output:
+                        overflow.set()
+                        return
+                    chunks.append(block)
+            except BaseException as error:
+                io_errors.append('output reader: ' + type(error).__name__)
+                io_failed.set()
+
+        def write():
+            try:
+                _write_all(process.stdin, stdin)
+            except BaseException as error:
+                io_errors.append('input writer: ' + type(error).__name__)
+                io_failed.set()
+
+        threads = [threading.Thread(target=read, daemon=True), threading.Thread(target=write, daemon=True)]
+        for t in threads:
+            t.start()
+        deadline = time.monotonic() + timeout
+        while True:
+            try:
+                seen.update(job.pids())
+            except OSError:
+                pass
+            if overflow.is_set() or io_failed.is_set() or process.poll() is not None:
+                break
+            if time.monotonic() >= deadline:
+                timed_out = True
+                break
+            time.sleep(0.05)
+    finally:
+        survivors, how = _cleanup(job, process, seen)
+        for t in threads:
+            t.join(timeout=5)
+            if t.is_alive():
+                io_errors.append('input/output thread did not finish')
+        for stream in (getattr(process, 'stdin', None), getattr(process, 'stdout', None)):
+            try:
+                if stream is not None:
+                    stream.close()
+            except OSError:
+                pass
+        if errors is not None:
+            errors.close()
+        if private:
+            shutil.rmtree(private, ignore_errors=True)
+
+    result = {'returncode': None if (timed_out or overflow.is_set()) else process.returncode, 'stdout': b''.join(chunks),
+              'timed_out': timed_out, 'survivors': survivors, 'peak_pids': sorted(seen), 'cleanup': how,
+              'io_errors': list(io_errors)}
+    if overflow.is_set():
+        result['stdout'] = b''
+        raise OutputLimit(result)
+    if io_errors and not timed_out:
+        # Whatever the exit code was, the output or the input is not trustworthy.
+        result['stdout'] = b''
+        result['returncode'] = None
+        raise JobIOError(result)
+    return result
+
+
+def _stub(gate, argv):
+    deadline = time.monotonic() + 10
+    while not os.path.exists(gate):
+        if time.monotonic() > deadline:
+            return GATE_TIMEOUT_EXIT
+        time.sleep(0.01)
+    try:
+        return subprocess.call(argv)
+    except OSError:
+        return TARGET_START_FAILED_EXIT
+
+
+if __name__ == '__main__':
+    if len(sys.argv) >= 4 and sys.argv[1] == '--stub':
+        sys.exit(_stub(sys.argv[2], sys.argv[3:]))
+    sys.exit('library module; used by the adapter wrapper')

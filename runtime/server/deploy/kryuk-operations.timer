@@ -1,0 +1,9 @@
+[Unit]
+Description=KRYUK24 plan every morning at 10:00 Yerevan / 09:00 Moscow
+[Timer]
+OnCalendar=*-*-* 06:00:00 UTC
+Persistent=true
+RandomizedDelaySec=60
+Unit=kryuk-operations.service
+[Install]
+WantedBy=timers.target

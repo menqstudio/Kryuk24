@@ -1,0 +1,8 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Тест — предпросмотр сообщения</title><style>body{font:16px system-ui;max-width:800px;margin:24px auto;padding:16px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f5f8;padding:16px}</style><h1>Только предпросмотр</h1><p>Реальный WhatsApp/Telegram не открыт. Ничего не отправлено. ID в тексте и журнале должен совпадать.</p><pre id="message"></pre><a href="/test-orders">Открыть журнал</a><script>
+const id=new URL(location.href).searchParams.get('id');
+async function show(){
+ try{const r=await fetch('/test-report');const d=await r.json();const o=d.orders.find(o=>o.id===id);document.getElementById('message').textContent=o?'ТЕСТ — НЕ ВЫЕЗЖАТЬ\nЗаявка: '+id+'\n'+o.data.message:'Заявка: '+id+'\nКопия пока не найдена. Обновите страницу, если сохранение завершилось.';}
+ catch(e){document.getElementById('message').textContent='Заявка: '+id+'\nЖурнал недоступен. Отправки не было.';}
+}
+show();setTimeout(show,1000);
+</script></html>

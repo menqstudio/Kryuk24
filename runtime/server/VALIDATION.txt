@@ -1,0 +1,6 @@
+v0.7.2 —07.10.2026 Asia/Yerevan
+LOCAL LinuxPython3.12:50 unittest tests OK.
+JS:4handoff+10contact+6actualmarkup+10persistence scenarios PASS;11SHA256oraclecases PASS.
+Fixture oldcode cp1252stdout test reproducedUnicodeEncodeError; explicitUTF8byte-outputpasses. Specific reportedWindowsfailure stillUNKNOWN withoutfullstderr. Launcherdiagnostics improved.
+Identitytests:calculator/bookingwa/tg exactpayloadreuse acrossreload includingreferrerchange; explicitnewrequest; changeddata;24hexpiry; modeisolation; blockedstoragefallback; offlinecapturethenreload; no rawformtextstored.
+ActualWindows/VPS/browser0.7.2 pending. ActualChrome0.7.1 accepted basedonClaude report, not independentCodexinspection. No sourcewebsite/database/server/cabinet/message changes here.

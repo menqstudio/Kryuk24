@@ -1,0 +1,13 @@
+[Unit]
+Description=KRYUK24 private SQLite backup
+
+[Service]
+Type=oneshot
+User=kryuk
+Group=kryuk
+ExecStart=/usr/bin/python3 /opt/kryuk24/deploy/backup_daily.py --db /var/lib/kryuk24/runtime.sqlite --directory /var/lib/kryuk24/backups
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/kryuk24
