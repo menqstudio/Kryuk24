@@ -56,7 +56,9 @@ jobs:
       - name: README visuals hold nothing GitHub would block or that loads from outside
         run: |
           ! grep -l -E "<script|foreignObject|@font-face|<image|href=|url\(http" docs/assets/readme/*.svg
-          test "$(ls docs/assets/readme/*.svg | wc -l)" = 20
+          test "$(ls docs/assets/readme/*.svg | wc -l)" = 36
+      - name: README diagrams are what README.md says today
+        run: python tools/make_repo_visuals.py --check
   windows:
     runs-on: windows-latest
     steps:

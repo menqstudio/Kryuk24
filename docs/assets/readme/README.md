@@ -1,6 +1,10 @@
 # README visuals
 
-Made by `tools/make_repo_visuals.py`; do not edit the SVG files by hand. After a fact changes, change it in the script, run it, and check the pictures on GitHub in the light and the dark theme.
+Made by `tools/make_repo_visuals.py`; do not edit the SVG files by hand.
+
+**The root `README.md` is the source of the four diagrams.** The script holds none of their content: it reads the title from the `###` heading above a picture, the names and states from the list under it, the date from the "State on" sentence, and the label from the alt text. After a fact changes, change it in the README, run `python tools/make_repo_visuals.py`, commit both, and look at the pictures on GitHub in the light and the dark theme. CI runs `python tools/make_repo_visuals.py --check` and fails when the README and the committed pictures differ.
+
+What a card shows: the bold name of a list item (a remark in brackets is left out); the state word its last line starts with, which must be one of the words in `STATES` in the script, because that list gives each word its tone; and, in the first diagram, the first sub-line up to its first colon, semicolon or full stop. A name too long for its card stops the script with a message; shorten it in the README. The cover is not read from the README: its words are in the script.
 
 | File | What |
 | --- | --- |
@@ -29,7 +33,11 @@ Rendering was checked this way: the README was passed through GitHub's own Markd
 
 # Հայերեն
 
-Սարքում ա `tools/make_repo_visuals.py`-ն. SVG ֆայլերը ձեռքով չեն խմբագրվում։ Երբ փաստ ա փոխվում, փոխում ենք սկրիպտում, աշխատացնում ու նայում GitHub-ում՝ light ու dark թեմայով։
+Սարքում ա `tools/make_repo_visuals.py`-ն. SVG ֆայլերը ձեռքով չեն խմբագրվում։
+
+**Չորս սխեմայի աղբյուրը արմատի `README.md`-ն ա։** Սկրիպտի մեջ դրանց բովանդակությունից ոչինչ չկա. վերնագիրը կարդում ա նկարի վերևի `###` տողից, անուններն ու վիճակները՝ տակի ցանկից, ամսաթիվը՝ «Վիճակը՝ …» նախադասությունից, պիտակը՝ alt տեքստից։ Երբ փաստ ա փոխվում, փոխում ենք README-ում, աշխատացնում `python tools/make_repo_visuals.py`, commit անում երկուսն էլ ու նայում GitHub-ում՝ light ու dark թեմայով։ CI-ն աշխատացնում ա `python tools/make_repo_visuals.py --check` ու կարմրում ա, եթե README-ն ու նկարները տարբեր են։
+
+Ինչ ա երևում քարտում. ցանկի կետի թավ անունը (փակագծի դիտողությունը չի մտնում). վիճակի բառը, որով սկսվում ա կետի վերջին տողը, ու որը պիտի լինի սկրիպտի `STATES` ցանկում, որովհետև էդ ցանկն ա տալիս բառի երանգը. առաջին սխեմայում նաև առաջին ենթատողը՝ մինչև առաջին վերջակետը, միջակետը կամ կետը։ Քարտում չտեղավորվող անունը սկրիպտը կանգնեցնում ա հաղորդագրությամբ. կարճացնում ենք README-ում։ Շապիկը README-ից չի կարդացվում. դրա բառերը սկրիպտում են։
 
 - **Ինքնությունը КРЮК24-ինն ա.** կեռիկը, «КРЮК24 / ЭВАКУАТОР+» lockup-ը, navy `#13233A`, orange `#EF5B00`, soft orange `#F18A4B`, սպիտակ՝ բոլորը `tools/brand.py`-ից։ Lockup-ի տառերը բրենդի տառատեսակներից հանած ուրվագծեր են, դրա համար լոգոն ամեն տեղ նույնն ա ու font բեռնել պետք չի։ Մնացած տեքստը ընթերցողի համակարգի font-ով ա. հայերենն էլ էդպես ա երևում։
 - **Կառուցվածքը MenQ-ի design platform-ի կանոններով ա**, ինչքան դա վերաբերում ա պրոդուկտին. 960×300 շապիկ՝ տեքստը ներքևի ձախ անկյունում ու 48 px ցանցով. քարտեր 1 px եզրագծով. պիտակներ՝ կետով ու բառով, այսինքն կարգավիճակը երբեք միայն գույն չի. light ու dark հավասար. տեքստի կոնտրաստը 4.5:1 կամ ավելի. երկու լեզուն նույն բովանդակությամբ։ MenQ-ի սեփական գույները, font-երն ու լոգոն չեն օգտագործվում։ Կարդացված ա `menqstudio/MenQ-Standard`-ի `main` ճյուղից, commit `78f86cbc346cf005211ee461b8dea22c8478b27e`, `platforms/design/` (issue #3-ում նշված `menq-design-system-v1` ճյուղը էդ repo-ում չկա)։ Հարթակը չի փոխվել։

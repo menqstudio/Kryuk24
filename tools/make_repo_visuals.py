@@ -2,8 +2,15 @@
 Light and dark, EN and HY.
 
     python tools/make_repo_visuals.py            writes docs/assets/readme/*.svg
+    python tools/make_repo_visuals.py --check    the committed diagrams are what README.md says today (no file written)
 
-Needs Pillow and OpenCV (tools/requirements.txt). The output is committed; rerun after a fact below changes.
+The four diagrams hold no content of their own: title, names, states, the date and the label of each are read from
+README.md (the heading, the list under the picture, the alt text). To change a picture, change the README and run
+this script; CI runs --check, so a README that moved without its pictures fails there. What stays here is how a
+diagram looks, the cover, and the list of state words with their tone (STATES): a state the list does not know, or a
+name too long for its card, stops the script with a message.
+
+Writing the files needs Pillow and OpenCV (tools/requirements.txt), for the cover. --check needs only Python.
 
 Rules the files follow:
   - identity is KRYUK24's own: the hook and the «КРЮК24 / ЭВАКУАТОР+» lockup, navy, orange, soft orange, white
@@ -19,20 +26,18 @@ Rules the files follow:
     the narrow one up to 600 px;
   - no script, no foreignObject, no external resource, no embedded or remote font: every other text uses the
     reader's system fonts, which is also what covers Armenian;
-  - every status word here must be backed by docs/CURRENT_STATE.md or docs/ROADMAP.md. AS_OF is printed in each.
+  - every status word comes from README.md and must be backed by docs/CURRENT_STATE.md or docs/ROADMAP.md. The date
+    of the README's "State on" sentence is printed in each diagram.
 """
+import re
 import sys
 from pathlib import Path
-
-import cv2
-import numpy as np
-from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import brand as B  # noqa: E402
 
 OUT = B.ROOT / "docs" / "assets" / "readme"
-AS_OF = "07.10.2026"
+README = B.ROOT / "README.md"
 W = 480                   # width of a diagram in its own units
 WIDE = 960                # width of the wide variant, the same as the cover
 MIN_TEXT = 17             # smallest text in a diagram
@@ -51,6 +56,9 @@ THEMES = {
 # ---------------------------------------------------------------- brand letters as outlines
 def outline(s, family, weight, size=420, ls=0.0):
     """Path data of `s` set in a brand font, baseline at y=0, in units of 1/size. Returns (d, advance width per unit)."""
+    import cv2                                    # only the cover needs these, so --check runs without them
+    import numpy as np
+    from PIL import Image, ImageDraw
     width = B.measure(s, size, family, weight, ls)
     pad = 40
     canvas = Image.new("L", (int(width) + 2 * pad, int(size * 1.5) + 2 * pad), 0)
@@ -126,21 +134,27 @@ def rows_picture(t, title, label, rows, foot):
     body = [text(28, 50, title, 26, t["text"], 700), '<rect x="28" y="68" width="%d" height="2" fill="%s"/>' % (56, t["accent"])]
     y = 88
     for name, word, tone in rows:
+        if width(name, 18) + width("● " + word, MIN_TEXT) > W - 72 - 12:
+            sys.exit("name and state do not fit one row of the narrow picture, shorten the name in README.md: %s" % name)
         body += [box(20, y, W - 40, 50, t["surface2"], t["border"], 12), text(36, y + 32, name, 18, t["text"], 600), state(W - 36, y + 32, word, tone, t)]
         y += 58
     body.append(text(28, y + 22, foot, MIN_TEXT, t["muted"]))
     return doc(W, y + 44, body, label, t)
 
 
+def width(s, size):
+    return len(s) * size * (0.62 if any(ord(ch) > 0x530 for ch in s) else 0.53)
+
+
 def columns(labels):
     """How many equal columns the wide variant takes: the most (4, 3 or 2) in which the longest label still fits.
     `labels` = (text, font size). The width is an estimate (a little over what Segoe UI semibold takes), because the
     reader's font is not known."""
-    longest = max(len(s) * size * (0.62 if any(ord(ch) > 0x530 for ch in s) else 0.53) for s, size in labels)
+    longest = max(width(s, size) for s, size in labels)
     for n in (4, 3, 2):
         if longest <= (WIDE - 40 - 12 * (n - 1)) / n - 36:
             return n
-    return 1
+    sys.exit("too long for a card even in two columns, shorten it in README.md: %s" % max(labels, key=lambda x: width(*x))[0])
 
 
 def cells(count, n, height):
@@ -166,41 +180,77 @@ def rows_picture_wide(t, title, label, rows, foot):
     return doc(WIDE, y + 36, body, label, t)
 
 
-# ---------------------------------------------------------------- content (every status: docs/CURRENT_STATE.md, docs/ROADMAP.md)
-L = {
-    "en": {
-        "foot": "State on %s" % AS_OF,
-        "placement": ("Where each part lives", "Where each part of KRYUK24 Bro lives: GitHub is in place, the VPS runtime is in STAGING, the Debian worker is planned, Windows is for trials",
-                      [("GitHub", "code, documents", "in place", "ok"), ("VPS", "the runtime", "STAGING", "progress"),
-                       ("Debian desktop", "browser worker", "planned", "neutral"), ("Windows", "development, trials", "in use", "ok")]),
-        "server": ("On the server today", "On the server today: queue and dashboard, Bro bridge and API reader are installed; mailbox, approvals, executor and monitoring are planned",
-                   [("Queue and dashboard", "installed", "ok"), ("Bro bridge", "installed", "ok"), ("API reader", "installed", "ok"),
-                    ("Mailbox", "planned", "neutral"), ("Approvals", "planned", "neutral"), ("Executor", "planned", "neutral"), ("Monitoring", "planned", "neutral")]),
-        "phases": ("Roadmap phases", "Roadmap phases: 0 in review; 1, 2 and 6 started; 3, 4, 5, 7 and 8 not started",
-                   [("0  Canonical state", "in review", "progress"), ("1  Security, recovery", "started", "progress"), ("2  Collection", "started", "progress"),
-                    ("3  Business flow", "not started", "neutral"), ("4  Action approval", "not started", "neutral"), ("5  Executor", "not started", "neutral"),
-                    ("6  Browser, Debian", "started", "progress"), ("7  Reports, control", "not started", "neutral"), ("8  Operation, v1.0", "not started", "neutral")]),
-        "sources": ("What Bro reads today", "What Bro reads today: hosting, Metrica and Webmaster are installed; Direct and the mailbox are blocked; Avito is on hold; the Business card is in progress; orders are not built",
-                    [("Hosting", "installed", "ok"), ("Yandex Metrica", "installed", "ok"), ("Yandex Webmaster", "installed", "ok"), ("Yandex Direct", "blocked", "blocked"),
-                     ("Avito", "on hold", "neutral"), ("Mailbox", "blocked", "blocked"), ("Business card", "in progress", "progress"), ("Requests, orders", "not built", "neutral")]),
-    },
-    "hy": {
-        "foot": "Վիճակը %s-ին" % AS_OF,
-        "placement": ("Որտեղ ինչն ա ապրում", "Որտեղ ա ապրում KRYUK24 Bro-ի ամեն մասը. GitHub-ը կա, VPS-ի runtime-ը STAGING ա, Debian-ի worker-ը պլանում ա, Windows-ը փորձերի համար ա",
-                      [("GitHub", "կոդ, փաստաթղթեր", "կա", "ok"), ("VPS", "runtime-ը", "STAGING", "progress"),
-                       ("Debian desktop", "browser worker", "պլանում ա", "neutral"), ("Windows", "մշակում, փորձեր", "գործածվում ա", "ok")]),
-        "server": ("Սերվերում այսօր", "Սերվերում այսօր. հերթն ու վահանակը, Bro-ի կամուրջն ու API reader-ը դրված են. փոստը, հաստատումները, executor-ն ու monitoring-ը պլանում են",
-                   [("Հերթ ու վահանակ", "դրված ա", "ok"), ("Bro-ի կամուրջ", "դրված ա", "ok"), ("API reader", "դրված ա", "ok"),
-                    ("Փոստ", "պլանում ա", "neutral"), ("Հաստատումներ", "պլանում ա", "neutral"), ("Executor", "պլանում ա", "neutral"), ("Monitoring", "պլանում ա", "neutral")]),
-        "phases": ("Քարտեզի փուլերը", "Քարտեզի փուլերը. 0-րդը ընդունման մեջ ա. 1, 2 ու 6-ը սկսված են. 3, 4, 5, 7 ու 8-ը սկսված չեն",
-                   [("0  Հիմնական վիճակ", "ընդունման մեջ", "progress"), ("1  Անվտանգություն", "սկսված ա", "progress"), ("2  Հավաքում", "սկսված ա", "progress"),
-                    ("3  Բիզնես հոսք", "սկսված չի", "neutral"), ("4  Հաստատում", "սկսված չի", "neutral"), ("5  Executor", "սկսված չի", "neutral"),
-                    ("6  Զննարկիչ, Debian", "սկսված ա", "progress"), ("7  Հաշվետվություն", "սկսված չի", "neutral"), ("8  Շահագործում, v1.0", "սկսված չի", "neutral")]),
-        "sources": ("Ինչ ա կարդում Bro-ն այսօր", "Ինչ ա կարդում Bro-ն այսօր. հոստինգը, Metrica-ն ու Webmaster-ը դրված են. Direct-ն ու փոստը փակ են. Avito-ն HOLD ա. Բիզնեսի քարտը ընթացքում ա. պատվերները չկան",
-                    [("Հոստինգ", "դրված ա", "ok"), ("Yandex Metrica", "դրված ա", "ok"), ("Yandex Webmaster", "դրված ա", "ok"), ("Yandex Direct", "փակ ա", "blocked"),
-                     ("Avito", "HOLD", "neutral"), ("Փոստարկղ", "փակ ա", "blocked"), ("Բիզնեսի քարտ", "ընթացքում ա", "progress"), ("Դիմումներ, պատվերներ", "չկա", "neutral")]),
-    },
+# ---------------------------------------------------------------- content: read from README.md
+# State words the README may use, with the tone each is drawn in. The first one a state line starts with is taken.
+STATES = {
+    "en": (("in place", "ok"), ("in use", "ok"), ("installed", "ok"), ("STAGING", "progress"), ("in review", "progress"),
+           ("in progress", "progress"), ("started", "progress"), ("planned", "neutral"), ("not started", "neutral"),
+           ("on hold", "neutral"), ("not built", "neutral"), ("blocked", "blocked")),
+    "hy": (("կա", "ok"), ("գործածվում ա", "ok"), ("դրված ա", "ok"), ("STAGING", "progress"), ("ընդունման մեջ", "progress"),
+           ("ընթացքում ա", "progress"), ("սկսված ա", "progress"), ("պլանում ա", "neutral"), ("սկսված չի", "neutral"),
+           ("HOLD", "neutral"), ("չկա", "neutral"), ("փակ ա", "blocked")),
 }
+FOOT = {"en": "State on %s", "hy": "Վիճակը %s-ին"}
+PICTURE = re.compile(r'<picture>.*?srcset="docs/assets/readme/(placement|server|phases|sources)-(en|hy)-dark\.svg".*?alt="([^"]*)"')
+ITEM = re.compile(r"^- \*\*(.+?)\*\*(?:: (.*))?$")
+SUB = re.compile(r"^  - [^:]+: (.*)$")
+DATE = re.compile(r"\b(\d{2}\.\d{2}\.\d{4})\b")
+
+
+def state_of(line, lang, where):
+    for word, tone in STATES[lang]:
+        if line.startswith(word) and not line[len(word):len(word) + 1].isalnum():
+            return word, tone
+    sys.exit("README.md, %s: the state %r starts with no word of STATES[%r] in tools/make_repo_visuals.py" % (where, line[:40], lang))
+
+
+def short(s):
+    """The part of a line before its first separator: what a card has room for."""
+    return re.split(r":|;|\. |\.$|՝", s, maxsplit=1)[0].strip()
+
+
+def read_readme(source=None):
+    """{(picture, lang): {"title", "label", "date", "rows"}} from README.md. A row is (name, what, state word, tone):
+    the bold name without a bracketed remark, the short form of the first sub-line, and the state from the last line."""
+    lines = (source if source is not None else README.read_bytes().decode("utf-8")).split("\n")
+    found, dates = {}, {}
+    for i, line in enumerate(lines):
+        m = PICTURE.search(line)
+        if not m:
+            continue
+        key, lang, label = m.groups()
+        where = "%s (%s)" % (key, lang)
+        head = next((lines[j][4:].strip() for j in range(i - 1, -1, -1) if lines[j].startswith("### ")), None)
+        if head is None:
+            sys.exit("README.md, %s: no ### heading above the picture" % where)
+        if lang not in dates:                                  # the date is in the paragraph above the first picture
+            d = next((DATE.search(lines[j]) for j in range(i - 1, -1, -1) if DATE.search(lines[j]) and not lines[j].startswith(("#", "-", " "))), None)
+            if d is None:
+                sys.exit("README.md, %s: no date (dd.mm.yyyy) in the text above the first picture" % where)
+            dates[lang] = d.group(1)
+        rows, j = [], i + 1
+        while j < len(lines) and not lines[j].strip():
+            j += 1
+        while j < len(lines) and ITEM.match(lines[j]):
+            name, inline = ITEM.match(lines[j]).groups()
+            subs, j = [], j + 1
+            while j < len(lines) and SUB.match(lines[j]):
+                subs.append(SUB.match(lines[j]).group(1))
+                j += 1
+            said = inline if inline else (subs[-1] if subs else "")
+            word, tone = state_of(said, lang, "%s, %s" % (where, name))
+            rows.append((re.sub(r"\s*\(.*\)$", "", name), short(subs[0]) if len(subs) > 1 else "", word, tone))
+        if not rows:
+            sys.exit("README.md, %s: no list under the picture" % where)
+        found[(key, lang)] = {"title": head, "label": label, "rows": rows, "lang": lang}
+    for c in found.values():
+        c["foot"] = FOOT[c["lang"]] % dates[c["lang"]]
+    missing = [(k, lang) for k in ("placement", "server", "phases", "sources") for lang in ("en", "hy") if (k, lang) not in found]
+    if missing:
+        sys.exit("README.md: no picture found for %s" % missing)
+    return found
+
+
 COVER = ("Bro: the business operating assistant", "Tow-truck service in Moscow and the Moscow region",
          "inspect → analyse → propose → prepare → approval → execute → verify → report",
          "KRYUK24 Bro: the business operating assistant for a tow-truck service in Moscow and the Moscow region")
@@ -238,56 +288,69 @@ def cover_narrow(t):
     return doc(w, h, body, label, t, frame=False)
 
 
-def placement(t, lang):
-    c = L[lang]
-    title, label, zones = c["placement"]
-    body = [text(28, 50, title, 26, t["text"], 700), '<rect x="28" y="68" width="56" height="2" fill="%s"/>' % t["accent"]]
+def placement(t, c):
+    body = [text(28, 50, c["title"], 26, t["text"], 700), '<rect x="28" y="68" width="56" height="2" fill="%s"/>' % t["accent"]]
     y = 88
-    for name, what, word, tone in zones:
+    for name, what, word, tone in c["rows"]:
+        if width(name, 21) + width("● " + word, MIN_TEXT) > W - 76 - 12 or width(what, MIN_TEXT) > W - 76:
+            sys.exit("too long for the narrow picture, shorten it in README.md: %s / %s" % (name, what))
         body += [box(20, y, W - 40, 78, t["surface2"], t["border"], 14), '<rect x="20" y="%d" width="4" height="46" fill="%s"/>' % (y + 16, t["accent"]),
                  text(40, y + 34, name, 21, t["text"], 700), text(40, y + 60, what, MIN_TEXT, t["text2"]), state(W - 36, y + 34, word, tone, t)]
         y += 88
     body.append(text(28, y + 20, c["foot"], MIN_TEXT, t["muted"]))
-    return doc(W, y + 42, body, label, t)
+    return doc(W, y + 42, body, c["label"], t)
 
 
-def placement_wide(t, lang):
-    c = L[lang]
-    title, label, zones = c["placement"]
-    body = [text(28, 50, title, 26, t["text"], 700), '<rect x="28" y="68" width="56" height="2" fill="%s"/>' % t["accent"]]
+def placement_wide(t, c):
+    zones = c["rows"]
+    body = [text(28, 50, c["title"], 26, t["text"], 700), '<rect x="28" y="68" width="56" height="2" fill="%s"/>' % t["accent"]]
     spots, cw, y = cells(len(zones), columns([(z[0], 21) for z in zones] + [(z[1], MIN_TEXT) for z in zones]), 116)
     for (x, top), (name, what, word, tone) in zip(spots, zones):
         body += [box(x, top, cw, 116, t["surface2"], t["border"], 14), '<rect x="%.1f" y="%d" width="4" height="46" fill="%s"/>' % (x, top + 16, t["accent"]),
                  text(x + 20, top + 34, name, 21, t["text"], 700), text(x + 20, top + 60, what, MIN_TEXT, t["text2"]),
                  state(x + 20, top + 96, word, tone, t, "start")]
     body.append(text(28, y + 14, c["foot"], MIN_TEXT, t["muted"]))
-    return doc(WIDE, y + 36, body, label, t)
+    return doc(WIDE, y + 36, body, c["label"], t)
 
 
-def listed(key, wide=False):
-    def make(t, lang):
-        title, label, rows = L[lang][key]
-        return (rows_picture_wide if wide else rows_picture)(t, title, label, rows, L[lang]["foot"])
+def listed(wide=False):
+    def make(t, c):
+        rows = [(name, word, tone) for name, _, word, tone in c["rows"]]
+        return (rows_picture_wide if wide else rows_picture)(t, c["title"], c["label"], rows, c["foot"])
     return make
 
 
-PICTURES = (("placement", placement), ("server", listed("server")), ("phases", listed("phases")), ("sources", listed("sources")),
-            ("placement-wide", placement_wide), ("server-wide", listed("server", True)), ("phases-wide", listed("phases", True)),
-            ("sources-wide", listed("sources", True)))
+PICTURES = (("placement", "placement", placement), ("server", "server", listed()), ("phases", "phases", listed()), ("sources", "sources", listed()),
+            ("placement-wide", "placement", placement_wide), ("server-wide", "server", listed(True)), ("phases-wide", "phases", listed(True)),
+            ("sources-wide", "sources", listed(True)))
+
+
+def diagrams():
+    content = read_readme()
+    return [("%s-%s-%s.svg" % (name, lang, theme), fn(t, content[(key, lang)]))
+            for theme, t in THEMES.items() for lang in ("en", "hy") for name, key, fn in PICTURES]
+
+
+def check():
+    stale = [name for name, svg in diagrams() if not (OUT / name).exists() or (OUT / name).read_bytes() != svg.encode("utf-8")]
+    if stale:
+        sys.exit("README.md and its pictures differ; run python tools/make_repo_visuals.py and commit the result:\n  " + "\n  ".join(stale))
+    print("%d diagrams match README.md" % len(diagrams()))
 
 
 def main():
-    OUT.mkdir(parents=True, exist_ok=True)
-    for old in OUT.glob("*.svg"):
-        old.unlink()
-    made = []
+    if sys.argv[1:] == ["--check"]:
+        return check()
+    made = diagrams()                                  # first, so that a README the script cannot read deletes nothing
     for theme, t in THEMES.items():
         made += [("cover-%s.svg" % theme, cover(t)), ("cover-narrow-%s.svg" % theme, cover_narrow(t))]
-        for lang in ("en", "hy"):
-            made += [("%s-%s-%s.svg" % (name, lang, theme), fn(t, lang)) for name, fn in PICTURES]
     for name, svg in made:
         for banned in ("<script", "foreignObject", "@font-face", "href=", "url(http", "<image"):
             assert banned not in svg, (name, banned)
+    OUT.mkdir(parents=True, exist_ok=True)
+    for old in OUT.glob("*.svg"):
+        old.unlink()
+    for name, svg in made:
         (OUT / name).write_bytes(svg.encode("utf-8"))
     print("%d files, %.0f KB in all" % (len(made), sum(len(s.encode("utf-8")) for _, s in made) / 1024))
 

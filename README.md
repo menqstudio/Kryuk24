@@ -21,16 +21,16 @@ Each picture carries one idea in large labels, so that it reads on a phone. The 
 <picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-en-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/placement-en-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-wide-en-dark.svg"><img src="docs/assets/readme/placement-wide-en-light.svg" alt="Where each part lives: GitHub in place; VPS runtime in STAGING; Debian desktop planned; Windows in use. Details in the list below." width="960"></picture>
 
 - **GitHub**
-  - What lives there: canonical code, documents, decisions, roadmap
+  - What lives there: code, documents: the canonical ones, with decisions and the roadmap
   - Today: in place: private repository, checks on every change
 - **VPS**
   - What lives there: the runtime: queue and database, API readers, mailbox, approvals, executor of API and mail actions, monitoring
   - Today: STAGING, sending is off; what is installed is in the next picture
 - **Debian desktop**
-  - What lives there: browser and media worker
+  - What lives there: browser worker; media work too
   - Today: planned; the move has not started
 - **Windows**
-  - What lives there: development and supervised trials only
+  - What lives there: development, trials; supervised trials only
   - Today: in use; the Chrome proxy, the gate and the trial harness are work in progress
 
 Boundaries and data flow: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
@@ -39,7 +39,7 @@ Boundaries and data flow: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 <picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/server-en-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/server-en-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/server-wide-en-dark.svg"><img src="docs/assets/readme/server-wide-en-light.svg" alt="On the server today: queue and dashboard, Bro bridge and API reader installed; mailbox, approvals, executor and monitoring planned. Details in the list below." width="960"></picture>
 
-- **Daily queue and dashboard**: installed; ten tasks are planned every day at 06:00 UTC
+- **Queue and dashboard**: installed; ten tasks are planned every day at 06:00 UTC
 - **Bro bridge**: installed; the service runs but does not start by itself after a reboot
 - **API reader (hosting, Metrica, Webmaster)**: installed on 07.10.2026; its first supervised write is pending
 - **Mailbox**: planned; blocked until the mail application exists
@@ -74,10 +74,10 @@ Evidence for each line: [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
 - **6 Browser and Debian**
   - Owner / acceptor: Claude / GPT
   - State: started: the harness failures on the hosted runner are diagnosed and fixed
-- **7 Analysis, reporting, control**
+- **7 Reports, control**
   - Owner / acceptor: Claude / Gev
   - State: not started
-- **8 Controlled operation and v1.0**
+- **8 Operation, v1.0**
   - Owner / acceptor: Gev / GPT
   - State: not started
 
@@ -105,10 +105,10 @@ A phase closes on its acceptor's word, not on a file. Scope, closing conditions 
 - **Mailbox**
   - What: reviews, moderation results, letters from the services
   - State: blocked: no mail application, no credential
-- **Yandex Business card**
-  - What: card state, reviews
+- **Business card**
+  - What: Yandex Business: card state, reviews
   - State: in progress: no API; the browser route is not accepted yet
-- **Real requests and orders**
+- **Requests, orders**
   - What: request → order → completion → payment
   - State: not built: nothing real is recorded
 
@@ -209,16 +209,16 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 <picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-hy-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/placement-hy-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-wide-hy-dark.svg"><img src="docs/assets/readme/placement-wide-hy-light.svg" alt="Որտեղ ինչն ա ապրում. GitHub-ը կա, VPS-ի runtime-ը STAGING ա, Debian desktop-ը պլանում ա, Windows-ը գործածվում ա։ Մանրամասները՝ ներքևի ցանկում։" width="960"></picture>
 
 - **GitHub**
-  - Ինչ ա ապրում էնտեղ: հիմնական կոդը, փաստաթղթերը, որոշումները, քարտեզը
+  - Ինչ ա ապրում էնտեղ: կոդ, փաստաթղթեր. հիմնականները՝ որոշումներով ու քարտեզով
   - Այսօր: կա. փակ repo, ստուգումներ ամեն փոփոխության վրա
 - **VPS**
   - Ինչ ա ապրում էնտեղ: runtime-ը. հերթ ու բազա, API reader-ներ, փոստ, հաստատումներ, API ու փոստի գործողությունների executor, monitoring
   - Այսօր: STAGING, ուղարկելը անջատված ա. ինչն ա դրված՝ հաջորդ նկարում
 - **Debian desktop**
-  - Ինչ ա ապրում էնտեղ: browser ու media worker
+  - Ինչ ա ապրում էնտեղ: browser worker. նաև media-ի գործը
   - Այսօր: պլանում ա. տեղափոխումը չի սկսվել
 - **Windows**
-  - Ինչ ա ապրում էնտեղ: միայն մշակում ու հսկվող փորձեր
+  - Ինչ ա ապրում էնտեղ: մշակում, փորձեր. միայն հսկվող փորձեր
   - Այսօր: գործածվում ա. Chrome proxy-ն, gate-ը ու trial harness-ը ընթացքում են
 
 Սահմաններն ու տվյալների հոսքը՝ [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#հայերեն)։
@@ -227,7 +227,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 
 <picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/server-hy-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/server-hy-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/server-wide-hy-dark.svg"><img src="docs/assets/readme/server-wide-hy-light.svg" alt="Սերվերում այսօր. հերթն ու վահանակը, Bro-ի կամուրջն ու API reader-ը դրված են. փոստը, հաստատումները, executor-ն ու monitoring-ը պլանում են։ Մանրամասները՝ ներքևի ցանկում։" width="960"></picture>
 
-- **Օրվա հերթ ու վահանակ**: դրված ա. ամեն օր 06:00 UTC-ին պլանավորվում ա տասը գործ
+- **Հերթ ու վահանակ**: դրված ա. ամեն օր 06:00 UTC-ին պլանավորվում ա տասը գործ
 - **Bro-ի կամուրջ**: դրված ա. ծառայությունը աշխատում ա, բայց reboot-ից հետո ինքը չի բարձրանում
 - **API reader (հոստինգ, Metrica, Webmaster)**: դրված ա 07.10.2026-ին. առաջին հսկվող գրելը սպասվում ա
 - **Փոստ**: պլանում ա. փակ ա, մինչև փոստի հավելվածը լինի
@@ -244,7 +244,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 - **0 Հիմնական վիճակ**
   - Պատասխանատու / ընդունող: Claude / GPT
   - Վիճակ: ընդունման մեջ. Claude-ի կողմից արված ա, սպասում ա GPT-ի ընդունմանը
-- **1 Անվտանգություն ու վերականգնում**
+- **1 Անվտանգություն**
   - Պատասխանատու / ընդունող: Claude / GPT
   - Վիճակ: սկսված ա. արտաքին պատճենը կա. credential-ների մաքրումն ու փորձված restore-ը բաց են
 - **2 Հուսալի հավաքում**
@@ -253,7 +253,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 - **3 Իրական բիզնես հոսք**
   - Պատասխանատու / ընդունող: GPT / Արմեն
   - Վիճակ: սկսված չի
-- **4 Գործողության հաստատում**
+- **4 Հաստատում**
   - Պատասխանատու / ընդունող: GPT / Claude
   - Վիճակ: սկսված չի
 - **5 Executor**
@@ -262,10 +262,10 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 - **6 Զննարկիչ ու Debian**
   - Պատասխանատու / ընդունող: Claude / GPT
   - Վիճակ: սկսված ա. hosted runner-ի harness ձախողումները պարզված ու ուղղված են
-- **7 Վերլուծություն, հաշվետվություն, հսկողություն**
+- **7 Հաշվետվություն**
   - Պատասխանատու / ընդունող: Claude / Գև
   - Վիճակ: սկսված չի
-- **8 Հսկվող շահագործում ու v1.0**
+- **8 Շահագործում, v1.0**
   - Պատասխանատու / ընդունող: Գև / GPT
   - Վիճակ: սկսված չի
 
@@ -293,10 +293,10 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 - **Փոստարկղ**
   - Ինչ: կարծիքներ, մոդերացիայի արդյունքներ, ծառայությունների նամակներ
   - Վիճակ: փակ ա. փոստի հավելված ու բանալի չկա
-- **Yandex Բիզնեսի քարտ**
-  - Ինչ: քարտի վիճակ, կարծիքներ
+- **Բիզնեսի քարտ**
+  - Ինչ: Yandex Բիզնես. քարտի վիճակ, կարծիքներ
   - Վիճակ: ընթացքում ա. API չկա, զննարկչի ճանապարհը դեռ ընդունված չի
-- **Իրական դիմումներ ու պատվերներ**
+- **Դիմումներ, պատվերներ**
   - Ինչ: դիմում → պատվեր → ավարտ → վճարում
   - Վիճակ: չկա. իրական ոչինչ չի գրանցվում
 
