@@ -48,6 +48,14 @@ jobs:
         working-directory: runtime/server
         # GOOGLE_SHEET.json in that folder is a test fixture, not the server's file
         run: python -m unittest discover -p "test_*.py"
+      - name: Order flow (internal backend, not deployed) against the server code
+        env:
+          PYTHONPATH: runtime/server
+        run: python -m unittest discover -s runtime/order_flow -p "test_*.py"
+      - name: Request flow (internal backend, not deployed) on top of the order flow
+        env:
+          PYTHONPATH: "runtime/server:runtime/order_flow"
+        run: python -m unittest discover -s runtime/request_flow -p "test_*.py"
       - name: Package manifest matches the files
         working-directory: runtime/api_reader
         run: sha256sum -c SHA256SUMS.txt
@@ -75,6 +83,17 @@ jobs:
         run: |
           python -m unittest test_bro_api_reader
           python -m unittest test_ops_api
+      - name: Order flow (internal backend, not deployed) against the server code
+        env:
+          PYTHONPATH: runtime/server
+        run: python -m unittest discover -s runtime/order_flow -p "test_*.py"
+      - name: Request flow (internal backend, not deployed) on top of the order flow
+        env:
+          PYTHONPATH: "runtime/server;runtime/order_flow"
+        run: python -m unittest discover -s runtime/request_flow -p "test_*.py"
+      - name: Server code, the runtime suite the order flow builds on
+        working-directory: runtime/server
+        run: python -m unittest test_runtime
       - name: WIP, gate hook and Windows job object
         working-directory: runtime/wip/adapter_preflight
         run: |
