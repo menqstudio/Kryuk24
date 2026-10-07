@@ -55,6 +55,19 @@ def credential(password):
  if not isinstance(password,str) or not 16<=len(password)<=1024:raise ValueError('password length 16..1024 required')
  salt=secrets.token_bytes(16)
  return {'salt':salt.hex(),'hash':hashlib.pbkdf2_hmac('sha256',password.encode(),salt,600000).hex()}
+def verify(user,password,users):
+ """The user name when the password is right, else None. An unknown name costs the same hash calculation."""
+ if not isinstance(user,str) or not isinstance(password,str) or not 1<=len(password)<=1024:return None
+ rec=users.get(user)
+ try:
+  salt=bytes.fromhex(rec['salt']) if rec else b'0'*16
+  actual=hashlib.pbkdf2_hmac('sha256',password.encode('utf-8'),salt,600000).hex()
+  if rec and hmac.compare_digest(actual,rec['hash']):return user
+ except (ValueError,UnicodeError,KeyError,TypeError):pass
+ return None
+def same(a,b):
+ """Constant-time comparison of two header-sized strings. compare_digest refuses non-ASCII str, so compare bytes."""
+ return isinstance(a,str) and isinstance(b,str) and hmac.compare_digest(a.encode('utf-8','surrogatepass'),b.encode('utf-8','surrogatepass'))
 def authenticate(header,users):
  try:
   if not header.startswith('Basic ') or len(header)>2048:return None
@@ -170,8 +183,9 @@ def server(store,users,origin,port=8790):
    if self.headers.get('Origin')!=origin:return self.reply(403,{'error':'origin required'})
    if self.headers.get('Transfer-Encoding'):return self.reply(400,{'error':'invalid login'})
    try:
+    # 8192: a 1024-character password may take 6 bytes a character when JSON escapes it.
     size=int(self.headers.get('Content-Length','0'))
-    if not 0<size<=4096 or self.headers.get('Content-Type','').split(';')[0]!='application/json':raise ValueError()
+    if not 0<size<=8192 or self.headers.get('Content-Type','').split(';')[0]!='application/json':raise ValueError()
     raw=self.rfile.read(size)
     if len(raw)!=size:raise ValueError()
     d=json.loads(raw)
@@ -183,8 +197,8 @@ def server(store,users,origin,port=8790):
     if len(attempts)>=30:return self.reply(429,{'error':'Попробуйте через минуту.'})
    if not logins.acquire(blocking=False):return self.reply(429,{'error':'Попробуйте через минуту.'})
    try:
-    auth='Basic '+base64.b64encode((d['username']+':'+d['password']).encode()).decode()
-    actor=authenticate(auth,users)
+    # Checked directly: wrapped as a Basic header, a long non-ASCII password allowed by provisioning passed the 2048 limit.
+    actor=verify(d['username'],d['password'],users)
     if not actor:
      with lock:attempts.append(time.monotonic())
      return self.reply(401,{'error':'Проверьте имя и пароль.'})
@@ -217,7 +231,7 @@ def server(store,users,origin,port=8790):
    if self.path==PREFIX+'api/login':return self.login()
    actor=self.identity()
    if not actor:return self.reply(401,{'error':'login required'})
-   if self.headers.get('Origin')!=origin or not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),self.session[1]):return self.reply(403,{'error':'reload page'})
+   if self.headers.get('Origin')!=origin or not same(self.headers.get('X-CSRF-Token',''),self.session[1]):return self.reply(403,{'error':'reload page'})
    if self.path==PREFIX+'api/logout':
     sessions.revoke(self.headers.get('Cookie',''));return self.reply(200,{'logged_out':True},cookie=self.cookie('',0))
    if actor!='armen':return self.reply(403,{'error':'read only'})

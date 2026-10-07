@@ -91,7 +91,8 @@ class Tests(unittest.TestCase):
 
  def test_session_cookie_and_no_repeated_password_hash(self):
   import portal
-  with patch('portal.authenticate',wraps=portal.authenticate) as verify:
+  # Counts the hash itself, whichever function asks for it: one for the login, none for the ten requests after it.
+  with patch('portal.hashlib.pbkdf2_hmac',wraps=portal.hashlib.pbkdf2_hmac) as verify:
    status,raw,h=self.request();self.assertEqual(status,200)
    for _ in range(10):self.assertEqual(self.request(PREFIX+'api/state')[0],200)
    self.assertEqual(verify.call_count,1)
@@ -126,4 +127,26 @@ class Tests(unittest.TestCase):
   self.assertNotEqual(h['Set-Cookie'].split(';')[0],old)
   self.assertEqual(self.request(PREFIX+'api/state',None,headers={'Cookie':old})[0],401)
 
+ def test_long_non_ascii_password_allowed_by_provisioning_logs_in(self):
+  # 800 Armenian letters: provisioning accepts it; wrapped as a Basic header it passed 2048 bytes and login refused it.
+  password='ա'*800;tmp=tempfile.TemporaryDirectory()
+  http=server(Store(tmp.name+'/db',tmp.name+'/media'),{'armen':credential(password)},'https://runtime.kryuk24.ru',0)
+  thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
+  try:
+   def post(pw):
+    req=urllib.request.Request('http://127.0.0.1:%d%sapi/login'%(http.server_port,PREFIX),data=json.dumps({'username':'armen','password':pw}).encode(),
+                               headers={'Content-Type':'application/json','Origin':'https://runtime.kryuk24.ru'})
+    try:
+     with urllib.request.urlopen(req) as r:return r.status
+    except urllib.error.HTTPError as e:
+     with e:return e.code
+   self.assertEqual(post(password),200)
+   self.assertEqual(post(password[:-1]),401)
+  finally:
+   http.shutdown();http.server_close();thread.join();tmp.cleanup()
+ def test_malformed_csrf_header_is_refused_not_a_crash(self):
+  for bad in ('é','é'*40,''):
+   status,raw,_=self.answer({'X-CSRF-Token':bad})
+   self.assertEqual((status,json.loads(raw)['error']),(403,'reload page'),repr(bad))
+  self.assertEqual(self.answer()[0],200,'the server still answers and the right token still works')
 if __name__=='__main__':unittest.main()

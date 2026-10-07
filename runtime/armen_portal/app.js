@@ -5,7 +5,7 @@ const csrf=document.querySelector('meta[name="csrf-token"]').content;
 const status=document.getElementById('status');let state=null;
 if(actor==='gev'){document.getElementById('greeting').textContent='Фото и ответы Армена';document.getElementById('upload').hidden=true;document.getElementById('question-hint').textContent='Ответы Армена. Только просмотр.';}
 function message(el,text,error=false){el.textContent=text;el.className=error?'error':'success';}
-async function api(path,options={}){const r=await fetch(ROOT+path,{credentials:'same-origin',...options});const data=await r.json();if(!r.ok)throw new Error(data.error||'Не сохранилось');return data;}
+async function api(path,options={}){const r=await fetch(ROOT+path,{credentials:'same-origin',...options});const data=await r.json();if(r.status===401){try{sessionStorage.setItem('kryuk-armen-expired','1');}catch(e){}location.reload();throw new Error('Время входа истекло. Войдите снова.');}if(!r.ok)throw new Error(data.error||'Не сохранилось');return data;}
 function key(){return crypto.randomUUID().replaceAll('-','');}
 async function load(){state=await api('api/state');render();}
 function render(){document.getElementById('question-heading').textContent='Сегодня · '+state.day;const area=document.getElementById('questions');area.replaceChildren();
