@@ -1,0 +1,3 @@
+# Every file is stored and checked out byte for byte. The site must equal what is deployed, and the runtime
+# fixtures and packages are compared by sha256; a line-ending conversion on checkout would break both.
+* -text
