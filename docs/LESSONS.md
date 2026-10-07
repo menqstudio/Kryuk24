@@ -155,6 +155,9 @@
 - **What happened (07.10, 21:53 UTC):** while starting the design system Gev wrote "do not mix MenQ in, this is fully separate".
   **Why:** KRYUK24 is Armen's business; the MenQ library is a tool, not its identity.
   **Do instead:** in KRYUK24 work, use MenQ code only as a pinned copy under `design/vendor/`; no MenQ colour, logo, name or text on any KRYUK24 screen; nothing about KRYUK24 into MenQ repositories or MenQ memory. `design/scripts/validate_design.py` checks the visible part.
+- **What happened (07.10, 22:18 UTC):** the first `KryukMark` re-set the logo letters in CSS; next to the official file the «ЭВАКУАТОР» spacing differed. Gev: «the logo cannot change, it stays as it is».
+  **Why:** the logo was rebuilt from its rules instead of copied from the approved file; the brand generator's letter-spacing depends on the size it was measured at.
+  **Do instead:** in code, the logo is a copy of the approved file in `brand/02_lockups/` (`design/scripts/build_lockup.py`, checked in CI); compare any new logo use with the file by pixels before showing it.
 
 ## What Gev reads
 

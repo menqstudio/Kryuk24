@@ -40,6 +40,11 @@ extra = sorted(p.name for p in VENDOR.iterdir() if p.name not in up["files"] and
 if extra:
     errors.append("unpinned files in vendor/: " + ", ".join(extra))
 
+# 2b. The logo artwork is the official logo file, copied, never drawn here
+r = subprocess.run([sys.executable, str(D / "scripts" / "build_lockup.py"), "--check"], capture_output=True, text=True)
+if r.returncode:
+    errors.append("logo artwork: " + r.stdout.strip())
+
 # 3. Custom property coverage
 tokens_css = (D / "tokens" / "kryuk.tokens.css").read_text(encoding="utf-8")
 DEF = re.compile(r"(--[a-z0-9-]+)\s*:")

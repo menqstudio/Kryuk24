@@ -41,17 +41,18 @@ h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.
 
 /* ── Part 2. KRYUK24 components ── */
 
-/* KryukMark: hook + «КРЮК24» / «ЭВАКУАТОР+». Proportions of the site header: hook 44, name 28, sub 12, gap 7. */
-.kr-mark { --kr-unit: 1px; display: inline-flex; align-items: center; gap: calc(7 * var(--kr-unit)); color: var(--color-content-primary); text-decoration: none; line-height: 1; }
-.kr-mark--sm { --kr-unit: 0.75px; }
-.kr-mark--lg { --kr-unit: 1.5px; }
-.kr-mark-hook { display: block; height: calc(44 * var(--kr-unit)); width: auto; flex: none; fill: var(--kr-hook, var(--orange-500)); }
-.kr-mark-txt { display: inline-flex; flex-direction: column; }
-.kr-mark-name { font: 700 calc(28 * var(--kr-unit))/1 var(--font-display); letter-spacing: 0; color: inherit; }
-.kr-mark-sub { display: block; margin-top: calc(3 * var(--kr-unit)); font: 400 calc(12 * var(--kr-unit))/1.1 var(--font-sans); letter-spacing: 0.2em; text-align: justify; text-align-last: justify; color: var(--kr-sub, var(--orange-500)); }
-.kr-mark-plus { font-weight: 700; letter-spacing: 0; color: var(--color-content-primary); }
-[data-theme="dark"] .kr-mark, .section-contrast .kr-mark { --kr-sub: var(--orange-300); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .kr-mark { --kr-sub: var(--orange-300); } }
+/* KryukMark: the official lockup artwork (lockup.generated.js), sized by its hook height: sm 33, md 44 (site header), lg 66 px.
+   Only the three logo colours are set here, exactly as in tools/brand.py: hook orange; name and «+» navy on light,
+   white on dark; «ЭВАКУАТОР» orange on light, soft orange on dark. */
+.kr-mark { --kr-h: 44px; --kr-main: var(--navy-900); --kr-sub: var(--orange-500); display: inline-flex; line-height: 0; text-decoration: none; }
+.kr-mark--sm { --kr-h: 33px; }
+.kr-mark--lg { --kr-h: 66px; }
+.kr-mark-art { display: block; height: var(--kr-h); width: auto; overflow: visible; }
+.kr-l-hook { fill: var(--orange-500); }
+.kr-l-main { fill: var(--kr-main); }
+.kr-l-sub { fill: var(--kr-sub); }
+[data-theme="dark"] .kr-mark, .section-contrast .kr-mark { --kr-main: var(--grey-0); --kr-sub: var(--orange-300); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .kr-mark { --kr-main: var(--grey-0); --kr-sub: var(--orange-300); } }
 
 /* Contact buttons: call first, then WhatsApp and Telegram. Big targets (min 48 px). */
 .kr-contact { display: grid; grid-template-columns: repeat(var(--kr-cols, 3), minmax(0, 1fr)); gap: var(--space-2); }

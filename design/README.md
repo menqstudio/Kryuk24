@@ -17,13 +17,13 @@ KRYUK24 is its own business with its own brand. This folder is its design system
 | 2 | `vendor/menq-components/bundle.css`, `bro.css` | The pinned library (never edited; sha256 in `UPSTREAM.json`) |
 | 3 | `components/kryuk.css` | The library in KRYUK24 colours, plus KRYUK24's own components |
 | 4 | `../site/assets/fonts.css`, `fonts/armenian.css` | Golos Text, Roboto Condensed (site files), Noto Sans Armenian for owner screens |
-| JS | React 18 → `vendor/menq-components/bundle.js` → `bro.bundle.js` → `components/hook.generated.js` → `components/kryuk.bundle.js` | `window.Kryuk` (own components), the library under its own namespace |
+| JS | React 18 → `vendor/menq-components/bundle.js` → `bro.bundle.js` → `components/lockup.generated.js` → `components/kryuk.bundle.js` | `window.Kryuk` (own components), the library under its own namespace |
 
-`preview/index.html` shows everything in both themes. Commands: `python design/scripts/build_tokens.py` after any change of the token source or the hook; `python design/scripts/validate_design.py` before every commit (also in CI).
+`preview/index.html` shows everything in both themes. Commands: `python design/scripts/build_tokens.py` after any change of the token source, `python design/scripts/build_lockup.py` if the logo file is ever regenerated; `python design/scripts/validate_design.py` before every commit (also in CI).
 
 ### Logo
 
-- The lockup is **hook + «КРЮК24» / «ЭВАКУАТОР+»**, approved by Gev on 04.10.2026. In code use `KryukMark`; elsewhere use the files in `brand/02_lockups/`.
+- The lockup is **hook + «КРЮК24» / «ЭВАКУАТОР+»**, approved by Gev on 04.10.2026. **It does not change.** In code use `KryukMark`: it places the official file `brand/02_lockups/lockup_horizontal_transparent_light.svg` as it is (copied by `design/scripts/build_lockup.py`, checked byte-for-byte in CI; only the colours switch for dark grounds). Elsewhere use the files in `brand/02_lockups/`.
 - Hook: orange `#EF5B00`, vector of `brand/00_hook_master/hook_path.txt`. «КРЮК24»: Roboto Condensed Bold, navy on light, white on dark. «ЭВАКУАТОР»: Golos Text, letter-spaced to the width of «КРЮК24», orange on light, soft orange `#F18A4B` on dark. «+»: bold, same colour as «КРЮК24».
 - Proportions of the site header: hook 44, name 28, sub 12, gap 7. Clear space at least the height of the hook's ring. Never stretch, tilt, outline or fill the hook with a gradient.
 - **Ink is navy `#13233A`** (Gev, 06.10.2026; `tools/brand.py`, site v32). The `#111111` in `brand/README.md` is the earlier value and is superseded.
@@ -38,7 +38,7 @@ KRYUK24 is its own business with its own brand. This folder is its design system
 | Orange as text | `#A33D00` | `#FF8A4C` | Links and emphasis |
 | Page / card / well | `#F4F6F8` / `#FFFFFF` / `#EEF1F4` | `#0B1524` / `#13233A` / `#1C3150` | Light theme starts from soft grey, not pure white |
 | Text / secondary / muted | `#13233A` / `#3E4A5A` / `#5A6676` | `#F4F6F8` / `#C5CDD7` / `#9AA6B6` | |
-| Success, warning, danger | text `#15803D`, `#B45309`, `#B91C1C` | `#4ADE80`, `#FBBF24`, `#F87171` | A state always carries a word or icon too |
+| Success, warning, danger | text `#166534`, `#92400E`, `#B91C1C` | `#4ADE80`, `#FBBF24`, `#F87171` | A state always carries a word or icon too |
 
 Components use only the semantic `--color-*` tokens, never a primitive. `.section-contrast` gives a dark navy block inside either theme.
 
@@ -67,7 +67,7 @@ Components use only the semantic `--color-*` tokens, never a primitive. `.sectio
 
 | Component | Use |
 | --- | --- |
-| `KryukMark` | The lockup, `size` sm / md / lg, `markOnly` for the hook alone |
+| `KryukMark` | The official lockup file placed as is; `size` sm / md / lg (hook 33 / 44 / 66 px), `markOnly` for the hook alone |
 | `ContactButtons` | Call (with the number), WhatsApp, Telegram: real `tel:` and chat links |
 | `CallBar` | The same three actions fixed to the bottom of a phone screen |
 | `Price`, `TariffList` | «от 4 000 ₽» and tariff rows with the per-km price |
@@ -119,7 +119,7 @@ Copy the six files from a newer commit of the library, refresh `vendor/menq-comp
 
 ### Լոգո
 
-- Lockup՝ **կեռիկ + «КРЮК24» / «ЭВАКУАТОР+»** (Գևի հաստատում, 04.10.2026)։ Կոդում՝ `KryukMark`, մնացած տեղերում՝ `brand/02_lockups/`։
+- Lockup՝ **կեռիկ + «КРЮК24» / «ЭВАКУАТОР+»** (Գևի հաստատում, 04.10.2026)։ **Լոգոն չի փոխվում։** Կոդում՝ `KryukMark`, որը դնում է պաշտոնական `brand/02_lockups/` ֆայլը հենց այնպես, ինչպես կա (CI-ն ստուգում է). միայն մուգ ֆոնին գույներն են փոխվում՝ ըստ բրենդի կանոնի։ Մնացած տեղերում՝ `brand/02_lockups/`-ի ֆայլերը։
 - Կեռիկը նարնջագույն է՝ `#EF5B00`։ «КРЮК24»-ը բաց ֆոնին navy է, մուգ ֆոնին՝ սպիտակ։ «ЭВАКУАТОР»-ը բաց ֆոնին նարնջագույն է, մուգ ֆոնին՝ `#F18A4B`։
 - Չձգել, չթեքել, եզրագիծ չտալ, գրադիենտ չլցնել։
 - **Ink-ը navy `#13233A`-ն է** (Գև, 06.10.2026)։ `brand/README.md`-ի `#111111`-ը հին արժեքն է, փոխարինված է։

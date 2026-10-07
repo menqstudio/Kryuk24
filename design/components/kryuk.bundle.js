@@ -1,9 +1,9 @@
 /* @ds-bundle: {"format":4,"namespace":"Kryuk","components":[{"name":"KryukMark"},{"name":"ContactButtons"},{"name":"CallBar"},{"name":"Price"},{"name":"TariffList"},{"name":"ChoiceTiles"},{"name":"OrderStatus"},{"name":"OrderCard"}]} */
 /* KRYUK24 components. Requires window.React, the vendored component library (window.MenQ, used only as building blocks)
-   and hook.generated.js (window.KryukHook). Customer-facing text is Russian; owner-facing labels can be passed in Armenian. */
+   and lockup.generated.js (window.KryukLockup, the official logo artwork). Customer-facing text is Russian; owner-facing labels can be passed in Armenian. */
 (function () {
-  var React = window.React, M = window.MenQ, HOOK = window.KryukHook;
-  if (!React || !M || !HOOK) throw new Error('KRYUK24 components: load React, vendor/menq-components/bundle.js and hook.generated.js first');
+  var React = window.React, M = window.MenQ, LOGO = window.KryukLockup;
+  if (!React || !M || !LOGO) throw new Error('KRYUK24 components: load React, vendor/menq-components/bundle.js and lockup.generated.js first');
   var h = React.createElement, useId = React.useId || function () { return 'kr' + Math.random().toString(36).slice(2, 8); };
   function cx() { return Array.prototype.filter.call(arguments, Boolean).join(' '); }
 
@@ -18,16 +18,13 @@
   function telHref(phone) { return 'tel:' + String(phone).replace(/[^\d+]/g, ''); }
   function rub(n) { return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(n) + ' ₽'; }
 
-  // KryukMark: the official lockup — hook + «КРЮК24» / «ЭВАКУАТОР+». The hook is the vector of brand/00_hook_master.
+  // KryukMark: the official lockup, placed as is. The artwork is generated from tools/brand.py lockup()
+  // (lockup.generated.js); this component only sizes it. Never redraw or restyle the logo here.
   function KryukMark(p) {
-    var hook = h('svg', { className: 'kr-mark-hook', viewBox: '0 0 ' + HOOK.w + ' ' + HOOK.h, 'aria-hidden': 'true', focusable: 'false' }, h('path', { d: HOOK.d }));
-    var label = p.label || 'КРЮК24, эвакуатор';
-    if (p.markOnly) return h('span', { className: cx('kr-mark', p.size && 'kr-mark--' + p.size, p.className), role: 'img', 'aria-label': label }, hook);
-    var body = [hook, h('span', { key: 't', className: 'kr-mark-txt', 'aria-hidden': 'true' },
-      h('span', { className: 'kr-mark-name' }, 'КРЮК24'),
-      h('span', { className: 'kr-mark-sub' }, 'ЭВАКУАТОР', h('span', { className: 'kr-mark-plus' }, '+')))];
-    var props = { className: cx('kr-mark', p.size && 'kr-mark--' + p.size, p.className), 'aria-label': label };
-    return p.href ? h('a', Object.assign(props, { href: p.href }), body) : h('span', Object.assign(props, { role: 'img' }), body);
+    var w = p.markOnly ? LOGO.hookW : LOGO.w;
+    var svg = h('svg', { className: 'kr-mark-art', viewBox: LOGO.x + ' ' + LOGO.y + ' ' + w + ' ' + LOGO.h, 'aria-hidden': 'true', focusable: 'false', dangerouslySetInnerHTML: { __html: LOGO.svg } });
+    var props = { className: cx('kr-mark', p.size && 'kr-mark--' + p.size, p.markOnly && 'kr-mark--hook', p.className), 'aria-label': p.label || 'КРЮК24, эвакуатор' };
+    return p.href ? h('a', Object.assign(props, { href: p.href }), svg) : h('span', Object.assign(props, { role: 'img' }), svg);
   }
 
   // ContactButtons: call (primary, with the number), WhatsApp, Telegram. Every button is a real link.
