@@ -9,6 +9,7 @@ Made by `tools/make_repo_visuals.py`; do not edit the SVG files by hand. After a
 | `server-<en|hy>-<light|dark>.svg` | what is on the server today |
 | `phases-<en|hy>-<light|dark>.svg` | roadmap phases 0 to 8 with their state |
 | `sources-<en|hy>-<light|dark>.svg` | what Bro reads today |
+| `<placement|server|phases|sources>-wide-<en|hy>-<light|dark>.svg` | the same four for a wide screen; the README shows these by default and the four above on screens up to 600 px wide |
 
 ## Rules
 
@@ -17,6 +18,7 @@ Made by `tools/make_repo_visuals.py`; do not edit the SVG files by hand. After a
 - **Safe for GitHub.** No script, no `foreignObject`, no external resource, no embedded or remote font, no raster image inside. The generator refuses to write a file that has one, and CI checks the committed files.
 - **No progress claim without evidence.** Every status word in a picture is in `docs/CURRENT_STATE.md` or `docs/ROADMAP.md`. The date is printed in each picture.
 - **Readable on a phone.** A picture carries one idea in large labels: the diagrams are 480 units wide and no text in them is smaller than 17 units, which is about 12 px when the picture is 330 px wide. Owners, notes and evidence are not in the pictures; they are in the Markdown list under each one.
+- **A wide screen is filled.** Each diagram also has a `-wide` file, 960 units across like the cover: the same cards in equal columns (4, 3 or 2, the most in which the longest label fits), a short last row centred. No text in them is smaller than 17 units either.
 - **Pictures supplement text.** Everything a picture says is in Markdown next to it and in its alt text.
 
 ## Not verified
@@ -34,6 +36,7 @@ Rendering was checked this way: the README was passed through GitHub's own Markd
 - **GitHub-ի համար անվտանգ.** script, `foreignObject`, դրսի ռեսուրս, ներդրված կամ դրսի font, ներսում raster նկար չկա։ Generator-ը էդպիսի ֆայլ չի գրում, CI-ն էլ ստուգում ա։
 - **Առանց ապացույցի առաջընթաց չի գրվում.** նկարի ամեն կարգավիճակ կա `docs/CURRENT_STATE.md`-ում կամ `docs/ROADMAP.md`-ում։ Ամսաթիվը գրված ա ամեն նկարում։
 - **Հեռախոսում կարդացվող.** նկարը մեկ միտք ա տանում խոշոր գրերով. սխեմաները 480 միավոր լայն են, ու մեջի ոչ մի գիր 17 միավորից փոքր չի, այսինքն մոտ 12 px, երբ նկարը 330 px լայն ա։ Պատասխանատուները, նշումներն ու ապացույցը նկարում չեն, ամեն նկարի տակի Markdown ցանկում են։
+- **Լայն էկրանը լցվում ա.** ամեն սխեմա ունի նաև `-wide` ֆայլ՝ 960 միավոր լայն, ոնց շապիկը. նույն քարտերը հավասար սյուներով (4, 3 կամ 2՝ ամենաշատը, որի մեջ ամենաերկար գիրը տեղավորվում ա), կարճ վերջին շարքը՝ կենտրոնում։ README-ն լռելյայն ցույց ա տալիս սրանք, իսկ մինչև 600 px էկրաններում՝ նեղերը։ Էստեղ էլ ոչ մի գիր 17 միավորից փոքր չի։
 - **Նկարը լրացնում ա տեքստը.** ինչ ասում ա նկարը, կա կողքի Markdown-ում ու alt տեքստում։
 
 **Չստուգված.** Տեսքը ստուգվել ա էսպես. README-ն անցել ա GitHub-ի սեփական Markdown API-ով, ու ստացված HTML-ը նկարվել ա Chromium-ում 1280 ու 390 px լայնքով, light ու dark։ GitHub-ի կենդանի էջը, ուրիշ զննարկիչներն ու GitHub-ի հեռախոսի հավելվածը ստուգված չեն։ Հայտնի չի՝ հեռախոսի հավելվածը հարգո՞ւմ ա շապիկի `max-width` աղբյուրը. եթե չէ, ցույց ա տրվում լայն շապիկը՝ փոքրացված։

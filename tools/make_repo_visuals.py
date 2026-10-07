@@ -11,9 +11,12 @@ Rules the files follow:
   - structure follows the MenQ design platform's conventions for a product layer: 960x300 cover with the text block
     bottom-left and a 48 px hairline grid, cards with a 1 px border, a status shown as a dot AND a word (never by
     colour alone), light and dark as equals, text contrast 4.5:1 or better;
-  - readable on a phone: a picture carries only the main idea in large labels. The diagrams are 480 units wide and
-    no text in them is smaller than MIN_TEXT, which is about 12 px when the picture is 330 px wide. Details (owners,
-    notes, evidence) are in the Markdown next to the picture. There is a narrow cover for small screens;
+  - readable on a phone: a picture carries only the main idea in large labels. The narrow diagrams are 480 units
+    wide and no text in them is smaller than MIN_TEXT, which is about 12 px when the picture is 330 px wide. Details
+    (owners, notes, evidence) are in the Markdown next to the picture. There is a narrow cover for small screens;
+  - on a wide screen the same content fills the column: every diagram also has a `-wide` file, WIDE units across,
+    with the cards in equal columns and a short last row centred. The README shows the wide file by default and
+    the narrow one up to 600 px;
   - no script, no foreignObject, no external resource, no embedded or remote font: every other text uses the
     reader's system fonts, which is also what covers Armenian;
   - every status word here must be backed by docs/CURRENT_STATE.md or docs/ROADMAP.md. AS_OF is printed in each.
@@ -31,6 +34,7 @@ import brand as B  # noqa: E402
 OUT = B.ROOT / "docs" / "assets" / "readme"
 AS_OF = "07.10.2026"
 W = 480                   # width of a diagram in its own units
+WIDE = 960                # width of the wide variant, the same as the cover
 MIN_TEXT = 17             # smallest text in a diagram
 SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans','Noto Sans Armenian',Helvetica,Arial,sans-serif"
 
@@ -105,10 +109,10 @@ def box(x, y, w, h, fill, stroke=None, r=16):
     return '<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="%d" fill="%s"%s/>' % (x, y, w, h, r, fill, s)
 
 
-def state(right, base, word, tone, t):
-    """A status: a dot and a word in its tone, right-aligned. Both always, never the colour alone.
+def state(x, base, word, tone, t, anchor="end"):
+    """A status: a dot and a word in its tone, right-aligned unless told otherwise. Both always, never the colour alone.
     The dot is a character of the same text, so it sits next to the word whatever font the reader has."""
-    return text(right, base, "● " + word, MIN_TEXT, t[tone], 600, "end")
+    return text(x, base, "● " + word, MIN_TEXT, t[tone], 600, anchor)
 
 
 def doc(w, h, body, label, t, frame=True):
@@ -126,6 +130,40 @@ def rows_picture(t, title, label, rows, foot):
         y += 58
     body.append(text(28, y + 22, foot, MIN_TEXT, t["muted"]))
     return doc(W, y + 44, body, label, t)
+
+
+def columns(labels):
+    """How many equal columns the wide variant takes: the most (4, 3 or 2) in which the longest label still fits.
+    `labels` = (text, font size). The width is an estimate (a little over what Segoe UI semibold takes), because the
+    reader's font is not known."""
+    longest = max(len(s) * size * (0.62 if any(ord(ch) > 0x530 for ch in s) else 0.53) for s, size in labels)
+    for n in (4, 3, 2):
+        if longest <= (WIDE - 40 - 12 * (n - 1)) / n - 36:
+            return n
+    return 1
+
+
+def cells(count, n, height):
+    """Top-left corners and the width of `count` cards in `n` equal columns; a short last row is centred."""
+    cw = (WIDE - 40 - 12 * (n - 1)) / n
+    out = []
+    for i in range(count):
+        row, col = divmod(i, n)
+        in_row = min(n, count - row * n)
+        left = 20 + (WIDE - 40 - (in_row * cw + (in_row - 1) * 12)) / 2
+        out.append((left + col * (cw + 12), 88 + row * (height + 12)))
+    return out, cw, 88 + ((count + n - 1) // n) * (height + 12)
+
+
+def rows_picture_wide(t, title, label, rows, foot):
+    """The same list for a wide screen: cards in equal columns, the name above its status."""
+    body = [text(28, 50, title, 26, t["text"], 700), '<rect x="28" y="68" width="%d" height="2" fill="%s"/>' % (56, t["accent"])]
+    spots, cw, y = cells(len(rows), columns([(r[0], 18) for r in rows]), 78)
+    for (x, top), (name, word, tone) in zip(spots, rows):
+        body += [box(x, top, cw, 78, t["surface2"], t["border"], 12), text(x + 18, top + 32, name, 18, t["text"], 600),
+                 state(x + 18, top + 60, word, tone, t, "start")]
+    body.append(text(28, y + 14, foot, MIN_TEXT, t["muted"]))
+    return doc(WIDE, y + 36, body, label, t)
 
 
 # ---------------------------------------------------------------- content (every status: docs/CURRENT_STATE.md, docs/ROADMAP.md)
@@ -213,14 +251,29 @@ def placement(t, lang):
     return doc(W, y + 42, body, label, t)
 
 
-def listed(key):
+def placement_wide(t, lang):
+    c = L[lang]
+    title, label, zones = c["placement"]
+    body = [text(28, 50, title, 26, t["text"], 700), '<rect x="28" y="68" width="56" height="2" fill="%s"/>' % t["accent"]]
+    spots, cw, y = cells(len(zones), columns([(z[0], 21) for z in zones] + [(z[1], MIN_TEXT) for z in zones]), 116)
+    for (x, top), (name, what, word, tone) in zip(spots, zones):
+        body += [box(x, top, cw, 116, t["surface2"], t["border"], 14), '<rect x="%.1f" y="%d" width="4" height="46" fill="%s"/>' % (x, top + 16, t["accent"]),
+                 text(x + 20, top + 34, name, 21, t["text"], 700), text(x + 20, top + 60, what, MIN_TEXT, t["text2"]),
+                 state(x + 20, top + 96, word, tone, t, "start")]
+    body.append(text(28, y + 14, c["foot"], MIN_TEXT, t["muted"]))
+    return doc(WIDE, y + 36, body, label, t)
+
+
+def listed(key, wide=False):
     def make(t, lang):
         title, label, rows = L[lang][key]
-        return rows_picture(t, title, label, rows, L[lang]["foot"])
+        return (rows_picture_wide if wide else rows_picture)(t, title, label, rows, L[lang]["foot"])
     return make
 
 
-PICTURES = (("placement", placement), ("server", listed("server")), ("phases", listed("phases")), ("sources", listed("sources")))
+PICTURES = (("placement", placement), ("server", listed("server")), ("phases", listed("phases")), ("sources", listed("sources")),
+            ("placement-wide", placement_wide), ("server-wide", listed("server", True)), ("phases-wide", listed("phases", True)),
+            ("sources-wide", listed("sources", True)))
 
 
 def main():

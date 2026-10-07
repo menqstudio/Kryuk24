@@ -18,7 +18,7 @@ Each picture carries one idea in large labels, so that it reads on a phone. The 
 
 ### Where each part lives
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-en-dark.svg"><img src="docs/assets/readme/placement-en-light.svg" alt="Where each part lives: GitHub in place; VPS runtime in STAGING; Debian desktop planned; Windows in use. Details in the list below." width="480"></picture>
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-en-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/placement-en-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-wide-en-dark.svg"><img src="docs/assets/readme/placement-wide-en-light.svg" alt="Where each part lives: GitHub in place; VPS runtime in STAGING; Debian desktop planned; Windows in use. Details in the list below." width="960"></picture>
 
 - **GitHub**
   - What lives there: canonical code, documents, decisions, roadmap
@@ -37,7 +37,7 @@ Boundaries and data flow: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ### On the server today
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/server-en-dark.svg"><img src="docs/assets/readme/server-en-light.svg" alt="On the server today: queue and dashboard, Bro bridge and API reader installed; mailbox, approvals, executor and monitoring planned. Details in the list below." width="480"></picture>
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/server-en-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/server-en-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/server-wide-en-dark.svg"><img src="docs/assets/readme/server-wide-en-light.svg" alt="On the server today: queue and dashboard, Bro bridge and API reader installed; mailbox, approvals, executor and monitoring planned. Details in the list below." width="960"></picture>
 
 - **Daily queue and dashboard**: installed; ten tasks are planned every day at 06:00 UTC
 - **Bro bridge**: installed; the service runs but does not start by itself after a reboot
@@ -51,7 +51,7 @@ Evidence for each line: [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
 
 ### Roadmap phases
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-en-dark.svg"><img src="docs/assets/readme/phases-en-light.svg" alt="Roadmap phases: 0 in review; 1, 2 and 6 started; 3, 4, 5, 7 and 8 not started. Details in the list below." width="480"></picture>
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-en-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/phases-en-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-wide-en-dark.svg"><img src="docs/assets/readme/phases-wide-en-light.svg" alt="Roadmap phases: 0 in review; 1, 2 and 6 started; 3, 4, 5, 7 and 8 not started. Details in the list below." width="960"></picture>
 
 - **0 Canonical state**
   - Owner / acceptor: Claude / GPT
@@ -85,7 +85,7 @@ A phase closes on its acceptor's word, not on a file. Scope, closing conditions 
 
 ### What Bro reads today
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/sources-en-dark.svg"><img src="docs/assets/readme/sources-en-light.svg" alt="What Bro reads today: hosting, Metrica and Webmaster installed; Direct and the mailbox blocked; Avito on hold; the Business card in progress; requests and orders not built. Details in the list below." width="480"></picture>
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/sources-en-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/sources-en-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/sources-wide-en-dark.svg"><img src="docs/assets/readme/sources-wide-en-light.svg" alt="What Bro reads today: hosting, Metrica and Webmaster installed; Direct and the mailbox blocked; Avito on hold; the Business card in progress; requests and orders not built. Details in the list below." width="960"></picture>
 
 - **Hosting account**
   - What: balance, days left
@@ -206,7 +206,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 
 ### Որտեղ ինչն ա ապրում
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-hy-dark.svg"><img src="docs/assets/readme/placement-hy-light.svg" alt="Որտեղ ինչն ա ապրում. GitHub-ը կա, VPS-ի runtime-ը STAGING ա, Debian desktop-ը պլանում ա, Windows-ը գործածվում ա։ Մանրամասները՝ ներքևի ցանկում։" width="480"></picture>
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-hy-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/placement-hy-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/placement-wide-hy-dark.svg"><img src="docs/assets/readme/placement-wide-hy-light.svg" alt="Որտեղ ինչն ա ապրում. GitHub-ը կա, VPS-ի runtime-ը STAGING ա, Debian desktop-ը պլանում ա, Windows-ը գործածվում ա։ Մանրամասները՝ ներքևի ցանկում։" width="960"></picture>
 
 - **GitHub**
   - Ինչ ա ապրում էնտեղ: հիմնական կոդը, փաստաթղթերը, որոշումները, քարտեզը
@@ -225,7 +225,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 
 ### Սերվերում այսօր
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/server-hy-dark.svg"><img src="docs/assets/readme/server-hy-light.svg" alt="Սերվերում այսօր. հերթն ու վահանակը, Bro-ի կամուրջն ու API reader-ը դրված են. փոստը, հաստատումները, executor-ն ու monitoring-ը պլանում են։ Մանրամասները՝ ներքևի ցանկում։" width="480"></picture>
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/server-hy-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/server-hy-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/server-wide-hy-dark.svg"><img src="docs/assets/readme/server-wide-hy-light.svg" alt="Սերվերում այսօր. հերթն ու վահանակը, Bro-ի կամուրջն ու API reader-ը դրված են. փոստը, հաստատումները, executor-ն ու monitoring-ը պլանում են։ Մանրամասները՝ ներքևի ցանկում։" width="960"></picture>
 
 - **Օրվա հերթ ու վահանակ**: դրված ա. ամեն օր 06:00 UTC-ին պլանավորվում ա տասը գործ
 - **Bro-ի կամուրջ**: դրված ա. ծառայությունը աշխատում ա, բայց reboot-ից հետո ինքը չի բարձրանում
@@ -239,7 +239,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 
 ### Քարտեզի փուլերը
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-hy-dark.svg"><img src="docs/assets/readme/phases-hy-light.svg" alt="Քարտեզի փուլերը. 0-րդը ընդունման մեջ ա. 1, 2 ու 6-ը սկսված են. 3, 4, 5, 7 ու 8-ը սկսված չեն։ Մանրամասները՝ ներքևի ցանկում։" width="480"></picture>
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-hy-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/phases-hy-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-wide-hy-dark.svg"><img src="docs/assets/readme/phases-wide-hy-light.svg" alt="Քարտեզի փուլերը. 0-րդը ընդունման մեջ ա. 1, 2 ու 6-ը սկսված են. 3, 4, 5, 7 ու 8-ը սկսված չեն։ Մանրամասները՝ ներքևի ցանկում։" width="960"></picture>
 
 - **0 Հիմնական վիճակ**
   - Պատասխանատու / ընդունող: Claude / GPT
@@ -273,7 +273,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 
 ### Ինչ ա կարդում Bro-ն այսօր
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/sources-hy-dark.svg"><img src="docs/assets/readme/sources-hy-light.svg" alt="Ինչ ա կարդում Bro-ն այսօր. հոստինգը, Metrica-ն ու Webmaster-ը դրված են. Direct-ն ու փոստը փակ են. Avito-ն HOLD ա. Բիզնեսի քարտը ընթացքում ա. դիմումներն ու պատվերները չկան։ Մանրամասները՝ ներքևի ցանկում։" width="480"></picture>
+<picture><source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/assets/readme/sources-hy-dark.svg"><source media="(max-width: 600px)" srcset="docs/assets/readme/sources-hy-light.svg"><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/sources-wide-hy-dark.svg"><img src="docs/assets/readme/sources-wide-hy-light.svg" alt="Ինչ ա կարդում Bro-ն այսօր. հոստինգը, Metrica-ն ու Webmaster-ը դրված են. Direct-ն ու փոստը փակ են. Avito-ն HOLD ա. Բիզնեսի քարտը ընթացքում ա. դիմումներն ու պատվերները չկան։ Մանրամասները՝ ներքևի ցանկում։" width="960"></picture>
 
 - **Հոստինգի հաշիվ**
   - Ինչ: մնացորդ, մնացած օրեր
