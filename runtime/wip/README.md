@@ -11,4 +11,6 @@ Three packages for letting a model read cabinets through Chrome under a restrict
 
 Waiting for: GPT's decisions on the proxy package v5.3 (accept the proxy as the restriction layer, the shape of the trials with it, Windows or Debian for the first run). No new model run without Gev's word. Windows only: the job runner and the harness use Windows APIs; a Linux variant does not exist.
 
+CI runs the gate, job runner and proxy suites on Windows. It does **not** run the trial harness self-test: on GitHub's hosted Windows runner 3 of the 68 tests ended INCONCLUSIVE or BLOCKED (`test_deny_cases`, two `test_tab_id_…`), 07.10.2026; on the development machine all 68 pass. The cause is not established; until it is, the self-test is a local check.
+
 `chrome_proxy/` and `trial/` find the gate at `../adapter_preflight`.
