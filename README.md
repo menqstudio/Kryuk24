@@ -1,8 +1,5 @@
 <p align="center">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/cover-dark.svg">
-  <img src="docs/assets/readme/cover-light.svg" alt="KRYUK24 Bro: the business operating assistant for a tow-truck service in Moscow and the Moscow region" width="960">
-</picture>
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/cover-dark.svg"><img src="docs/assets/readme/cover-light.svg" alt="KRYUK24 Bro: the business operating assistant for a tow-truck service in Moscow and the Moscow region" width="960"></picture>
 </p>
 
 # KRYUK24 · Bro
@@ -19,21 +16,15 @@ First business goal (Gev, 04.10.2026): five profitable completed orders a day on
 
 The pictures show the state on 07.10.2026 and supplement the text; they do not replace it. Every word in them is in the linked document, where it is searchable and carries its evidence. A status is always a word, never a colour alone.
 
-| | |
-| --- | --- |
-| <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/architecture-en-dark.svg">
-  <img src="docs/assets/readme/architecture-en-light.svg" alt="Where each part lives. GitHub: code and documents, in place. VPS runtime in STAGING, sending off: daily queue, dashboard, Bro bridge and the API reader are installed; the reader's first supervised write is pending; mailbox, approvals, executor and monitoring are planned. Debian desktop worker: planned. Windows: development and supervised trials; proxy, gate and trial harness in progress." width="420">
-</picture> | <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-en-dark.svg">
-  <img src="docs/assets/readme/phases-en-light.svg" alt="Roadmap phases with owner and acceptor. 0 Canonical state: awaits acceptance. 1 Security and recovery: started. 2 Reliable collection: started. 3 Real business flow: not started. 4 Action approval: not started. 5 Executor: not started. 6 Browser and Debian: started. 7 Analysis, reporting, control: not started. 8 Controlled operation and v1.0: not started." width="420">
-</picture> |
-| **Where each part lives.** Text and boundaries: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | **Roadmap phases 0 to 8.** Scope, closing conditions and the task queue: [`docs/ROADMAP.md`](docs/ROADMAP.md) |
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/architecture-en-dark.svg"><img src="docs/assets/readme/architecture-en-light.svg" alt="Where each part lives. GitHub: code and documents, in place. VPS runtime in STAGING, sending off: daily queue, dashboard, Bro bridge and the API reader are installed; the reader's first supervised write is pending; mailbox, approvals, executor and monitoring are planned. Debian desktop worker: planned. Windows: development and supervised trials; proxy, gate and trial harness in progress." width="640"></picture>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/status-en-dark.svg">
-  <img src="docs/assets/readme/status-en-light.svg" alt="What Bro can read today. Hosting account, Yandex Metrica and Yandex Webmaster: installed. Yandex Direct: blocked, waits for Yandex. Avito: on hold. Mailbox: blocked, no mail application. Yandex Business card: no API, browser route in progress. Real requests and orders: not built." width="640">
-</picture>
+**Where each part lives.** Text and boundaries: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-en-dark.svg"><img src="docs/assets/readme/phases-en-light.svg" alt="Roadmap phases with owner and acceptor. 0 Canonical state: awaits acceptance. 1 Security and recovery: started. 2 Reliable collection: started. 3 Real business flow: not started. 4 Action approval: not started. 5 Executor: not started. 6 Browser and Debian: started. 7 Analysis, reporting, control: not started. 8 Controlled operation and v1.0: not started." width="640"></picture>
+
+**Roadmap phases 0 to 8.** Scope, closing conditions and the task queue: [`docs/ROADMAP.md`](docs/ROADMAP.md)
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/status-en-dark.svg"><img src="docs/assets/readme/status-en-light.svg" alt="What Bro can read today. Hosting account, Yandex Metrica and Yandex Webmaster: installed. Yandex Direct: blocked, waits for Yandex. Avito: on hold. Mailbox: blocked, no mail application. Yandex Business card: no API, browser route in progress. Real requests and orders: not built." width="640"></picture>
 
 **What Bro can read today.** Each source with its evidence: [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
 
@@ -121,21 +112,15 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 
 Նկարները ցույց են տալիս 07.10.2026-ի վիճակը ու լրացնում են տեքստը, չեն փոխարինում։ Ամեն բառ, որ նկարում կա, կա նաև հղված փաստաթղթում՝ որոնելի ու իրա ապացույցով։ Կարգավիճակը միշտ բառ ա, երբեք միայն գույն։
 
-| | |
-| --- | --- |
-| <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/architecture-hy-dark.svg">
-  <img src="docs/assets/readme/architecture-hy-light.svg" alt="Որտեղ ինչն ա ապրում։ GitHub՝ կոդն ու փաստաթղթերը, կա։ VPS-ի runtime-ը STAGING ա, ուղարկելը անջատված. օրվա հերթը, վահանակը, Bro-ի կամուրջն ու API reader-ը դրված են, reader-ի առաջին հսկվող գրելը սպասվում ա, փոստը, հաստատումները, executor-ն ու monitoring-ը պլանում են։ Debian-ի worker-ը պլանում ա։ Windows՝ մշակում ու հսկվող փորձեր. proxy-ն, gate-ը ու trial harness-ը ընթացքում են։" width="420">
-</picture> | <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-hy-dark.svg">
-  <img src="docs/assets/readme/phases-hy-light.svg" alt="Քարտեզի փուլերը՝ պատասխանատուով ու ընդունողով։ 0 Հիմնական վիճակ՝ սպասում ա ընդունման։ 1 Անվտանգություն ու վերականգնում՝ սկսված ա։ 2 Հուսալի հավաքում՝ սկսված ա։ 3 Իրական բիզնես հոսք՝ սկսված չի։ 4 Գործողության հաստատում՝ սկսված չի։ 5 Executor՝ սկսված չի։ 6 Զննարկիչ ու Debian՝ սկսված ա։ 7 Վերլուծություն, հաշվետվություն՝ սկսված չի։ 8 Հսկվող շահագործում ու v1.0՝ սկսված չի։" width="420">
-</picture> |
-| **Որտեղ ինչն ա ապրում։** Տեքստն ու սահմանները՝ [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#հայերեն) | **Քարտեզի 0–8 փուլերը։** Շրջանակը, փակման պայմաններն ու հերթը՝ [`docs/ROADMAP.md`](docs/ROADMAP.md#հայերեն) |
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/architecture-hy-dark.svg"><img src="docs/assets/readme/architecture-hy-light.svg" alt="Որտեղ ինչն ա ապրում։ GitHub՝ կոդն ու փաստաթղթերը, կա։ VPS-ի runtime-ը STAGING ա, ուղարկելը անջատված. օրվա հերթը, վահանակը, Bro-ի կամուրջն ու API reader-ը դրված են, reader-ի առաջին հսկվող գրելը սպասվում ա, փոստը, հաստատումները, executor-ն ու monitoring-ը պլանում են։ Debian-ի worker-ը պլանում ա։ Windows՝ մշակում ու հսկվող փորձեր. proxy-ն, gate-ը ու trial harness-ը ընթացքում են։" width="640"></picture>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/status-hy-dark.svg">
-  <img src="docs/assets/readme/status-hy-light.svg" alt="Ինչ կարա կարդա Bro-ն այսօր։ Հոստինգի հաշիվը, Yandex Metrica-ն ու Yandex Webmaster-ը՝ դրված են։ Yandex Direct՝ փակ ա, սպասում ա Yandex-ին։ Avito՝ HOLD։ Փոստարկղ՝ փակ ա, հավելված չկա։ Yandex Բիզնեսի քարտ՝ API չկա, զննարկչի ճանապարհը ընթացքում ա։ Իրական դիմումներ ու պատվերներ՝ չկա։" width="640">
-</picture>
+**Որտեղ ինչն ա ապրում։** Տեքստն ու սահմանները՝ [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#հայերեն)
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/phases-hy-dark.svg"><img src="docs/assets/readme/phases-hy-light.svg" alt="Քարտեզի փուլերը՝ պատասխանատուով ու ընդունողով։ 0 Հիմնական վիճակ՝ սպասում ա ընդունման։ 1 Անվտանգություն ու վերականգնում՝ սկսված ա։ 2 Հուսալի հավաքում՝ սկսված ա։ 3 Իրական բիզնես հոսք՝ սկսված չի։ 4 Գործողության հաստատում՝ սկսված չի։ 5 Executor՝ սկսված չի։ 6 Զննարկիչ ու Debian՝ սկսված ա։ 7 Վերլուծություն, հաշվետվություն՝ սկսված չի։ 8 Հսկվող շահագործում ու v1.0՝ սկսված չի։" width="640"></picture>
+
+**Քարտեզի 0–8 փուլերը։** Շրջանակը, փակման պայմաններն ու հերթը՝ [`docs/ROADMAP.md`](docs/ROADMAP.md#հայերեն)
+
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/status-hy-dark.svg"><img src="docs/assets/readme/status-hy-light.svg" alt="Ինչ կարա կարդա Bro-ն այսօր։ Հոստինգի հաշիվը, Yandex Metrica-ն ու Yandex Webmaster-ը՝ դրված են։ Yandex Direct՝ փակ ա, սպասում ա Yandex-ին։ Avito՝ HOLD։ Փոստարկղ՝ փակ ա, հավելված չկա։ Yandex Բիզնեսի քարտ՝ API չկա, զննարկչի ճանապարհը ընթացքում ա։ Իրական դիմումներ ու պատվերներ՝ չկա։" width="640"></picture>
 
 **Ինչ կարա կարդա Bro-ն այսօր։** Ամեն աղբյուրը իրա ապացույցով՝ [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md#հայերեն)։
 
