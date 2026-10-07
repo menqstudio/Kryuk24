@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>КРЮК24 — дизайн-система</title>
+<link rel="stylesheet" href="../tokens/kryuk.tokens.css">
+<link rel="stylesheet" href="../vendor/menq-components/bundle.css">
+<link rel="stylesheet" href="../vendor/menq-components/bro.css">
+<link rel="stylesheet" href="../components/kryuk.css">
+<link rel="stylesheet" href="../../site/assets/fonts.css">
+<link rel="stylesheet" href="../fonts/armenian.css">
+<style>
+  body { margin: 0; }
+  .ds { max-width: 72rem; margin: 0 auto; padding: var(--space-8) var(--space-4) var(--space-16); display: flex; flex-direction: column; gap: var(--space-8); }
+  .ds-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); flex-wrap: wrap; }
+  .ds-sec h2 { font-size: 1.5rem; margin: 0 0 var(--space-4); }
+  .ds-sec h3 { font-size: 1rem; margin: var(--space-4) 0 var(--space-2); color: var(--color-content-muted); font-family: var(--font-sans); font-weight: 600; }
+  .ds-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: var(--space-2); }
+  .ds-sw { border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); overflow: hidden; background: var(--color-surface-primary); font-size: 0.75rem; }
+  .ds-sw i { display: block; height: 3.5rem; }
+  .ds-sw span { display: block; padding: var(--space-2); }
+  .ds-sw code { color: var(--color-content-muted); }
+  .ds-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: var(--space-4); align-items: start; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="../vendor/menq-components/bundle.js"></script>
+<script src="../vendor/menq-components/bro.bundle.js"></script>
+<script src="../components/hook.generated.js"></script>
+<script src="../components/kryuk.bundle.js"></script>
+<script>
+(function () {
+  var h = React.createElement, M = window.MenQ, B = M.Bro, K = window.Kryuk;
+  var WA = 'https://wa.me/79858930606', TG = 'https://t.me/';
+  function Sw(name) { return h('div', { className: 'ds-sw', key: name }, h('i', { style: { background: 'var(--' + name + ')' } }), h('span', null, h('code', null, name))); }
+  function Theme() {
+    var st = React.useState('light');
+    return h(M.Button, { variant: 'outline', small: true, onClick: function () { var t = st[0] === 'light' ? 'dark' : 'light'; document.documentElement.setAttribute('data-theme', t); st[1](t); } }, st[0] === 'light' ? 'Тёмная тема' : 'Светлая тема');
+  }
+  function App() {
+    return h('main', { className: 'ds' },
+      h('header', { className: 'ds-head' }, h(K.KryukMark, { size: 'lg' }), h(Theme)),
+
+      h('section', { className: 'ds-sec' }, h('h2', null, 'Цвет'),
+        h('div', { className: 'ds-swatches' }, ['color-action-primary', 'color-action-secondary', 'color-accent', 'color-page-bg', 'color-surface-primary', 'color-surface-secondary', 'color-content-primary', 'color-content-muted', 'color-border-strong', 'color-success', 'color-warning', 'color-danger'].map(Sw))),
+
+      h('section', { className: 'ds-sec' }, h('h2', null, 'Шрифт'),
+        h('h1', { style: { fontSize: '3rem', margin: 0 } }, 'Заберём и доставим. Круглосуточно.'),
+        h('p', { className: 'muted' }, 'Golos Text — основной текст, интерфейс, цифры в формах. Roboto Condensed Bold — заголовки, кнопки и цены.')),
+
+      h('section', { className: 'ds-sec' }, h('h2', null, 'Кнопки и связь'),
+        h('div', { className: 'row', style: { flexWrap: 'wrap' } },
+          h(M.Button, { variant: 'primary' }, 'Вызвать эвакуатор'), h(M.Button, { variant: 'outline' }, 'Запланировать перевозку'), h(M.Button, { variant: 'ghost' }, 'Все работы'), h(M.Button, { variant: 'primary', disabled: true }, 'Недоступно')),
+        h('h3', null, 'ContactButtons'), h(K.ContactButtons, { whatsapp: WA, telegram: TG }),
+        h('h3', null, 'CallBar (на телефоне закреплена снизу)'), h(K.CallBar, { static: true, whatsapp: WA, telegram: TG })),
+
+      h('section', { className: 'ds-sec' }, h('h2', null, 'Расчёт и тарифы'),
+        h('div', { className: 'ds-grid' },
+          h(M.Card, null, h('div', { className: 'panel' },
+            h(K.ChoiceTiles, { legend: 'Транспорт', defaultValue: 'car', options: [{ value: 'car', label: 'Автомобиль' }, { value: 'moto', label: 'Мотоцикл' }, { value: 'truck', label: 'Коммерческий' }, { value: 'spec', label: 'Спецтехника' }] }),
+            h(M.FormRow, { label: 'Откуда забрать', hint: 'Выберите адрес из подсказок' }, h(M.Input, { placeholder: 'Адрес' })),
+            h(M.FormRow, { label: 'Сколько колёс заблокировано?', error: 'Выберите количество' }, h(M.Select, { invalid: true }, h('option', null, 'Выберите количество'))))),
+          h(M.Card, null, h('div', { className: 'panel' },
+            h('div', { className: 'field-label' }, 'Предварительно'), h(K.Price, { value: 4000, size: 'lg', note: 'Минимальный тариф. Окончательную стоимость согласуем до выезда.' }),
+            h(K.TariffList, { label: 'Тарифы', items: [{ name: 'Легковой автомобиль, мотоцикл', price: 4000, perKm: 100 }, { name: 'Кроссовер (паркетник)', price: 4500, perKm: 100 }, { name: 'Спорткар', price: 6000, perKm: 100 }] }))))),
+
+      h('section', { className: 'ds-sec' }, h('h2', null, 'Заказ'),
+        h('p', { className: 'muted' }, 'Статусы — из runtime/order_flow. Пример ниже вымышленный.'),
+        h('div', { className: 'ds-grid' },
+          h(K.OrderCard, { order: { id: 'K24-EXAMPLE-01', vehicle: 'Легковой, колёса крутятся', from: 'Москва, пример адреса 1', to: 'Москва, пример адреса 2', price: 5100, status: 'ARRIVED', test: true } }),
+          h(K.OrderCard, { lang: 'hy', order: { id: 'K24-EXAMPLE-02', vehicle: 'Кроссовер после ДТП', from: 'Химки', to: 'Москва', price: 7000, status: 'DELIVERED', test: true } }))),
+
+      h('section', { className: 'ds-sec section-contrast' }, h('h2', null, 'Bro — управляемый оркестратор'),
+        h('p', { style: { color: 'var(--color-content-secondary)' } }, 'Bro предлагает, Гев решает. Каждое действие наружу — через карточку одобрения (runtime/action_approval). Экран Гева — на армянском.'),
+        h('div', { className: 'ds-grid' },
+          h('div', { className: 'stack' },
+            h(B.ChatMessage, { role: 'bro', author: 'Bro', time: '10:02', scope: 'ops' }, 'Այսօրվա 10 գործից 9-ը պատրաստ է։ Մեկը քո որոշումն է պահանջում։'),
+            h(B.ChatMessage, { role: 'human', author: 'Գև', mine: true, time: '10:04' }, 'Ցույց տուր։'),
+            h(B.Timeline, { items: [{ title: 'Metrica-ն կարդացված է', meta: '06:00', state: 'done' }, { title: 'Հաշվետվության սևագիր', meta: '06:02', state: 'done' }, { title: 'Սպասում է քո «հա»-ին', state: 'waiting' }] })),
+          h(B.ApprovalCard, { kicker: 'Պետք է քո «հա»-ն', risk: 'medium', riskLabel: 'Միջին ռիսկ', title: 'Օրինակ. պատասխանել Yandex-ի կարծիքին', description: 'Տեքստը, հաշիվը և ժամկետը ֆիքսված են. փոփոխված գործողությունը նոր հաստատում է պահանջում։', requestedBy: 'Bro', approveLabel: 'Հաստատել', rejectLabel: 'Մերժել' }))));
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+})();
+</script>
+</body>
+</html>

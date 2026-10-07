@@ -1,0 +1,48 @@
+/* MenQ product extension: Bro (D-027). Load after brand-expression tokens.css and components/bundle.css. */
+.mq-avatar--bro { background: var(--gradient-brand); color: var(--color-content-inverse); box-shadow: var(--shadow-glow); }
+.mq-avatar--bro.avatar--img { padding: 2px; }
+.mq-avatar--agent { background: var(--color-chat-agent-bg); color: var(--color-accent-text); border-radius: var(--radius-sm); border: 1px solid var(--color-border-strong); }
+
+/* ── Agents ── */
+.mq-timeline { list-style: none; margin: 0; padding: 0; }
+.mq-tl-item { position: relative; display: flex; gap: var(--space-3); padding-bottom: var(--space-5); }
+.mq-tl-item:not(:last-child)::before { content: ""; position: absolute; left: 5px; top: 18px; bottom: 0; width: 2px; background: linear-gradient(var(--color-border-strong), var(--color-border-subtle)); }
+.mq-tl-marker { width: 12px; height: 12px; margin-top: 5px; border-radius: var(--radius-pill); flex: none; background: var(--color-status-online); box-shadow: 0 0 0 4px var(--color-page-bg); }
+.mq-tl--running .mq-tl-marker { background: var(--gradient-brand); box-shadow: 0 0 0 4px var(--color-page-bg), var(--shadow-glow); animation: mq-signal 2s ease-in-out infinite; }
+.mq-tl--waiting .mq-tl-marker { background: var(--color-status-busy); }
+.mq-tl--failed .mq-tl-marker { background: var(--color-status-error); }
+.mq-tl--pending .mq-tl-marker { background: var(--color-page-bg); border: 2px solid var(--color-border-strong); }
+.mq-tl-title { font-weight: 600; }
+.mq-tl-meta { font-size: 0.75rem; color: var(--color-content-muted); }
+.run-step-result { margin-top: var(--space-2); padding: var(--space-2) var(--space-3); background: var(--color-surface-secondary); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); font-size: 0.8125rem; font-family: var(--font-mono); }
+.chat-msg { display: flex; gap: var(--space-3); align-items: flex-start; }
+.chat-msg--mine { flex-direction: row-reverse; }
+.mq-msg-col { display: flex; flex-direction: column; max-width: 72ch; }
+.chat-msg--mine .mq-msg-col { align-items: flex-end; }
+.chat-author { font-size: 0.75rem; color: var(--color-content-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.mq-msg-name { font-weight: 600; color: var(--color-content-primary); }
+.mq-msg-scope { font-family: var(--font-mono); font-size: 0.6875rem; padding: 1px 6px; border-radius: var(--radius-pill); border: 1px solid var(--color-border-strong); color: var(--color-accent-text); }
+.chat-bubble { padding: var(--space-3) var(--space-4); border-radius: var(--radius-xl); border: 1px solid var(--color-border-subtle); background: var(--color-chat-human-bg); line-height: 1.5; }
+.chat-msg--mine .chat-bubble { border-top-right-radius: var(--radius-sm); }
+.chat-msg:not(.chat-msg--mine) .chat-bubble { border-top-left-radius: var(--radius-sm); }
+.mq-msg--bro .chat-bubble { background: var(--color-chat-bro-bg); border-color: var(--color-chat-bro-accent); }
+.mq-msg--agent .chat-bubble { background: var(--color-chat-agent-bg); border-color: var(--color-border-strong); }
+.mq-msg-state { margin-top: 6px; }
+.mq-agent { display: flex; flex-direction: column; gap: var(--space-4); }
+.mq-agent-scope { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.mq-agent-scope .badge { font-family: var(--font-mono); letter-spacing: 0; font-weight: 500; }
+.mq-agent-task { padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); background: var(--color-surface-secondary); display: flex; flex-direction: column; gap: 2px; }
+.mq-progress { height: 0.375rem; border-radius: var(--radius-pill); background: var(--color-surface-muted); overflow: hidden; }
+.mq-progress span { display: block; height: 100%; border-radius: inherit; background-image: var(--gradient-brand); transition: width var(--duration-slow) var(--ease-standard); }
+.mq-approval { border-color: var(--color-warning); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-warning) 14%, transparent); }
+.mq-approval--high { border-color: var(--color-danger); box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-danger) 12%, transparent); }
+.mq-approval--low { border-color: var(--color-border-subtle); box-shadow: none; }
+.mq-composer { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
+  background: var(--glass-bg); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-pill); box-shadow: var(--shadow-card);
+  transition: border-color var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard); }
+.mq-composer:focus-within { border-color: var(--color-border-strong); box-shadow: var(--shadow-card), 0 0 0 4px var(--color-selected); }
+.mq-composer-prompt { font-family: var(--font-mono); font-weight: 700; color: var(--color-action-primary-strong); }
+.mq-composer textarea { flex: 1; resize: none; border: 0; outline: none; background: transparent; color: var(--color-content-primary); font: inherit; font-size: 1rem; padding: var(--space-2) 0; }
+.mq-composer textarea:focus-visible { outline: none; }
+.mq-kbd { font-family: var(--font-mono); font-size: 0.6875rem; color: var(--color-content-muted); border: 1px solid var(--color-border-subtle); border-bottom-width: 2px; border-radius: var(--radius-sm); padding: 1px 6px; }
+

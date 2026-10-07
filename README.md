@@ -140,6 +140,7 @@ A source that is not read is UNKNOWN, never "no problem". A click is not a call,
 - **`tools/`**: Site checks (`tools/tests/`), brand and media generators, API setup scripts (`tools/api_setup/`)
 - **`research/`**: Owner's prices and answers, Yandex rules, Direct launch package
 - **`brand/`, `offers/`, `reports/`, `photo/01_real_polished/`**: Brand sources, texts for the owner, reports, the processed photo set that may be published
+- **`design/`**: Design system: tokens, rules, components, Bro screens ([`design/README.md`](design/README.md))
 - **`docs/`**: The six documents below, `LESSONS.md`, `history/`, `inventory/`, `cleanup/`, `media-index.md`
 - **`_drive_staging/`**: Git-ignored. Media and archives that go to Drive, not to GitHub, kept locally until Gev names the Drive. Index: `docs/media-index.md`
 - **`_private/`**: Not in git. Private notes (the VPS address is there). Not read by AI sessions
@@ -328,6 +329,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 - **`tools/`**: Կայքի ստուգումները (`tools/tests/`), բրենդի ու մեդիայի գեներատորները, API-ի setup սկրիպտները (`tools/api_setup/`)
 - **`research/`**: Տիրոջ գներն ու պատասխանները, Yandex-ի կանոնները, Direct-ի գործարկման փաթեթը
 - **`brand/`, `offers/`, `reports/`, `photo/01_real_polished/`**: Բրենդի աղբյուրները, տեքստեր տիրոջ համար, հաշվետվություններ, մշակված նկարների սեթը, որ կարելի ա հրապարակել
+- **`design/`**: Դիզայն սիստեմ. token-ներ, կանոններ, կոմպոնենտներ, Bro-ի էկրաններ ([`design/README.md`](design/README.md))
 - **`docs/`**: Ներքևի վեց փաստաթուղթը, `LESSONS.md`, `history/`, `inventory/`, `cleanup/`, `media-index.md`
 - **`_drive_staging/`**: Git-ում չի։ Մեդիան ու արխիվները, որ գնում են Drive, ոչ GitHub. տեղում են, մինչև Գևը ասի՝ որ Drive-ը։ Ցուցակը՝ `docs/media-index.md`
 - **`_private/`**: Git-ում չի։ Անձնական նշումներ (VPS-ի հասցեն էնտեղ ա)։ AI նիստերը չեն կարդում

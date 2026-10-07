@@ -200,6 +200,7 @@ API access: VERIFIED 07.10.2026 09:07. Allowed methods are limited to "Account a
 | Item | Status | Evidence |
 | --- | --- | --- |
 | Brand colour is blue (`tools/brand.py`, `INK = #13233A`); logo, avatar, livery, 7 signs, QR, WhatsApp kit, address guides rebuilt in blue | VERIFIED | Gev's decision 06.10.2026; files |
+| Design system v1 in `design/`: token source and generated tokens (light, dark, contrast scope), the MenQ component library as a pinned copy (commit `8d1b0ab`, 6 files, sha256 checked), KRYUK24 components (`KryukMark`, contact buttons, call bar, price, tariffs, choice tiles, order status, order card), Bro screens, rules in EN and HY. `brand/README.md` now names navy `#13233A` | IMPLEMENTED, checked locally | `design/scripts/validate_design.py` GREEN (44 contrast checks); preview in Chromium: axe 0 violations in light, dark and at 390 px (logo lettering excluded as logotype), no horizontal scroll, no console error; 07.10.2026 22:05 UTC. Applied to nothing live: the site and the dashboard are unchanged |
 | Signage sizes: the owner sent a screenshot with every size circled and voice messages on 06.10.2026 | UNKNOWN | what the voice messages say (Claude does not hear audio) |
 | Processed photo set: 23 frames, plates and passers-by covered, checked by eye. Three new frames (07.10) are not uploaded anywhere | VERIFIED | `photo/01_real_polished/`, 07.10.2026 |
 | The video of 07.10.2026 was copied, its content not watched | unverified | no ffmpeg |
@@ -208,7 +209,7 @@ API access: VERIFIED 07.10.2026 09:07. Allowed methods are limited to "Account a
 
 | Item | Status | Evidence |
 | --- | --- | --- |
-| GitHub: private repository `menqstudio/Kryuk24`, clean initial import `8bc7233` (500 files), then pull request #1 merged locally as `0abf9b0`. Every commit: author and committer MenQ, linked by GitHub to the account, no tool lines | VERIFIED | read back from GitHub, 07.10.2026 14:07 UTC; `docs/cleanup/GITHUB_SETUP_RESULT.md` |
+| GitHub: repository `menqstudio/Kryuk24` is **public** since Gev opened it so that CI runs without a paid plan; he will make it private later (Gev, 07.10.2026 21:57 UTC). The earlier wording "private" is superseded. Clean initial import `8bc7233` (500 files), then pull request #1 merged locally as `0abf9b0`. Every commit: author and committer MenQ, linked by GitHub to the account, no tool lines | VERIFIED | read back from GitHub, 07.10.2026 14:07 UTC; `docs/cleanup/GITHUB_SETUP_RESULT.md` |
 | GitHub protection of `main` (pull request, required CI, no force-push, no deletion), secret scanning, private vulnerability reporting | BLOCKED | GitHub answers 403 / 422 / 404 for a private repository on the current plan; no upgrade was made. `main` is kept by procedure and by the identity check in CI |
 | Git bundle with all refs in `D:\KRYUK24_backup\`, verified by `git bundle verify` and a test clone (commit count and HEAD equal) | VERIFIED | 07.10.2026; `docs/cleanup/CLEANUP_STAGE1_REPORT.md` |
 | 15 files that git does not hold, copied to `D:\KRYUK24_backup\untracked_2026-10-07\`, each compared by sha256 | VERIFIED | same |
@@ -441,6 +442,7 @@ API-ի մուտքը՝ VERIFIED 07.10.2026 09:07։ Թույլատրված մեթ�
 | Կետ | Վիճակ | Ապացույց |
 | --- | --- | --- |
 | Բրենդի գույնը կապույտ ա (`tools/brand.py`, `INK = #13233A`). լոգոն, ավատարը, մեքենայի գունավորումը, 7 ցուցանակը, QR-ը, WhatsApp-ի հավաքածուն, հասցեի ուղեցույցները վերահավաքված են կապույտով | VERIFIED | Գևի որոշումը 06.10.2026. ֆայլերը |
+| Դիզայն սիստեմ v1՝ `design/`-ում. token-ների աղբյուր ու գեներացված token-ներ (light, dark, contrast), MenQ-ի կոմպոնենտների գրադարանը՝ ամրագրված պատճենով (commit `8d1b0ab`, 6 ֆայլ, sha256-ով ստուգվող), КРЮК24-ի կոմպոնենտները (`KryukMark`, կապի կոճակներ, call bar, գին, սակագներ, ընտրության սալիկներ, պատվերի վիճակ, պատվերի քարտ), Bro-ի էկրանները, կանոնները EN ու HY։ `brand/README.md`-ում հիմա navy `#13233A`-ն ա | IMPLEMENTED, ստուգված տեղում | `design/scripts/validate_design.py` GREEN (44 contrast ստուգում). preview-ը Chromium-ում. axe 0 light-ում, dark-ում ու 390px-ում (լոգոյի տառերը բացառված են որպես logotype), հորիզոնական scroll չկա, console error չկա. 07.10.2026 22:05 UTC։ Կենդանի ոչ մի բանի վրա կիրառված չի. կայքն ու վահանակը նույնն են |
 | Ցուցանակների չափերը. տերը 06.10.2026-ին ուղարկել ա սքրինշոթ՝ բոլոր չափերը շրջանակած, ու ձայնայիններ | UNKNOWN | ինչ ա ասված ձայնայիններում (Claude-ը ձայն չի լսում) |
 | Մշակված նկարների սեթ. 23 կադր, համարանիշներն ու անցորդները փակած, աչքով ստուգված։ Երեք նոր կադրը (07.10) ոչ մի տեղ չեն վերբեռնվել | VERIFIED | `photo/01_real_polished/`, 07.10.2026 |
 | 07.10.2026-ի վիդեոն պատճենված ա, բովանդակությունը չի դիտվել | չստուգված | ffmpeg չկա |
@@ -449,7 +451,7 @@ API-ի մուտքը՝ VERIFIED 07.10.2026 09:07։ Թույլատրված մեթ�
 
 | Կետ | Վիճակ | Ապացույց |
 | --- | --- | --- |
-| GitHub. փակ repo `menqstudio/Kryuk24`, մաքուր սկզբնական import `8bc7233` (500 ֆայլ), հետո pull request #1՝ տեղում merge արված `0abf9b0`։ Ամեն commit-ի author ու committer՝ MenQ, GitHub-ը կապել ա հաշվին, գործիքի տող չկա | VERIFIED | հետ կարդացած GitHub-ից, 07.10.2026 14:07 UTC. `docs/cleanup/GITHUB_SETUP_RESULT.md` |
+| GitHub. repo `menqstudio/Kryuk24`-ը **public** ա, Գևը բացել ա, որ CI-ը առանց վճարովի plan-ի աշխատի. հետո կփակի (Գև, 07.10.2026 21:57 UTC)։ Նախկին «փակ» բառը փոխարինված ա։ Մաքուր սկզբնական import `8bc7233` (500 ֆայլ), հետո pull request #1՝ տեղում merge արված `0abf9b0`։ Ամեն commit-ի author ու committer՝ MenQ, GitHub-ը կապել ա հաշվին, գործիքի տող չկա | VERIFIED | հետ կարդացած GitHub-ից, 07.10.2026 14:07 UTC. `docs/cleanup/GITHUB_SETUP_RESULT.md` |
 | `main`-ի պաշտպանություն GitHub-ով (pull request, պարտադիր CI, force-push ու ջնջելու արգելք), secret scanning, private vulnerability reporting | BLOCKED | GitHub-ը այս plan-ով փակ repo-ի համար պատասխանում ա 403 / 422 / 404. upgrade չի արվել։ `main`-ը պահվում ա կարգով ու CI-ի identity ստուգումով |
 | Git bundle բոլոր ref-երով՝ `D:\KRYUK24_backup\`-ում, ստուգված `git bundle verify`-ով ու փորձնական clone-ով (commit-ների քանակն ու HEAD-ը համընկնում են) | VERIFIED | 07.10.2026. `docs/cleanup/CLEANUP_STAGE1_REPORT.md` |
 | Git-ից դուրս 15 ֆայլը պատճենված ա `D:\KRYUK24_backup\untracked_2026-10-07\`, ամեն մեկը համեմատված sha256-ով | VERIFIED | նույնը |
