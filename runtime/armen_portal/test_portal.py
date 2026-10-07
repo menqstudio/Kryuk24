@@ -1,4 +1,4 @@
-import base64,io,json,re,tempfile,threading,unittest,urllib.request,urllib.error,uuid
+import base64,io,json,re,subprocess,sys,tempfile,threading,unittest,urllib.request,urllib.error,uuid
 from pathlib import Path
 from PIL import Image
 from portal import Store,server,credential,day,PREFIX,Sessions,SESSION_TTL,COOKIE
@@ -149,4 +149,68 @@ class Tests(unittest.TestCase):
    status,raw,_=self.answer({'X-CSRF-Token':bad})
    self.assertEqual((status,json.loads(raw)['error']),(403,'reload page'),repr(bad))
   self.assertEqual(self.answer()[0],200,'the server still answers and the right token still works')
+ def test_repeat_of_a_saved_answer_after_midnight_returns_the_saved_result(self):
+  key=uuid.uuid4().hex;d=dict(question='inquiries',answer='YES',day=day())
+  first=self.store.answer('armen',key,d)
+  with patch('portal.day',return_value='2999-01-01'):
+   self.assertEqual(self.store.answer('armen',key,d),first,'the same key and body: the saved result, whatever the date is now')
+   with self.assertRaises(ValueError):self.store.answer('armen',key,{**d,'answer':'NO'})
+   with self.assertRaises(ValueError):self.store.answer('armen',uuid.uuid4().hex,d)  # a new answer for a day that is over
+   with self.assertRaises(ValueError):self.store.answer('armen',key,{**d,'day':5})
+  with self.store.db() as c:self.assertEqual(c.execute('SELECT COUNT(*) FROM armen_answers').fetchone()[0],1)
+ def test_latest_answer_is_the_last_saved_when_times_are_equal(self):
+  # Simulation of equal timestamps: the clock text is fixed. The id is random, so the old order (created, id) was a coin toss per pair.
+  with patch('portal.now',return_value='2026-10-08T00:00:00+00:00'):
+   for i in range(40):
+    want='YES' if i%2 else 'NO'
+    self.store.answer('armen',uuid.uuid4().hex,dict(question='inquiries',answer=want,day=day()))
+    shown=[a['answer'] for a in self.store.state('armen')['answers'] if a['question']=='inquiries']
+    self.assertEqual(shown,[want],'after save %d'%(i+1))
+   for colour in ('red','green','blue'):
+    out=io.BytesIO();Image.new('RGB',(20,20),colour).save(out,'PNG');last=self.store.photo('armen',out.getvalue(),'WORK')['id']
+    self.assertEqual(self.store.state('armen')['photos'][0]['id'],last)
+ def test_preview_follows_the_orientation_and_other_modes_decode(self):
+  out=io.BytesIO();exif=Image.Exif();exif[0x0112]=6;Image.new('RGB',(1600,800),'navy').save(out,'JPEG',exif=exif)
+  with Image.open(io.BytesIO(self.store.preview('armen',self.store.photo('armen',out.getvalue(),'WORK')['id']))) as im:
+   self.assertEqual(im.size,(300,600),'turned as the camera recorded it, then fitted into 600')
+  for mode in ('P','L','RGBA','LA','1'):
+   out=io.BytesIO();Image.new(mode,(900,300)).save(out,'PNG')
+   with Image.open(io.BytesIO(self.store.preview('armen',self.store.photo('armen',out.getvalue(),'OTHER')['id']))) as im:
+    self.assertEqual((im.mode,im.size),('RGB',(600,200)),mode)
+  out=io.BytesIO();Image.new('RGB',(3000,2000),'navy').save(out,'JPEG');cut=out.getvalue()[:len(out.getvalue())//2]
+  with self.assertRaises(ValueError):self.store.photo('armen',cut,'WORK')
+ def test_two_40_megapixel_uploads_at_once_stay_under_the_service_memory_limit(self):
+  # A real measurement in a separate process: two pictures of the largest allowed size are saved by two threads at
+  # the same moment and the process reports its own peak memory. The unit file allows 768 MiB (MemoryMax).
+  child=r'''
+import io,sys,tempfile,threading
+from PIL import Image
+import portal
+def peak():
+ if sys.platform=='win32':
+  import ctypes
+  from ctypes import wintypes
+  class M(ctypes.Structure):_fields_=[('cb',wintypes.DWORD),('faults',wintypes.DWORD)]+[(n,ctypes.c_size_t) for n in 'abcdefgh']
+  m=M();m.cb=ctypes.sizeof(m);k=ctypes.WinDLL('kernel32');k.GetCurrentProcess.restype=wintypes.HANDLE
+  p=ctypes.WinDLL('psapi');p.GetProcessMemoryInfo.argtypes=[wintypes.HANDLE,ctypes.c_void_p,wintypes.DWORD]
+  if not p.GetProcessMemoryInfo(k.GetCurrentProcess(),ctypes.byref(m),m.cb):raise OSError('no memory figure')
+  return m.a/2**20  # PeakWorkingSetSize
+ import resource
+ return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/(2**20 if sys.platform=='darwin' else 1024)
+raws=[open(n,'rb').read() for n in sys.argv[2:4]];tmp=tempfile.TemporaryDirectory();store=portal.Store(tmp.name+'/db',tmp.name+'/media');saved=[]
+ts=[threading.Thread(target=lambda r=r:saved.append(store.photo('armen',r,'WORK')['duplicate'])) for r in raws]
+[t.start() for t in ts];[t.join() for t in ts]
+print(len(saved),round(peak()))
+'''
+  folder=Path(self.tmp.name)
+  for fmt,mode in (('PNG','RGBA'),('PNG','RGB'),('JPEG','RGB')):
+   names=[]
+   for n,colour in enumerate(((10,20,30,255),(40,50,60,255))):
+    name=folder/('big-%s-%s-%d'%(fmt,mode,n));Image.new(mode,(8000,5000),colour[:len(mode)]).save(name,fmt);names.append(str(name))
+   got=subprocess.run([sys.executable,'-c',child,'x']+names,capture_output=True,text=True,cwd=str(Path(__file__).parent),timeout=300)
+   self.assertEqual(got.returncode,0,got.stderr[-600:])
+   saved,peak=map(int,got.stdout.split())
+   self.assertEqual(saved,2,'both pictures were saved')
+   self.assertLess(peak,512,'%s %s: peak %d MiB; the service is allowed 768'%(fmt,mode,peak))
+   print('\n  two 40 MP %s %s at once: peak %d MiB'%(fmt,mode,peak),file=sys.stderr)
 if __name__=='__main__':unittest.main()

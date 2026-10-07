@@ -84,6 +84,7 @@ def authenticate(header,users):
 class Store:
  def __init__(self,db,root):
   self.db_path=str(db);self.root=Path(root).resolve();self.root.mkdir(parents=True,exist_ok=True,mode=0o700)
+  self.decoding=threading.Lock()  # one photo is decoded at a time: a 40 MP picture takes about 160 MiB while it is open
   with self.db() as c:c.executescript('''
 CREATE TABLE IF NOT EXISTS armen_answers(id TEXT PRIMARY KEY, actor TEXT, day TEXT, question TEXT, answer TEXT, created TEXT);
 CREATE TABLE IF NOT EXISTS armen_photos(id TEXT PRIMARY KEY, actor TEXT, digest TEXT, format TEXT, original TEXT, preview TEXT, purpose TEXT, created TEXT, UNIQUE(actor,digest));
@@ -98,7 +99,7 @@ CREATE TABLE IF NOT EXISTS armen_commands(actor TEXT,key TEXT,digest TEXT,result
  def answer(self,actor,key,d):
   if set(d)!={'question','answer','day'}:raise ValueError('exact answer fields required')
   q=next((q for q in QUESTIONS if q['id']==d['question']),None)
-  if not q or d['answer'] not in {v for v,_ in q['options']} or d['day']!=day():raise ValueError('invalid question/answer/day; reload page')
+  if not q or d['answer'] not in {v for v,_ in q['options']} or not isinstance(d['day'],str):raise ValueError('invalid question/answer/day; reload page')
   if not isinstance(key,str) or not re.fullmatch('[a-f0-9]{32}',key):raise ValueError('request key required')
   dg=hashlib.sha256(encode(d).encode()).hexdigest()
   with self.db() as c:
@@ -106,13 +107,15 @@ CREATE TABLE IF NOT EXISTS armen_commands(actor TEXT,key TEXT,digest TEXT,result
    if old:
     if old['digest']!=dg:raise ValueError('changed request key')
     return json.loads(old['result'])
+   # Only a new answer must be for today: the repeat of a saved one gets its saved result after midnight too.
+   if d['day']!=day():raise ValueError('invalid question/answer/day; reload page')
    ident=uuid.uuid4().hex;result={'saved':True,'id':ident,'trust':'ARMEN_REPORTED','day':d['day']}
    c.execute('INSERT INTO armen_answers VALUES(?,?,?,?,?,?)',(ident,actor,d['day'],d['question'],d['answer'],now()))
    c.execute('INSERT INTO armen_commands VALUES(?,?,?,?)',(actor,key,dg,encode(result)))
    return result
  def photo(self,actor,raw,purpose):
   if not raw or len(raw)>MAX_IMAGE or purpose not in ('WORK','EQUIPMENT','OTHER'):raise ValueError('image up to 20 MiB and known purpose required')
-  with warnings.catch_warnings():
+  with self.decoding,warnings.catch_warnings():
    warnings.simplefilter('error',Image.DecompressionBombWarning)
    try:
     with Image.open(io.BytesIO(raw)) as im:
@@ -120,7 +123,11 @@ CREATE TABLE IF NOT EXISTS armen_commands(actor TEXT,key TEXT,digest TEXT,result
      if fmt not in ('JPEG','PNG','WEBP') or getattr(im,'n_frames',1)!=1 or im.width*im.height>40000000:raise ValueError('single JPEG/PNG/WebP up to 40 megapixels required')
      im.verify()
     with Image.open(io.BytesIO(raw)) as im:
-     im.load();thumb=ImageOps.exif_transpose(im).convert('RGB');thumb.thumbnail((600,600))
+     # Made small first, turned and converted after: the full-size picture is in memory once, never as three copies.
+     # The whole file is still decoded, so a broken one is refused.
+     im.draft(None,(1200,1200))  # JPEG only: decoded at a smaller scale
+     small=im if im.mode in ('RGB','RGBA','L') else im.convert('RGB')  # palette and other modes do not shrink well
+     small.thumbnail((600,600));thumb=ImageOps.exif_transpose(small).convert('RGB')
      out=io.BytesIO();thumb.save(out,'JPEG',quality=80)
    except (OSError,Image.DecompressionBombWarning,Image.DecompressionBombError,SyntaxError) as e:
     raise ValueError('cannot decode photo; use JPEG/PNG/WebP') from None
@@ -143,8 +150,9 @@ CREATE TABLE IF NOT EXISTS armen_commands(actor TEXT,key TEXT,digest TEXT,result
   with self.db() as c:
    args=() if owner else (actor,)
    where='' if owner else ' WHERE actor=?'
-   answers=[dict(r) for r in c.execute('SELECT * FROM armen_answers'+where+' ORDER BY created,id',args)]
-   photos=[dict(r) for r in c.execute('SELECT id,actor,purpose,created FROM armen_photos'+where+' ORDER BY created DESC LIMIT 100',args)]
+   # In the order they were saved (rowid), not by clock text: two answers may carry the same time, and the id is random.
+   answers=[dict(r) for r in c.execute('SELECT * FROM armen_answers'+where+' ORDER BY rowid',args)]
+   photos=[dict(r) for r in c.execute('SELECT id,actor,purpose,created FROM armen_photos'+where+' ORDER BY rowid DESC LIMIT 100',args)]
   latest={}
   for r in answers:
    if r['day']==day():latest[r['actor']+':'+r['question']]=r
