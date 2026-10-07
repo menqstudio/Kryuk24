@@ -1,4 +1,5 @@
 """Private Armen input portal. Separate credentials/data; no operator approvals."""
+from http.cookies import SimpleCookie,CookieError
 import argparse,base64,hashlib,hmac,io,json,os,re,secrets,sqlite3,threading,time,uuid,warnings
 from contextlib import contextmanager
 from datetime import datetime,timedelta,timezone
@@ -7,6 +8,36 @@ from pathlib import Path
 from PIL import Image,ImageOps
 
 PREFIX='/operator/work/armen/'
+COOKIE='__Secure-kryuk_armen'
+SESSION_TTL=8*60*60
+
+class Sessions:
+ def __init__(self,clock=time.monotonic):
+  self.clock=clock;self.records={};self.lock=threading.Lock()
+ def create(self,actor):
+  token=secrets.token_urlsafe(32);csrf=secrets.token_urlsafe(32)
+  with self.lock:
+   t=self.clock();self.records={k:v for k,v in self.records.items() if v[2]>t}
+   if len(self.records)>=1024:raise ValueError('session capacity')
+   self.records[hashlib.sha256(token.encode()).hexdigest()]=(actor,csrf,t+SESSION_TTL)
+  return token,csrf
+ def resolve(self,header):
+  try:
+   if len(header)>4096:return None
+   jar=SimpleCookie();jar.load(header);token=jar[COOKIE].value
+   if not re.fullmatch('[A-Za-z0-9_-]{43}',token):return None
+   key=hashlib.sha256(token.encode()).hexdigest()
+  except (KeyError,ValueError,CookieError):return None
+  with self.lock:
+   rec=self.records.get(key)
+   if rec and rec[2]>self.clock():return rec
+   self.records.pop(key,None);return None
+ def revoke(self,header):
+  try:
+   jar=SimpleCookie();jar.load(header);key=hashlib.sha256(jar[COOKIE].value.encode()).hexdigest()
+  except (KeyError,ValueError,CookieError):return
+  with self.lock:self.records.pop(key,None)
+
 MAX_IMAGE=20*1024*1024
 MAX_TOTAL=1024*1024*1024
 QUESTIONS=[
@@ -119,31 +150,60 @@ def server(store,users,origin,port=8790):
  if not users or set(users)-{'armen','gev'} or 'armen' not in users:raise ValueError('armen user required; optional gev reviewer')
  for r in users.values():
   if set(r)!={'salt','hash'} or not re.fullmatch('[a-f0-9]{32}',r['salt']) or not re.fullmatch('[a-f0-9]{64}',r['hash']):raise ValueError('invalid credential record')
- csrf={u:secrets.token_urlsafe(32) for u in users};attempts=[];lock=threading.Lock();uploads=threading.BoundedSemaphore(2)
+ sessions=Sessions();attempts=[];lock=threading.Lock();uploads=threading.BoundedSemaphore(2);logins=threading.BoundedSemaphore(2)
  class H(BaseHTTPRequestHandler):
   def setup(self):super().setup();self.connection.settimeout(30)
   def log_message(self,*args):pass
-  def reply(self,status,data,kind='application/json; charset=utf-8',challenge=False):
+  def reply(self,status,data,kind='application/json; charset=utf-8',cookie=None):
    raw=data if isinstance(data,bytes) else (encode(data) if isinstance(data,dict) else data).encode()
    self.send_response(status);self.send_header('Content-Type',kind);self.send_header('Content-Length',str(len(raw)))
    for k,v in [('Cache-Control','no-store'),('X-Content-Type-Options','nosniff'),('X-Frame-Options','DENY'),('Referrer-Policy','no-referrer'),('X-Robots-Tag','noindex, nofollow')]:self.send_header(k,v)
    self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
-   if challenge:self.send_header('WWW-Authenticate','Basic realm="KRYUK24 Armen", charset="UTF-8"')
+   if cookie is not None:self.send_header('Set-Cookie',cookie)
    self.end_headers();self.wfile.write(raw)
   def identity(self):
+   self.session=sessions.resolve(self.headers.get('Cookie',''))
+   return self.session[0] if self.session else None
+  def cookie(self,token,age=SESSION_TTL):
+   return f'{COOKIE}={token}; Path={PREFIX}; Max-Age={age}; Secure; HttpOnly; SameSite=Strict'
+  def login(self):
+   if self.headers.get('Origin')!=origin:return self.reply(403,{'error':'origin required'})
+   if self.headers.get('Transfer-Encoding'):return self.reply(400,{'error':'invalid login'})
+   try:
+    size=int(self.headers.get('Content-Length','0'))
+    if not 0<size<=4096 or self.headers.get('Content-Type','').split(';')[0]!='application/json':raise ValueError()
+    raw=self.rfile.read(size)
+    if len(raw)!=size:raise ValueError()
+    d=json.loads(raw)
+    if type(d) is not dict or set(d)!={'username','password'} or not all(type(v) is str for v in d.values()):raise ValueError()
+    if len(d['username'])>64 or not 1<=len(d['password'])<=1024:raise ValueError()
+   except (ValueError,TypeError):return self.reply(400,{'error':'invalid login'})
    with lock:
     t=time.monotonic();attempts[:]=[v for v in attempts if t-v<60]
-    if len(attempts)>=30:return None
-   actor=authenticate(self.headers.get('Authorization',''),users)
-   if actor is None:
-    with lock:attempts.append(time.monotonic())
-   return actor
+    if len(attempts)>=30:return self.reply(429,{'error':'Попробуйте через минуту.'})
+   if not logins.acquire(blocking=False):return self.reply(429,{'error':'Попробуйте через минуту.'})
+   try:
+    auth='Basic '+base64.b64encode((d['username']+':'+d['password']).encode()).decode()
+    actor=authenticate(auth,users)
+    if not actor:
+     with lock:attempts.append(time.monotonic())
+     return self.reply(401,{'error':'Проверьте имя и пароль.'})
+    sessions.revoke(self.headers.get('Cookie',''))
+    try:token,_=sessions.create(actor)
+    except ValueError:return self.reply(503,{'error':'Попробуйте позже.'})
+    return self.reply(200,{'logged_in':True},cookie=self.cookie(token))
+   finally:logins.release()
   def do_GET(self):
+   if self.path in (PREFIX+'login.js',PREFIX+'style.css'):
+    name=self.path[len(PREFIX):];kind='text/javascript; charset=utf-8' if name.endswith('.js') else 'text/css; charset=utf-8'
+    return self.reply(200,(Path(__file__).parent/name).read_bytes(),kind)
    actor=self.identity()
-   if not actor:return self.reply(401,{'error':'login required'},challenge=True)
+   if not actor:
+    if self.path==PREFIX:return self.reply(200,(Path(__file__).parent/'login.html').read_bytes(),'text/html; charset=utf-8')
+    return self.reply(401,{'error':'login required'})
    if '?' in self.path:return self.reply(404,{'error':'unavailable'})
    if self.path==PREFIX:
-    raw=(Path(__file__).parent/'index.html').read_text(encoding='utf-8').replace('__CSRF__',csrf[actor]).replace('__ACTOR__',actor)
+    raw=(Path(__file__).parent/'index.html').read_text(encoding='utf-8').replace('__CSRF__',self.session[1]).replace('__ACTOR__',actor)
     return self.reply(200,raw,'text/html; charset=utf-8')
    if self.path in (PREFIX+'app.js',PREFIX+'style.css'):
     name=self.path[len(PREFIX):];kind='text/javascript; charset=utf-8' if name.endswith('.js') else 'text/css; charset=utf-8'
@@ -154,10 +214,13 @@ def server(store,users,origin,port=8790):
     except (LookupError,OSError):return self.reply(404,{'error':'unavailable'})
    return self.reply(404,{'error':'unavailable'})
   def do_POST(self):
+   if self.path==PREFIX+'api/login':return self.login()
    actor=self.identity()
-   if not actor:return self.reply(401,{'error':'login required'},challenge=True)
+   if not actor:return self.reply(401,{'error':'login required'})
+   if self.headers.get('Origin')!=origin or not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),self.session[1]):return self.reply(403,{'error':'reload page'})
+   if self.path==PREFIX+'api/logout':
+    sessions.revoke(self.headers.get('Cookie',''));return self.reply(200,{'logged_out':True},cookie=self.cookie('',0))
    if actor!='armen':return self.reply(403,{'error':'read only'})
-   if self.headers.get('Origin')!=origin or not hmac.compare_digest(self.headers.get('X-CSRF-Token',''),csrf[actor]):return self.reply(403,{'error':'reload page'})
    try:
     if self.headers.get('Transfer-Encoding'):raise ValueError('chunked upload not supported')
     size=int(self.headers.get('Content-Length','0'));ctype=self.headers.get('Content-Type','').split(';')[0]
@@ -184,4 +247,4 @@ def server(store,users,origin,port=8790):
 if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--db',required=True);p.add_argument('--photos',required=True);p.add_argument('--credentials',required=True);p.add_argument('--port',type=int,default=8790);a=p.parse_args()
  os.umask(0o077)
- server(Store(a.db,a.photos),json.loads(Path(a.credentials).read_text()),'https://runtime.kryuk24.ru',a.port).serve_forever()
+ server(Store(a.db,a.photos),json.loads(Path(a.credentials).read_text(encoding='utf-8')),'https://runtime.kryuk24.ru',a.port).serve_forever()

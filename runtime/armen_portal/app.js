@@ -17,3 +17,5 @@ async function upload(input){const files=Array.from(input.files||[]);if(!files.l
  message(el,'Сохранено '+saved+' из '+files.length+(failed.length?'. '+failed.join('; '):'. Спасибо!'),failed.length>0);for(const picker of document.querySelectorAll('input[type=file]'))picker.disabled=false;input.value='';try{await load();}catch(e){message(status,'Фото могли сохраниться. Обновите страницу для проверки.',true);}}
 for(const id of ['gallery','camera'])document.getElementById(id).onchange=e=>upload(e.target);
 load().catch(()=>message(status,'Не удалось загрузить. Обновите страницу и проверьте вход.',true));
+
+document.getElementById('logout').onclick=async()=>{try{await api('api/logout',{method:'POST',headers:{'X-CSRF-Token':csrf}});location.reload();}catch(e){message(status,e.message,true);}};
