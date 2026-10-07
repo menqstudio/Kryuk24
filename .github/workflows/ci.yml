@@ -61,8 +61,10 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -r requirements.txt
           python -m unittest discover -s . -p "test_*.py"
-      - name: Armen portal, the page script parses
-        run: node --check runtime/armen_portal/app.js
+      - name: Armen portal, the page scripts parse
+        run: |
+          node --check runtime/armen_portal/app.js
+          node --check runtime/armen_portal/login.js
       - name: Package manifest matches the files
         working-directory: runtime/api_reader
         run: sha256sum -c SHA256SUMS.txt
