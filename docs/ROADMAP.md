@@ -131,7 +131,7 @@ Deliverables:
 5. Verified rendering on GitHub: readable in light and dark, alt text, legible on a small screen, Armenian glyphs covered where needed. SVG files use no script, no `foreignObject` and no remotely loaded font.
 6. Gev's visual acceptance of the repository presentation is part of the v1.0 acceptance.
 
-It is queue item 27. Built on 07.10.2026 (root README, `docs/assets/readme/`, `tools/make_repo_visuals.py`); **awaits Gev's visual acceptance**. The MenQ sources were read from the `main` branch of `menqstudio/MenQ-Standard` (commit `78f86cb`): the branch name in the issue does not exist there.
+It is queue item 27. Built on 07.10.2026 (root README, `docs/assets/readme/`, `tools/make_repo_visuals.py`); **awaits Gev's visual acceptance**. The MenQ sources were read from the `main` branch of `menqstudio/MenQ-Standard` (commit `78f86cbc346cf005211ee461b8dea22c8478b27e`): the branch name in the issue does not exist there.
 
 ### How this is kept
 
@@ -335,7 +335,7 @@ It is queue item 27. Built on 07.10.2026 (root README, `docs/assets/readme/`, `t
 5. Ստուգված տեսք GitHub-ում. ընթեռնելի light ու dark, alt տեքստեր, փոքր էկրանին կարդացվող, հայերեն տառերը ծածկված, որտեղ պետք ա։ SVG ֆայլերում script, `foreignObject` ու դրսից բեռնվող font չկա։
 6. Repo-ի ներկայացման Գևի վիզուալ ընդունումը v1.0-ի ընդունման մաս ա։
 
-Հերթի 27-րդ կետն ա։ Արված ա 07.10.2026-ին (root README, `docs/assets/readme/`, `tools/make_repo_visuals.py`). **սպասում ա Գևի վիզուալ ընդունմանը**։ MenQ-ի աղբյուրները կարդացվել են `menqstudio/MenQ-Standard`-ի `main` ճյուղից (commit `78f86cb`). issue-ում գրված ճյուղը էնտեղ չկա։
+Հերթի 27-րդ կետն ա։ Արված ա 07.10.2026-ին (root README, `docs/assets/readme/`, `tools/make_repo_visuals.py`). **սպասում ա Գևի վիզուալ ընդունմանը**։ MenQ-ի աղբյուրները կարդացվել են `menqstudio/MenQ-Standard`-ի `main` ճյուղից (commit `78f86cbc346cf005211ee461b8dea22c8478b27e`). issue-ում գրված ճյուղը էնտեղ չկա։
 
 ### Ոնց ա սա պահվում
 

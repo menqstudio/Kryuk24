@@ -1,4 +1,5 @@
-"""Visuals of the repository README: cover, architecture, roadmap phases, status board. Light and dark, EN and HY.
+"""Visuals of the repository README: cover, where each part lives, what runs on the server, roadmap phases, sources.
+Light and dark, EN and HY.
 
     python tools/make_repo_visuals.py            writes docs/assets/readme/*.svg
 
@@ -8,11 +9,14 @@ Rules the files follow:
   - identity is KRYUK24's own: the hook and the «КРЮК24 / ЭВАКУАТОР+» lockup, navy, orange, soft orange, white
     (tools/brand.py). The lockup letters are outlines traced from the brand fonts, so no font has to load;
   - structure follows the MenQ design platform's conventions for a product layer: 960x300 cover with the text block
-    bottom-left and a 48 px hairline grid, cards with a 1 px border, pill badges with a dot AND a word (status is
-    never carried by colour alone), light and dark as equals, text contrast 4.5:1 or better;
+    bottom-left and a 48 px hairline grid, cards with a 1 px border, a status shown as a dot AND a word (never by
+    colour alone), light and dark as equals, text contrast 4.5:1 or better;
+  - readable on a phone: a picture carries only the main idea in large labels. The diagrams are 480 units wide and
+    no text in them is smaller than MIN_TEXT, which is about 12 px when the picture is 330 px wide. Details (owners,
+    notes, evidence) are in the Markdown next to the picture. There is a narrow cover for small screens;
   - no script, no foreignObject, no external resource, no embedded or remote font: every other text uses the
     reader's system fonts, which is also what covers Armenian;
-  - every status word here must be backed by docs/CURRENT_STATE.md. AS_OF is printed in each picture.
+  - every status word here must be backed by docs/CURRENT_STATE.md or docs/ROADMAP.md. AS_OF is printed in each.
 """
 import sys
 from pathlib import Path
@@ -26,15 +30,17 @@ import brand as B  # noqa: E402
 
 OUT = B.ROOT / "docs" / "assets" / "readme"
 AS_OF = "07.10.2026"
+W = 480                   # width of a diagram in its own units
+MIN_TEXT = 17             # smallest text in a diagram
 SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans','Noto Sans Armenian',Helvetica,Arial,sans-serif"
 
 THEMES = {
     "light": {"surface": "#FFFFFF", "surface2": "#F3F5F8", "border": "#D5DBE3", "grid": "#E4E8EE", "text": B.INK, "text2": "#44536A",
               "muted": "#5E6B7E", "accent": B.ORANGE, "sub": B.ORANGE, "on": "light",
-              "ok": ("#15803D", "#E8F5EC"), "progress": ("#B45309", "#FBF1E1"), "blocked": ("#B91C1C", "#FBEAEA"), "neutral": ("#44536A", "#EDF0F4")},
+              "ok": "#15803D", "progress": "#B45309", "blocked": "#B91C1C", "neutral": "#44536A"},
     "dark": {"surface": B.INK, "surface2": "#1B2F4C", "border": "#34475F", "grid": "#1E3350", "text": B.WHITE, "text2": "#C9D3E0",
              "muted": "#9FB0C5", "accent": B.ORANGE, "sub": B.ORANGE_SOFT, "on": "dark",
-             "ok": ("#4ADE80", "#17382F"), "progress": ("#FBBF24", "#3A3320"), "blocked": ("#F87171", "#3D2530"), "neutral": ("#C9D3E0", "#263A56")},
+             "ok": "#4ADE80", "progress": "#FBBF24", "blocked": "#F87171", "neutral": "#C9D3E0"},
 }
 
 
@@ -88,10 +94,10 @@ def esc(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
-def text(x, y, s, size, fill, weight=400, anchor="start", ls=0.0, caps=False):
+def text(x, y, s, size, fill, weight=400, anchor="start", ls=0.0):
     extra = ' letter-spacing="%.2f"' % ls if ls else ""
     return '<text x="%.1f" y="%.1f" font-family="%s" font-size="%d" font-weight="%d" fill="%s" text-anchor="%s"%s>%s</text>' % (
-        x, y, SANS, size, weight, fill, anchor, extra, esc(s.upper() if caps else s))
+        x, y, SANS, size, weight, fill, anchor, extra, esc(s))
 
 
 def box(x, y, w, h, fill, stroke=None, r=16):
@@ -99,173 +105,138 @@ def box(x, y, w, h, fill, stroke=None, r=16):
     return '<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" rx="%d" fill="%s"%s/>' % (x, y, w, h, r, fill, s)
 
 
-def badge(right, cy, word, tone, t):
-    """Pill with a dot and a word, right edge at `right`, centred on cy. Returns (svg, width)."""
-    fg, bg = t[tone]
-    w = 30 + sum(9.6 if ord(ch) > 0x52F else 7.3 for ch in word)      # Armenian capitals are wider than Latin ones
-    x = right - w
-    return (box(x, cy - 12, w, 24, bg, r=12) + '<circle cx="%.1f" cy="%.1f" r="3.5" fill="%s"/>' % (x + 13, cy, fg)
-            + text(x + 23, cy + 4, word, 11, fg, 700, ls=0.5, caps=True)), w
+def state(right, base, word, tone, t):
+    """A status: a dot and a word in its tone, right-aligned. Both always, never the colour alone.
+    The dot is a character of the same text, so it sits next to the word whatever font the reader has."""
+    return text(right, base, "● " + word, MIN_TEXT, t[tone], 600, "end")
 
 
-def doc(w, h, body, label, t, bg=True):
-    back = box(0.5, 0.5, w - 1, h - 1, t["surface"], t["border"], 24) if bg else ""
+def doc(w, h, body, label, t, frame=True):
+    back = box(0.5, 0.5, w - 1, h - 1, t["surface"], t["border"], 24) if frame else ""
     return ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" role="img" aria-label="%s">'
             '<title>%s</title>%s%s</svg>\n') % (w, h, w, h, esc(label), esc(label), back, "".join(body))
 
 
-def head(title, sub, t, w=640):
-    return [text(32, 50, title, 22, t["text"], 700), text(32, 74, sub, 13, t["muted"]),
-            '<rect x="32" y="88" width="%d" height="1" fill="%s"/>' % (w - 64, t["border"])]
+def rows_picture(t, title, label, rows, foot):
+    """A titled list: each row is a name on the left and a status on the right. `rows` = (name, word, tone)."""
+    body = [text(28, 50, title, 26, t["text"], 700), '<rect x="28" y="68" width="%d" height="2" fill="%s"/>' % (56, t["accent"])]
+    y = 88
+    for name, word, tone in rows:
+        body += [box(20, y, W - 40, 50, t["surface2"], t["border"], 12), text(36, y + 32, name, 18, t["text"], 600), state(W - 36, y + 32, word, tone, t)]
+        y += 58
+    body.append(text(28, y + 22, foot, MIN_TEXT, t["muted"]))
+    return doc(W, y + 44, body, label, t)
 
 
-# ---------------------------------------------------------------- content (every status: docs/CURRENT_STATE.md)
+# ---------------------------------------------------------------- content (every status: docs/CURRENT_STATE.md, docs/ROADMAP.md)
 L = {
     "en": {
-        "cover": ("Bro: the business operating assistant", "Tow-truck service in Moscow and the Moscow region", "inspect → analyse → propose → prepare → approval → execute → verify → report",
-                  "KRYUK24 Bro: the business operating assistant for a tow-truck service in Moscow and the Moscow region"),
-        "as_of": "State on %s. Source: docs/CURRENT_STATE.md" % AS_OF,
-        "arch": ("Where each part lives", "Target placement and what is there today",
-                 "KRYUK24 architecture: GitHub holds code and documents; the VPS holds the runtime, with the queue, dashboard, Bro bridge and API reader installed and the mailbox, approvals, executor and monitoring planned; the Debian desktop worker is planned; Windows is for development and supervised trials"),
-        "zones": [("GitHub", "Canonical code, documents, decisions, roadmap", [("Private repository, CI on every change", "in place", "ok")]),
-                  ("VPS", "The runtime. STAGING, sending is off", [("Daily queue, dashboard, Bro bridge", "installed", "ok"),
-                                                                   ("API reader: hosting, Metrica, Webmaster", "installed", "ok"),
-                                                                   ("Its first supervised write", "pending", "progress"),
-                                                                   ("Mailbox, approvals, executor, monitoring", "planned", "neutral")]),
-                  ("Debian desktop", "Browser and media worker", [("Bounded worker that takes runtime jobs", "planned", "neutral")]),
-                  ("Windows", "Development and supervised trials only", [("Chrome proxy, gate, trial harness", "in progress", "progress")])],
-        "outside": ["Outside the runtime: the live site kryuk24.ru is not connected to it yet.",
-                    "Every public or paid action needs Gev's approval for that exact action."],
-        "phases": ("Roadmap phases", "Approved 07.10.2026. A phase closes on its acceptor's word, not on a file",
-                   "KRYUK24 roadmap phases 0 to 8 with owner, acceptor and state: phase 0 awaits acceptance, phases 1, 2 and 6 are started, phases 3, 4, 5, 7 and 8 are not started"),
-        "phase_rows": [("0", "Canonical state", "Claude / GPT", "awaits acceptance", "progress"), ("1", "Security and recovery", "Claude / GPT", "started", "progress"),
-                       ("2", "Reliable collection", "Claude / GPT", "started", "progress"), ("3", "Real business flow", "GPT / Armen", "not started", "neutral"),
-                       ("4", "Action approval", "GPT / Claude", "not started", "neutral"), ("5", "Executor", "Claude / GPT", "not started", "neutral"),
-                       ("6", "Browser and Debian", "Claude / GPT", "started", "progress"), ("7", "Analysis, reporting, control", "Claude / Gev", "not started", "neutral"),
-                       ("8", "Controlled operation, v1.0", "Gev / GPT", "not started", "neutral")],
-        "owner": "owner / acceptor",
-        "status": ("What Bro can read today", "A source that is not read is UNKNOWN, never \"no problem\"",
-                   "KRYUK24 sources: hosting, Metrica and Webmaster are read by an installed API reader; Yandex Direct is blocked by Yandex; Avito is on hold; the mailbox is blocked; the Yandex Business card has no API; real requests and orders are not recorded"),
-        "status_rows": [("Hosting account", "balance, days left", "installed", "ok"), ("Yandex Metrica", "site and Maps card, separately", "installed", "ok"),
-                        ("Yandex Webmaster", "indexing of the site", "installed", "ok"), ("Yandex Direct", "waits for Yandex to grant API access", "blocked", "blocked"),
-                        ("Avito", "reading works; nothing is changed", "on hold", "neutral"), ("Mailbox", "no mail application, no credential", "blocked", "blocked"),
-                        ("Yandex Business card", "no API; browser route is work in progress", "in progress", "progress"),
-                        ("Real requests and orders", "nothing real is recorded yet", "not built", "neutral")],
-        "status_foot": "A click is not a call, a call is not an order, an order is not a paid completion.",
+        "foot": "State on %s" % AS_OF,
+        "placement": ("Where each part lives", "Where each part of KRYUK24 Bro lives: GitHub is in place, the VPS runtime is in STAGING, the Debian worker is planned, Windows is for trials",
+                      [("GitHub", "code, documents", "in place", "ok"), ("VPS", "the runtime", "STAGING", "progress"),
+                       ("Debian desktop", "browser worker", "planned", "neutral"), ("Windows", "development, trials", "in use", "ok")]),
+        "server": ("On the server today", "On the server today: queue and dashboard, Bro bridge and API reader are installed; mailbox, approvals, executor and monitoring are planned",
+                   [("Queue and dashboard", "installed", "ok"), ("Bro bridge", "installed", "ok"), ("API reader", "installed", "ok"),
+                    ("Mailbox", "planned", "neutral"), ("Approvals", "planned", "neutral"), ("Executor", "planned", "neutral"), ("Monitoring", "planned", "neutral")]),
+        "phases": ("Roadmap phases", "Roadmap phases: 0 in review; 1, 2 and 6 started; 3, 4, 5, 7 and 8 not started",
+                   [("0  Canonical state", "in review", "progress"), ("1  Security, recovery", "started", "progress"), ("2  Collection", "started", "progress"),
+                    ("3  Business flow", "not started", "neutral"), ("4  Action approval", "not started", "neutral"), ("5  Executor", "not started", "neutral"),
+                    ("6  Browser, Debian", "started", "progress"), ("7  Reports, control", "not started", "neutral"), ("8  Operation, v1.0", "not started", "neutral")]),
+        "sources": ("What Bro reads today", "What Bro reads today: hosting, Metrica and Webmaster are installed; Direct and the mailbox are blocked; Avito is on hold; the Business card is in progress; orders are not built",
+                    [("Hosting", "installed", "ok"), ("Yandex Metrica", "installed", "ok"), ("Yandex Webmaster", "installed", "ok"), ("Yandex Direct", "blocked", "blocked"),
+                     ("Avito", "on hold", "neutral"), ("Mailbox", "blocked", "blocked"), ("Business card", "in progress", "progress"), ("Requests, orders", "not built", "neutral")]),
     },
     "hy": {
-        "as_of": "Վիճակը %s-ին։ Աղբյուր՝ docs/CURRENT_STATE.md" % AS_OF,
-        "arch": ("Որտեղ ինչն ա ապրում", "Նպատակային տեղաբաշխումը ու ինչ կա այսօր",
-                 "KRYUK24-ի ճարտարապետությունը. GitHub-ում կոդն ու փաստաթղթերն են. VPS-ում runtime-ն ա՝ հերթը, վահանակը, Bro-ի կամուրջն ու API reader-ը դրված են, փոստը, հաստատումները, executor-ն ու monitoring-ը պլանավորված են. Debian-ի worker-ը պլանավորված ա. Windows-ը մշակման ու հսկվող փորձերի համար ա"),
-        "zones": [("GitHub", "Հիմնական կոդը, փաստաթղթերը, որոշումները, քարտեզը", [("Փակ repo, CI ամեն փոփոխության վրա", "կա", "ok")]),
-                  ("VPS", "Runtime-ը։ STAGING, ուղարկելը անջատված ա", [("Օրվա հերթ, վահանակ, Bro-ի կամուրջ", "դրված ա", "ok"),
-                                                                    ("API reader. հոստինգ, Metrica, Webmaster", "դրված ա", "ok"),
-                                                                    ("Դրա առաջին հսկվող գրելը", "սպասվում ա", "progress"),
-                                                                    ("Փոստ, հաստատումներ, executor, monitoring", "պլանում ա", "neutral")]),
-                  ("Debian desktop", "Browser ու media worker", [("Սահմանափակ worker, որ վերցնում ա runtime-ի գործերը", "պլանում ա", "neutral")]),
-                  ("Windows", "Միայն մշակում ու հսկվող փորձեր", [("Chrome proxy, gate, trial harness", "ընթացքում ա", "progress")])],
-        "outside": ["Runtime-ից դուրս. կենդանի կայքը՝ kryuk24.ru, դեռ կապված չի runtime-ին։",
-                    "Հրապարակային կամ վճարովի ամեն քայլ՝ Գևի հաստատումով հենց էդ քայլի համար։"],
-        "phases": ("Քարտեզի փուլերը", "Հաստատված ա 07.10.2026-ին։ Փուլը փակում ա ընդունողը, ոչ թե ֆայլը",
-                   "KRYUK24-ի քարտեզի 0–8 փուլերը՝ պատասխանատուով, ընդունողով ու վիճակով. 0-րդը սպասում ա ընդունման, 1, 2 ու 6 փուլերը սկսված են, 3, 4, 5, 7 ու 8 փուլերը սկսված չեն"),
-        "phase_rows": [("0", "Հիմնական վիճակ", "Claude / GPT", "սպասում ա ընդունման", "progress"), ("1", "Անվտանգություն ու վերականգնում", "Claude / GPT", "սկսված ա", "progress"),
-                       ("2", "Հուսալի հավաքում", "Claude / GPT", "սկսված ա", "progress"), ("3", "Իրական բիզնես հոսք", "GPT / Արմեն", "սկսված չի", "neutral"),
-                       ("4", "Գործողության հաստատում", "GPT / Claude", "սկսված չի", "neutral"), ("5", "Executor", "Claude / GPT", "սկսված չի", "neutral"),
-                       ("6", "Զննարկիչ ու Debian", "Claude / GPT", "սկսված ա", "progress"), ("7", "Վերլուծություն, հաշվետվություն", "Claude / Գև", "սկսված չի", "neutral"),
-                       ("8", "Հսկվող շահագործում, v1.0", "Գև / GPT", "սկսված չի", "neutral")],
-        "owner": "պատասխանատու / ընդունող",
-        "status": ("Ինչ կարա կարդա Bro-ն այսօր", "Չկարդացված աղբյուրը UNKNOWN ա, ոչ թե «խնդիր չկա»",
-                   "KRYUK24-ի աղբյուրները. հոստինգը, Metrica-ն ու Webmaster-ը կարդում ա դրված API reader-ը. Yandex Direct-ը փակ ա Yandex-ի կողմից. Avito-ն HOLD ա. փոստը փակ ա. Yandex Բիզնեսի քարտը API չունի. իրական դիմումներն ու պատվերները չեն գրանցվում"),
-        "status_rows": [("Հոստինգի հաշիվ", "մնացորդ, մնացած օրեր", "դրված ա", "ok"), ("Yandex Metrica", "կայքն ու Քարտեզի քարտը՝ առանձին", "դրված ա", "ok"),
-                        ("Yandex Webmaster", "կայքի ինդեքսավորում", "դրված ա", "ok"), ("Yandex Direct", "սպասում ա Yandex-ի API թույլտվությանը", "փակ ա", "blocked"),
-                        ("Avito", "կարդալը աշխատում ա. ոչինչ չի փոխվում", "HOLD", "neutral"), ("Փոստարկղ", "փոստի հավելված ու բանալի չկա", "փակ ա", "blocked"),
-                        ("Yandex Բիզնեսի քարտ", "API չկա. զննարկչի ճանապարհը ընթացքում ա", "ընթացքում ա", "progress"),
-                        ("Իրական դիմումներ ու պատվերներ", "իրական ոչինչ դեռ չի գրանցվում", "չկա", "neutral")],
-        "status_foot": "Սեղմումը զանգ չի, զանգը պատվեր չի, պատվերը վճարված ավարտ չի։",
+        "foot": "Վիճակը %s-ին" % AS_OF,
+        "placement": ("Որտեղ ինչն ա ապրում", "Որտեղ ա ապրում KRYUK24 Bro-ի ամեն մասը. GitHub-ը կա, VPS-ի runtime-ը STAGING ա, Debian-ի worker-ը պլանում ա, Windows-ը փորձերի համար ա",
+                      [("GitHub", "կոդ, փաստաթղթեր", "կա", "ok"), ("VPS", "runtime-ը", "STAGING", "progress"),
+                       ("Debian desktop", "browser worker", "պլանում ա", "neutral"), ("Windows", "մշակում, փորձեր", "գործածվում ա", "ok")]),
+        "server": ("Սերվերում այսօր", "Սերվերում այսօր. հերթն ու վահանակը, Bro-ի կամուրջն ու API reader-ը դրված են. փոստը, հաստատումները, executor-ն ու monitoring-ը պլանում են",
+                   [("Հերթ ու վահանակ", "դրված ա", "ok"), ("Bro-ի կամուրջ", "դրված ա", "ok"), ("API reader", "դրված ա", "ok"),
+                    ("Փոստ", "պլանում ա", "neutral"), ("Հաստատումներ", "պլանում ա", "neutral"), ("Executor", "պլանում ա", "neutral"), ("Monitoring", "պլանում ա", "neutral")]),
+        "phases": ("Քարտեզի փուլերը", "Քարտեզի փուլերը. 0-րդը ընդունման մեջ ա. 1, 2 ու 6-ը սկսված են. 3, 4, 5, 7 ու 8-ը սկսված չեն",
+                   [("0  Հիմնական վիճակ", "ընդունման մեջ", "progress"), ("1  Անվտանգություն", "սկսված ա", "progress"), ("2  Հավաքում", "սկսված ա", "progress"),
+                    ("3  Բիզնես հոսք", "սկսված չի", "neutral"), ("4  Հաստատում", "սկսված չի", "neutral"), ("5  Executor", "սկսված չի", "neutral"),
+                    ("6  Զննարկիչ, Debian", "սկսված ա", "progress"), ("7  Հաշվետվություն", "սկսված չի", "neutral"), ("8  Շահագործում, v1.0", "սկսված չի", "neutral")]),
+        "sources": ("Ինչ ա կարդում Bro-ն այսօր", "Ինչ ա կարդում Bro-ն այսօր. հոստինգը, Metrica-ն ու Webmaster-ը դրված են. Direct-ն ու փոստը փակ են. Avito-ն HOLD ա. Բիզնեսի քարտը ընթացքում ա. պատվերները չկան",
+                    [("Հոստինգ", "դրված ա", "ok"), ("Yandex Metrica", "դրված ա", "ok"), ("Yandex Webmaster", "դրված ա", "ok"), ("Yandex Direct", "փակ ա", "blocked"),
+                     ("Avito", "HOLD", "neutral"), ("Փոստարկղ", "փակ ա", "blocked"), ("Բիզնեսի քարտ", "ընթացքում ա", "progress"), ("Դիմումներ, պատվերներ", "չկա", "neutral")]),
     },
 }
+COVER = ("Bro: the business operating assistant", "Tow-truck service in Moscow and the Moscow region",
+         "inspect → analyse → propose → prepare → approval → execute → verify → report",
+         "KRYUK24 Bro: the business operating assistant for a tow-truck service in Moscow and the Moscow region")
 
 
-# ---------------------------------------------------------------- the four pictures
+# ---------------------------------------------------------------- the pictures
+def grid(w, h, t):
+    return ("".join('<path d="M%d 0V%d" stroke="%s" stroke-width="1"/>' % (x, h, t["grid"]) for x in range(48, w, 48))
+            + "".join('<path d="M0 %dH%d" stroke="%s" stroke-width="1"/>' % (y, w, t["grid"]) for y in range(48, h, 48)))
+
+
 def cover(t):
     w, h = 960, 300
-    title, sub, cycle, label = L["en"]["cover"]
-    clip = '<clipPath id="c"><rect x="0.5" y="0.5" width="%d" height="%d" rx="32"/></clipPath>' % (w - 1, h - 1)
-    grid = "".join('<path d="M%d 0V%d" stroke="%s" stroke-width="1"/>' % (x, h, t["grid"]) for x in range(48, w, 48))
-    grid += "".join('<path d="M0 %dH%d" stroke="%s" stroke-width="1"/>' % (y, w, t["grid"]) for y in range(48, h, 48))
+    title, sub, cycle, label = COVER
     big, _ = B.hook(742, -34, 392)                                    # the hook bleeds off the top and the right, as art
     logo, _ = lockup(40, 36, 58, t)
-    body = [clip, '<g clip-path="url(#c)">', box(0, 0, w, h, t["surface"], r=0), grid,
-            '<g opacity="%s">%s</g>' % ("0.95" if t["on"] == "dark" else "1", big), "</g>",
+    body = ['<clipPath id="c"><rect x="0.5" y="0.5" width="%d" height="%d" rx="32"/></clipPath>' % (w - 1, h - 1),
+            '<g clip-path="url(#c)">', box(0, 0, w, h, t["surface"], r=0), grid(w, h, t), big, "</g>",
             box(0.5, 0.5, w - 1, h - 1, "none", t["border"], 32), logo,
-            text(40, 196, title, 30, t["text"], 700, ls=-0.4), text(40, 226, sub, 16, t["text2"]),
-            text(40, 262, cycle, 13, t["muted"], 500)]
-    return doc(w, h, body, label, t, bg=False)
+            text(40, 196, title, 30, t["text"], 700, ls=-0.4), text(40, 226, sub, 16, t["text2"]), text(40, 262, cycle, 13, t["muted"], 500)]
+    return doc(w, h, body, label, t, frame=False)
 
 
-def architecture(t, lang):
+def cover_narrow(t):
+    """The cover for a small screen: same parts, set for 480 units so that the words stay readable."""
+    w, h = W, 300
+    label = COVER[3]
+    big, _ = B.hook(322, 128, 300)
+    logo, _ = lockup(28, 30, 64, t)
+    body = ['<clipPath id="c"><rect x="0.5" y="0.5" width="%d" height="%d" rx="28"/></clipPath>' % (w - 1, h - 1),
+            '<g clip-path="url(#c)">', box(0, 0, w, h, t["surface"], r=0), grid(w, h, t), big, "</g>",
+            box(0.5, 0.5, w - 1, h - 1, "none", t["border"], 28), logo,
+            text(28, 170, "Bro", 44, t["text"], 700, ls=-0.6), text(28, 204, "The business", 22, t["text"], 600),
+            text(28, 232, "operating assistant", 22, t["text"], 600), text(28, 268, "Moscow and the region", 18, t["text2"])]
+    return doc(w, h, body, label, t, frame=False)
+
+
+def placement(t, lang):
     c = L[lang]
-    title, sub, label = c["arch"]
-    w, y, body = 640, 108, []
-    for name, what, rows in c["zones"]:
-        hgt = 64 + 34 * len(rows)
-        body += [box(32, y, w - 64, hgt, t["surface2"], t["border"]), '<rect x="32" y="%d" width="4" height="%d" fill="%s"/>' % (y + 16, 28, t["accent"]),
-                 text(52, y + 30, name, 17, t["text"], 700), text(52, y + 50, what, 13, t["text2"])]
-        for i, (item, word, tone) in enumerate(rows):
-            cy = y + 76 + 34 * i
-            b, _ = badge(w - 48, cy, word, tone, t)
-            body += ['<rect x="52" y="%d" width="%d" height="1" fill="%s"/>' % (cy - 17, w - 104, t["border"]), text(52, cy + 5, item, 14, t["text"]), b]
-        y += hgt + 12
-    for i, line in enumerate(c["outside"]):
-        body.append(text(32, y + 16 + 20 * i, line, 13, t["text2"]))
-    y += 20 * len(c["outside"]) + 22
-    body.append(text(32, y, c["as_of"], 12, t["muted"]))
-    return doc(w, y + 24, head(title, sub, t) + body, label, t)
+    title, label, zones = c["placement"]
+    body = [text(28, 50, title, 26, t["text"], 700), '<rect x="28" y="68" width="56" height="2" fill="%s"/>' % t["accent"]]
+    y = 88
+    for name, what, word, tone in zones:
+        body += [box(20, y, W - 40, 78, t["surface2"], t["border"], 14), '<rect x="20" y="%d" width="4" height="46" fill="%s"/>' % (y + 16, t["accent"]),
+                 text(40, y + 34, name, 21, t["text"], 700), text(40, y + 60, what, MIN_TEXT, t["text2"]), state(W - 36, y + 34, word, tone, t)]
+        y += 88
+    body.append(text(28, y + 20, c["foot"], MIN_TEXT, t["muted"]))
+    return doc(W, y + 42, body, label, t)
 
 
-def phases(t, lang):
-    c = L[lang]
-    title, sub, label = c["phases"]
-    w = 640
-    body = [text(w - 48, 112, c["owner"], 11, t["muted"], 600, "end", 0.5, True)]
-    for i, (num, name, who, word, tone) in enumerate(c["phase_rows"]):
-        y = 124 + 58 * i
-        b, bw = badge(w - 48, y + 23, word, tone, t)
-        body += [box(32, y, w - 64, 48, t["surface2"], t["border"], 12),
-                 '<circle cx="60" cy="%d" r="15" fill="%s"/>' % (y + 24, t["surface"]), '<circle cx="60" cy="%d" r="15" fill="none" stroke="%s" stroke-width="2"/>' % (y + 24, t["accent"]),
-                 text(60, y + 29, num, 15, t["text"], 700, "middle"), text(88, y + 21, name, 15, t["text"], 600),
-                 text(88, y + 39, who, 12, t["muted"]), b]
-    y = 124 + 58 * len(c["phase_rows"]) + 14
-    body.append(text(32, y, c["as_of"], 12, t["muted"]))
-    return doc(w, y + 24, head(title, sub, t) + body, label, t)
+def listed(key):
+    def make(t, lang):
+        title, label, rows = L[lang][key]
+        return rows_picture(t, title, label, rows, L[lang]["foot"])
+    return make
 
 
-def status(t, lang):
-    c = L[lang]
-    title, sub, label = c["status"]
-    w, body = 640, []
-    for i, (name, note, word, tone) in enumerate(c["status_rows"]):
-        y = 108 + 56 * i
-        b, _ = badge(w - 48, y + 23, word, tone, t)
-        body += [box(32, y, w - 64, 46, t["surface2"], t["border"], 12), text(48, y + 20, name, 15, t["text"], 600), text(48, y + 37, note, 12, t["text2"]), b]
-    y = 108 + 56 * len(c["status_rows"]) + 16
-    body += [text(32, y, c["status_foot"], 13, t["text2"], 500), text(32, y + 24, c["as_of"], 12, t["muted"])]
-    return doc(w, y + 48, head(title, sub, t) + body, label, t)
+PICTURES = (("placement", placement), ("server", listed("server")), ("phases", listed("phases")), ("sources", listed("sources")))
 
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    for old in OUT.glob("*.svg"):
+        old.unlink()
     made = []
     for theme, t in THEMES.items():
-        made.append(("cover-%s.svg" % theme, cover(t)))
+        made += [("cover-%s.svg" % theme, cover(t)), ("cover-narrow-%s.svg" % theme, cover_narrow(t))]
         for lang in ("en", "hy"):
-            for name, fn in (("architecture", architecture), ("phases", phases), ("status", status)):
-                made.append(("%s-%s-%s.svg" % (name, lang, theme), fn(t, lang)))
+            made += [("%s-%s-%s.svg" % (name, lang, theme), fn(t, lang)) for name, fn in PICTURES]
     for name, svg in made:
         for banned in ("<script", "foreignObject", "@font-face", "href=", "url(http", "<image"):
             assert banned not in svg, (name, banned)
         (OUT / name).write_bytes(svg.encode("utf-8"))
-        print("%-32s %6.1f KB" % (name, len(svg.encode("utf-8")) / 1024))
+    print("%d files, %.0f KB in all" % (len(made), sum(len(s.encode("utf-8")) for _, s in made) / 1024))
 
 
 if __name__ == "__main__":
