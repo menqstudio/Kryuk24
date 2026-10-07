@@ -75,6 +75,13 @@ jobs:
       - name: WIP, Chrome proxy (stand-in upstream, no browser)
         working-directory: runtime/wip/chrome_proxy
         run: python -m unittest test_bro_chrome_proxy
-      # The trial harness self-test (runtime/wip/trial, 68 tests) is NOT run here. On the hosted Windows runner 3 of its 68
-      # tests end INCONCLUSIVE / BLOCKED (07.10.2026); the cause is not established. On the development machine all 68 pass.
-      # The harness judges the state of the machine it runs on, so it stays a local check until that is understood.
+      - name: WIP, trial harness self-test (stand-in for the model, no model run)
+        working-directory: runtime/wip/trial
+        run: python -m unittest test_trial_harness
+      - name: WIP, the three tests that used to fail here, five more times (the race they exposed is fixed)
+        working-directory: runtime/wip/trial
+        shell: bash
+        run: |
+          for n in 1 2 3 4 5; do
+            python -m unittest test_trial_harness.Honest.test_deny_cases test_trial_harness.Order.test_tab_id_mismatch_stops_the_queue test_trial_harness.Order.test_tab_id_unknown_form_stays_informational_and_matching_id_passes
+          done
