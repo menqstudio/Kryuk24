@@ -61,6 +61,10 @@ jobs:
         run: sha256sum -c SHA256SUMS.txt
       - name: Site, static references
         run: python tools/check_site_assets.py
+      - name: Action approval (internal contract, no executor) against the server code
+        env:
+          PYTHONPATH: runtime/server
+        run: python -m unittest discover -s runtime/action_approval -p "test_*.py"
   windows:
     runs-on: windows-latest
     steps:
@@ -91,6 +95,10 @@ jobs:
         run: |
           python -m unittest test_bro_gate_hook
           python -m unittest test_win_job
+      - name: Action approval (internal contract, no executor) against the server code
+        env:
+          PYTHONPATH: runtime/server
+        run: python -m unittest discover -s runtime/action_approval -p "test_*.py"
       - name: WIP, Chrome proxy (stand-in upstream, no browser)
         working-directory: runtime/wip/chrome_proxy
         run: python -m unittest test_bro_chrome_proxy
