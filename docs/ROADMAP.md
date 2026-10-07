@@ -131,7 +131,7 @@ Deliverables:
 5. Verified rendering on GitHub: readable in light and dark, alt text, legible on a small screen, Armenian glyphs covered where needed. SVG files use no script, no `foreignObject` and no remotely loaded font.
 6. Gev's visual acceptance of the repository presentation is part of the v1.0 acceptance.
 
-It is queue item 27; nothing of it is built yet.
+It is queue item 27. Built on 07.10.2026 (root README, `docs/assets/readme/`, `tools/make_repo_visuals.py`); **awaits Gev's visual acceptance**. The MenQ sources were read from the `main` branch of `menqstudio/MenQ-Standard` (commit `78f86cb`): the branch name in the issue does not exist there.
 
 ### How this is kept
 
@@ -188,7 +188,7 @@ It is queue item 27; nothing of it is built yet.
 | 24 | **WhatsApp Business on the phone** | Armen | — | Name "Kruk24" → "КРЮК24"; the map pin; greeting and "driving" messages. Texts: `offers/whatsapp_business_setup_2026-10-07.md`. Statuses from `offers/whatsapp_kit/`, one a day, chosen by a person |
 | 25 | **Small items for Gev** | Gev | — | Approve or comment the new dashboard design (phone width and dark mode unverified); "previously open tabs" at start in the working profile; allow the mail site to the extension; switch the extension back on in the main profile after the trials; decide a separate Chrome profile for Bro; decide whether unattended runs may spend the subscription allowance; decide on the merged branches `navy-v32` and `v33`; a separate WhatsApp number for Claude and transcription of voice messages |
 | 26 | **Small items for Claude** | Claude | — | Recheck the call-tracking numbers in Direct; check the status of the Business ad subscription and of the old Business landing; fix the encoding of the Direct error text in `yandex_check.ps1`; the daily check stays manual (first record in `docs/history/`) until one run without Gev's open session has passed with the right profile |
-| 27 | **Repository presentation** (branded README, SVG cover, architecture / phases / status visuals, MenQ conventions with KRYUK24 identity) | Claude; acceptor Gev | Read the MenQ design sources first; reconcile `#111111` in `brand/README.md` with the navy decision | Nothing built. Repository presentation only: no dashboard, runtime or cabinet redesign. Verify rendering on GitHub in light and dark, on a small screen, with Armenian glyphs; SVG without script, `foreignObject` or remote fonts. Separate branch and pull request |
+| 27 | **Repository presentation** (branded README, SVG cover, architecture / phases / status visuals, MenQ conventions with KRYUK24 identity) | Claude; acceptor Gev | Read the MenQ design sources first; reconcile `#111111` in `brand/README.md` with the navy decision | Built 07.10.2026; awaits Gev's visual acceptance. Repository presentation only: no dashboard, runtime or cabinet redesign. Verify rendering on GitHub in light and dark, on a small screen, with Armenian glyphs; SVG without script, `foreignObject` or remote fonts. Separate branch and pull request |
 
 ## Not in the queue
 
@@ -335,7 +335,7 @@ It is queue item 27; nothing of it is built yet.
 5. Ստուգված տեսք GitHub-ում. ընթեռնելի light ու dark, alt տեքստեր, փոքր էկրանին կարդացվող, հայերեն տառերը ծածկված, որտեղ պետք ա։ SVG ֆայլերում script, `foreignObject` ու դրսից բեռնվող font չկա։
 6. Repo-ի ներկայացման Գևի վիզուալ ընդունումը v1.0-ի ընդունման մաս ա։
 
-Հերթի 27-րդ կետն ա. դեռ ոչինչ արված չի։
+Հերթի 27-րդ կետն ա։ Արված ա 07.10.2026-ին (root README, `docs/assets/readme/`, `tools/make_repo_visuals.py`). **սպասում ա Գևի վիզուալ ընդունմանը**։ MenQ-ի աղբյուրները կարդացվել են `menqstudio/MenQ-Standard`-ի `main` ճյուղից (commit `78f86cb`). issue-ում գրված ճյուղը էնտեղ չկա։
 
 ### Ոնց ա սա պահվում
 
@@ -392,7 +392,7 @@ It is queue item 27; nothing of it is built yet.
 | 24 | **WhatsApp Business հեռախոսում** | Արմեն | — | Անունը «Kruk24» → «КРЮК24». քարտեզի նշանը. ողջույնի ու «ղեկին եմ» հաղորդագրությունները։ Տեքստերը՝ `offers/whatsapp_business_setup_2026-10-07.md`։ Ստատուսները `offers/whatsapp_kit/`-ից, օրը մեկ, ընտրում ա մարդը |
 | 25 | **Մանր կետեր Գևի համար** | Գև | — | Հաստատել կամ ասել՝ ինչ ուղղել վահանակի նոր դիզայնում (հեռախոսի լայնությունն ու մուգ ռեժիմը չստուգված են). աշխատանքային պրոֆիլում մեկնարկին «նախկինում բաց թաբերը». extension-ին թողնել փոստի կայքը. փորձերից հետո հիմնական պրոֆիլում extension-ը նորից միացնել. որոշել Bro-ի առանձին Chrome պրոֆիլը. որոշել՝ կարա՞ն առանց հսկողության run-երը ծախսեն բաժանորդագրության սահմանաչափը. որոշել merge արված `navy-v32` ու `v33` ճյուղերի հարցը. առանձին WhatsApp համար Claude-ի համար ու ձայնայինների տառադարձում |
 | 26 | **Մանր կետեր Claude-ի համար** | Claude | — | Direct-ում վերաստուգել коллтрекинг-ի համարները. ստուգել Բիզնեսի գովազդային բաժանորդագրության ու Բիզնեսի հին լենդինգի վիճակը. ուղղել Direct-ի սխալի տեքստի կոդավորումը `yandex_check.ps1`-ում. ամենօրյա ստուգումը մնում ա ձեռքով (առաջին գրառումը `docs/history/`-ում), մինչև մեկ run առանց Գևի բաց նիստի անցնի ճիշտ պրոֆիլով |
-| 27 | **Repo-ի ներկայացումը** (բրենդային README, SVG շապիկ, ճարտարապետության / փուլերի / կարգավիճակի պատկերներ, MenQ-ի կանոններ՝ КРЮК24-ի ինքնությամբ) | Claude. ընդունող՝ Գև | Նախ կարդալ MenQ-ի design աղբյուրները. հաշտեցնել `brand/README.md`-ի `#111111`-ը navy որոշման հետ | Ոչինչ արված չի։ Միայն repo-ի տեսքը. վահանակի, runtime-ի կամ կաբինետի վերադիզայն չկա։ Ստուգել GitHub-ում light ու dark, փոքր էկրան, հայերեն տառեր. SVG առանց script-ի, `foreignObject`-ի ու դրսի font-երի։ Առանձին ճյուղ ու pull request |
+| 27 | **Repo-ի ներկայացումը** (բրենդային README, SVG շապիկ, ճարտարապետության / փուլերի / կարգավիճակի պատկերներ, MenQ-ի կանոններ՝ КРЮК24-ի ինքնությամբ) | Claude. ընդունող՝ Գև | Նախ կարդալ MenQ-ի design աղբյուրները. հաշտեցնել `brand/README.md`-ի `#111111`-ը navy որոշման հետ | Արված ա 07.10.2026-ին. սպասում ա Գևի վիզուալ ընդունմանը։ Միայն repo-ի տեսքը. վահանակի, runtime-ի կամ կաբինետի վերադիզայն չկա։ Ստուգել GitHub-ում light ու dark, փոքր էկրան, հայերեն տառեր. SVG առանց script-ի, `foreignObject`-ի ու դրսի font-երի։ Առանձին ճյուղ ու pull request |
 
 ## Հերթում չկա
 

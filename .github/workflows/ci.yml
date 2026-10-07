@@ -53,6 +53,10 @@ jobs:
         run: sha256sum -c SHA256SUMS.txt
       - name: Site, static references
         run: python tools/check_site_assets.py
+      - name: README visuals hold nothing GitHub would block or that loads from outside
+        run: |
+          ! grep -l -E "<script|foreignObject|@font-face|<image|href=|url\(http" docs/assets/readme/*.svg
+          test "$(ls docs/assets/readme/*.svg | wc -l)" = 14
   windows:
     runs-on: windows-latest
     steps:
