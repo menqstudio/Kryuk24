@@ -22,6 +22,13 @@ CREATE TABLE IF NOT EXISTS business_requests (
 CREATE TABLE IF NOT EXISTS business_request_events (
  id INTEGER PRIMARY KEY, request_id TEXT NOT NULL, kind TEXT NOT NULL,
  data TEXT NOT NULL, created TEXT NOT NULL);
+CREATE TRIGGER IF NOT EXISTS business_request_conversion_guard
+BEFORE UPDATE OF status,revision ON orders
+WHEN EXISTS (
+ SELECT 1 FROM business_requests
+ WHERE id=json_extract(OLD.data,'$.business_request_id')
+ AND status='CONVERTING')
+BEGIN SELECT RAISE(ABORT,'request conversion incomplete; resume conversion first'); END;
 ''')
 
     def _principal(self, p):

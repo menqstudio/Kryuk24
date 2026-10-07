@@ -38,3 +38,21 @@ PowerShell: set `$env:PYTHONPATH='runtime/server;runtime/order_flow'` for reques
 Կախվածություն՝ նախ ինտեգրել Order Flow v0.1.1-ը։ Principal-ը տալիս է վստահելի authenticated adapter-ը. HTTP/auth, UI, կենդանի աղբյուրների կապ, LIVE կամ deploy դեռ չկա։ GitHub main-ի runtime.py-ն համեմատված է։ Տեղական Linux՝ բոլոր 35 թեստն անցել են, Windows-ը դեռ չստուգված է։
 
 Քլոդը նոր թղթապանակը ինտեգրում է առանձին PR-ով, համադրում ընթացիկ main-ի հետ, անում Linux/Windows CI և MenQ author/committer-ով commit։ Սա սերվերում տեղադրելու թույլտվություն կամ 3-րդ փուլի ավարտ չէ։
+
+## Pre-merge fixes r1, 08.10.2026 / Մինչև merge ուղղումներ r1
+
+EN. Added after the package, from `KRYUK24_Premerge_Fixes_r1_from_GPT.zip` (sha256 `7de328b4e8a1779faa109d2a98d0e7a8ce4fd0b0383959d118c7c13ee6bd05de`); it replaced `request_flow.py` and `test_request_flow.py`. Where the text above says otherwise, this section holds.
+
+The quarantine of item 4 is now enforced for status and revision. The trigger `business_request_conversion_guard` refuses `UPDATE OF status, revision` on an order whose inquiry is CONVERTING: after `Runtime.intake` and before `OrderFlow.adopt`, and after `adopt` until the link commits. The exact conversion retry still completes with one order and one notification. After CONVERTED the order flow's own guard applies; unrelated unmanaged orders behave as before.
+
+Limits. It guards the project's own code paths, not a process with direct database access, which could remove the trigger or the inquiry. It covers status and revision only. A CONVERTING inquiry whose order was changed before the trigger existed is not repaired; no reconciliation or migration tool is included. Not deployed; no production data was touched.
+
+Tests: 13 (the 10 above and 3 for the guard).
+
+HY. Ավելացվել ա փաթեթից հետո, նույն զիպից. փոխարինվել են `request_flow.py`-ն ու `test_request_flow.py`-ն։ Որտեղ վերևի տեքստը ուրիշ բան ա ասում, ուժի մեջ ա այս բաժինը։
+
+4-րդ կետի quarantine-ը հիմա կոդով ա պահվում status-ի ու revision-ի համար։ `business_request_conversion_guard` trigger-ը մերժում ա CONVERTING դիմումի պատվերի status-ի ու revision-ի փոփոխությունը՝ `Runtime.intake`-ից հետո մինչև `OrderFlow.adopt`-ը, ու `adopt`-ից հետո մինչև կապի commit-ը։ Նույն փոխարկման հրամանը ավարտվում ա մեկ պատվերով ու մեկ ծանուցումով։ CONVERTED-ից հետո գործում ա պատվերի հոսքի սեփական guard-ը. կապ չունեցող չկառավարվող պատվերները աշխատում են ոնց առաջ։
+
+Սահմաններ. պաշտպանում ա նախագծի սեփական կոդի ճանապարհներից, ոչ թե բազային ուղիղ հասանելիություն ունեցող պրոցեսից։ Միայն status ու revision։ Trigger-ից առաջ վնասված փոխարկումը չի ուղղվում. հաշտեցման կամ migration գործիք չկա։ Սերվերում դրված չի։
+
+Թեստեր՝ 13 (վերևի 10-ը ու 3-ը guard-ի համար)։

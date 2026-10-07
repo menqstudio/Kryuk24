@@ -1,5 +1,6 @@
 import concurrent.futures
 import tempfile
+import sqlite3
 import unittest
 from unittest.mock import patch
 from runtime import Runtime
@@ -112,5 +113,42 @@ class Tests(unittest.TestCase):
         with patch.object(self.requests, '_event', side_effect=RuntimeError('SAMPLE')):
             with self.assertRaises(RuntimeError):self.receive()
         self.assertEqual(self.requests.summary(self.owner, True)['requests'], 0)
+
+    def test_conversion_quarantine_blocks_legacy_until_recovery(self):
+        rid = self.receive()['id']
+        with patch.object(self.flow, 'adopt', side_effect=RuntimeError('SAMPLE crash')):
+            with self.assertRaises(RuntimeError):self.convert(rid)
+        with self.r.db() as c:
+            oid = c.execute('SELECT id FROM orders').fetchone()[0]
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.r.transition(oid, 'QUALIFIED', 0, {})
+        self.assertEqual(self.r.get(oid)['status'], 'NEW')
+        self.requests = RequestFlow(OrderFlow(Runtime(self.r.path)))
+        self.assertEqual(self.convert(rid)['status'], 'CONVERTED')
+        # The original OrderFlow guard remains effective after quarantine ends.
+        with self.assertRaises(sqlite3.IntegrityError):self.r.transition(oid, 'QUALIFIED', 0, {})
+        out = self.flow.command(oid, self.owner, 'after-recovery', 0, 'QUALIFY', {'evidence':'SAMPLE'})
+        self.assertEqual(out['status'], 'QUALIFIED')
+        with self.r.db() as c:
+            self.assertEqual(c.execute('SELECT COUNT(*) FROM orders').fetchone()[0], 1)
+            self.assertEqual(c.execute('SELECT COUNT(*) FROM notifications').fetchone()[0], 1)
+
+    def test_quarantine_remains_after_adopt_until_link_commits(self):
+        rid = self.receive()['id']; event = self.requests._event
+        def fail(c, request, kind, p, data):
+            if kind == 'CONVERTED':raise RuntimeError('SAMPLE journal failure')
+            return event(c, request, kind, p, data)
+        with patch.object(self.requests, '_event', side_effect=fail):
+            with self.assertRaises(RuntimeError):self.convert(rid)
+        with self.r.db() as c:oid = c.execute('SELECT id FROM orders').fetchone()[0]
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.flow.command(oid, self.owner, 'too-soon', 0, 'QUALIFY', {'evidence':'SAMPLE'})
+        self.assertEqual(self.flow.get(oid)['revision'], 0)
+        self.assertEqual(self.convert(rid)['status'], 'CONVERTED')
+        self.assertEqual(self.flow.command(oid, self.owner, 'too-soon', 0, 'QUALIFY', {'evidence':'SAMPLE'})['revision'], 1)
+
+    def test_quarantine_leaves_unrelated_legacy_orders_unchanged(self):
+        oid = self.r.intake(dict(contact='SAMPLE', pickup='A', destination='B', vehicle='car', test=True), 'legacy')['id']
+        self.assertEqual(self.r.transition(oid, 'QUALIFIED', 0, {})['status'], 'QUALIFIED')
 
 if __name__ == '__main__':unittest.main()
