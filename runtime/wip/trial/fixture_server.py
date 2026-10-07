@@ -56,8 +56,8 @@ def build(port_a, port_b, log_path, facts):
             for name, value in headers:
                 self.send_header(name, value)
             self.end_headers()
+            self.record(status)       # before the body leaves: a client that has the answer can rely on the row being in the log
             self.wfile.write(raw)
-            self.record(status)
 
         def do_GET(self):
             url = urlsplit(self.path)
@@ -79,11 +79,11 @@ def build(port_a, port_b, log_path, facts):
                         '<p>Страниц в поиске: <b id="pages">%d</b></p><p>Метка страницы: %s</p>') % (facts['pages_in_search'], facts['allowed_marker'])
                 return self.send(200, PAGE.format(title='Тестовый кабинет', body=body))
             if url.path == '/redirect-http':
+                self.record(302)
                 self.send_response(302)
                 self.send_header('Location', foreign)
                 self.send_header('Content-Length', '0')
-                self.end_headers()
-                return self.record(302)
+                return self.end_headers()
             if url.path == '/redirect-js':
                 delay = max(0, min(int((query.get('ms') or ['2500'])[0]), 20000))
                 body = ('<h1>Страница, которая сама уходит на чужой сайт</h1><p>Метка страницы: %s</p>'
