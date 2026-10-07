@@ -143,7 +143,7 @@ def server(store,users,origin,port=8790):
    if not actor:return self.reply(401,{'error':'login required'},challenge=True)
    if '?' in self.path:return self.reply(404,{'error':'unavailable'})
    if self.path==PREFIX:
-    raw=(Path(__file__).parent/'index.html').read_text().replace('__CSRF__',csrf[actor]).replace('__ACTOR__',actor)
+    raw=(Path(__file__).parent/'index.html').read_text(encoding='utf-8').replace('__CSRF__',csrf[actor]).replace('__ACTOR__',actor)
     return self.reply(200,raw,'text/html; charset=utf-8')
    if self.path in (PREFIX+'app.js',PREFIX+'style.css'):
     name=self.path[len(PREFIX):];kind='text/javascript; charset=utf-8' if name.endswith('.js') else 'text/css; charset=utf-8'
