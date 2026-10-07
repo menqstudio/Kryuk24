@@ -775,9 +775,13 @@ class Trial:
         parent = {p.get('ProcessId'): p.get('ParentProcessId') for p in after} if valid else {}
         valid = valid and isinstance(run.get('started'), str)
         floor = (datetime.fromisoformat(run['started']) - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%S') if valid else ''
-        # A pid is reused by Windows as soon as its process is gone, and the job result holds pids without creation times.
-        # So a live process under a job pid is not proof by itself. On the hosted runner on 07.10.2026 this check named a
-        # powershell.exe four times and a rundll32.exe once; rundll32 is nothing the job starts.
+        # A pid is reused by Windows as soon as its process is gone, so a live process under a job pid is not proof by
+        # itself. On the hosted runner on 07.10.2026 this check named a powershell.exe four times and a rundll32.exe
+        # once; rundll32 is nothing the job starts. Since v5.4 win_job records, for every pid, the creation times Windows
+        # confirmed inside the job (peak_created), and a process is identified by pid AND creation time:
+        #   - the creation time is one of the recorded ones: a process of the job, alive: FAIL;
+        #   - times are recorded for the pid and none is equal: another process under a reused pid, not from the job.
+        # Only for a pid without a recorded time (the process ended before it could be asked, or an older attempt):
         #   - created after the job ended: it cannot have been in the job, its pid proves nothing;
         #   - created during the run under a job pid, parent in the job or the harness: a leftover, FAIL;
         #   - created during the run under a job pid, parent NOT in the job and not the harness: a process of the job
@@ -794,11 +798,19 @@ class Trial:
 
         family = peak | ({taken_by or os.getpid()} if taken_by is not None else set())
 
+        recorded = run['job'].get('peak_created') if isinstance(run['job'].get('peak_created'), dict) else {}
+
         def own(p):
-            """A live process under a job pid, created within the run: 'sure' with a parent from the job, else 'doubt'."""
-            if not (p.get('ProcessId') in peak and within(p)):
+            """A live process under a job pid: 'sure' = a job process, 'doubt' = cannot be told, None = not from the job."""
+            if p.get('ProcessId') not in peak:
                 return None
-            return 'sure' if taken_by is None or p.get('ParentProcessId') in family else 'doubt'
+            times, start = recorded.get(str(p.get('ProcessId'))), p.get('Start')
+            if times and isinstance(start, str):
+                return 'sure' if any(str(t)[:23] == start.replace('Z', '+00:00')[:23] for t in times) else None    # equal to the millisecond
+            if not within(p):
+                return None
+            # The parent rule belongs to v5.4. An attempt stored without the end of its job is judged by the old rule: FAIL.
+            return 'sure' if ceiling is None or taken_by is None or p.get('ParentProcessId') in family else 'doubt'
 
         def from_job(p, depth=0):
             if own(p) == 'sure':
@@ -845,6 +857,15 @@ class Trial:
         else:
             chrome_ok, chrome_detail = True, 'all %d chrome.exe processes present with the same pid and creation time' % len(chrome)
         survivors = run['job'].get('survivors')
+        # win_job counts a live job pid whose creation time it could not read as a survivor and names it in
+        # `unidentified`. When every survivor is of that kind nothing is proven either way: INCONCLUSIVE, never PASS.
+        unread = run['job'].get('unidentified')
+        if type(survivors) is not int:
+            job_clean = None
+        elif survivors == 0:
+            job_clean = True
+        else:
+            job_clean = None if isinstance(unread, list) and len(unread) == survivors else False
         # Chrome native hosts are browser infrastructure: started by Chrome, outside the job, not ours to kill.
         hosts_before = [h for h in native_hosts(before, {ident(p) for p in chrome}) if h['rooted_in_chrome']] if valid else []
         hosts_after = [h for h in native_hosts(after, {ident(p) for p in chrome}) if h['rooted_in_chrome']] if valid else []
@@ -873,7 +894,7 @@ class Trial:
         host_check['native_hosts'] = hosts_after
         return [
             chk(cid + '.a', 'Job reports no survivor', 'win_job result (job accounting + PIDs seen in the job)',
-                (survivors == 0) if type(survivors) is int else None, run['job']),
+                job_clean, run['job']),
             chk(cid + '.b', 'No process of the job tree is alive afterwards', 'Windows process list taken by the harness after the run (Win32_Process)',
                 (False if leftovers else (None if doubtful else True)) if valid else None,
                 ([(p.get('ProcessId'), p.get('Name'), p.get('Start')) for p in leftovers] if leftovers or not doubtful else

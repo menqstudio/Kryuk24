@@ -22,6 +22,7 @@ import tempfile
 import threading
 import time
 from ctypes import wintypes
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 k32 = ctypes.WinDLL('kernel32', use_last_error=True)
@@ -91,6 +92,7 @@ k32.OpenProcess.restype = wintypes.HANDLE
 k32.OpenProcess.argtypes = [wintypes.DWORD, wintypes.BOOL, wintypes.DWORD]
 k32.GetExitCodeProcess.argtypes = [wintypes.HANDLE, ctypes.POINTER(wintypes.DWORD)]
 k32.CloseHandle.argtypes = [wintypes.HANDLE]
+k32.GetProcessTimes.argtypes = [wintypes.HANDLE] + [ctypes.POINTER(wintypes.FILETIME)] * 4
 
 
 def _check(ok, what):
@@ -98,15 +100,42 @@ def _check(ok, what):
         raise OSError(ctypes.get_last_error(), what)
 
 
-def pid_alive(pid):
+def _created(handle):
+    """Creation time of the process behind a handle, as Windows keeps it (100 ns units), or None."""
+    ft = [wintypes.FILETIME() for _ in range(4)]
+    if not k32.GetProcessTimes(handle, *[ctypes.byref(f) for f in ft]):
+        return None
+    return (ft[0].dwHighDateTime << 32) | ft[0].dwLowDateTime
+
+
+def created_iso(ticks):
+    return (datetime(1601, 1, 1, tzinfo=timezone.utc) + timedelta(microseconds=ticks // 10)).isoformat()
+
+
+def pid_state(pid, born=None):
+    """'gone', 'alive' or 'unknown'. With `born` (creation times seen for this pid inside the job) a live process
+    created at another time is 'gone': Windows gave the pid of an ended job process to something else. A live process
+    whose creation time cannot be read is 'unknown': it cannot be told apart from the job's, so it is never 'gone'."""
     handle = k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
     if not handle:
-        return False
+        return 'gone'
     try:
         code = wintypes.DWORD()
-        return bool(k32.GetExitCodeProcess(handle, ctypes.byref(code))) and code.value == STILL_ACTIVE
+        if not (k32.GetExitCodeProcess(handle, ctypes.byref(code)) and code.value == STILL_ACTIVE):
+            return 'gone'
+        if not born:
+            return 'alive'
+        when = _created(handle)
+        if when is None:
+            return 'unknown'
+        return 'alive' if when in born else 'gone'
     finally:
         k32.CloseHandle(handle)
+
+
+def pid_alive(pid, born=None):
+    """Is the process alive? 'unknown' counts as alive: an unreadable creation time never says "no leftover"."""
+    return pid_state(pid, born) != 'gone'
 
 
 def clean_env(env, extra_env_names=()):
@@ -163,6 +192,20 @@ class Job:
                'QueryInformationJobObject list')
         return [int(info.ProcessIdList[i]) for i in range(info.NumberOfProcessIdsInList)]
 
+    def born(self, pid):
+        """Creation time of `pid`, taken through a handle that Windows confirms is a process of THIS job; else None.
+        The confirmation matters: between the list and the handle the pid may already belong to another process."""
+        handle = k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
+        if not handle:
+            return None
+        try:
+            inside = wintypes.BOOL()
+            if not k32.IsProcessInJob(handle, self.handle, ctypes.byref(inside)) or not inside.value:
+                return None
+            return _created(handle)
+        finally:
+            k32.CloseHandle(handle)
+
     def terminate(self, wait=5.0):
         """End every process in the job. Returns the number still active after `wait` seconds (0 = clean)."""
         _check(k32.TerminateJobObject(self.handle, 1), 'TerminateJobObject')
@@ -193,12 +236,25 @@ def _release(gate):
     Path(gate).write_bytes(b'1')
 
 
-def _cleanup(job, process, seen, wait=5.0):
-    """End everything, whatever already failed. Returns (survivors, how)."""
+def _note(job, seen, born):
+    """Add what is in the job now: pids to `seen`, and to `born` every creation time seen for a pid."""
+    for pid in job.pids():
+        seen.add(pid)
+        when = job.born(pid)
+        if when:
+            born.setdefault(pid, set()).add(when)
+
+
+def _cleanup(job, process, seen, wait=5.0, born=None):
+    """End everything, whatever already failed. Returns (survivors, how, unidentified).
+
+    `unidentified`: pids still alive whose creation time could not be read, so they may or may not be the job's.
+    They are counted in `survivors` too: a caller that reads only that number never sees "no leftover"."""
     how = 'job'
     remaining = None
+    born = {} if born is None else born
     try:
-        seen.update(job.pids())
+        _note(job, seen, born)
     except OSError:
         pass
     try:
@@ -218,18 +274,22 @@ def _cleanup(job, process, seen, wait=5.0):
             pass
         seen.add(process.pid)
     deadline = time.monotonic() + wait
-    alive = [p for p in seen if pid_alive(p)]
-    while alive and time.monotonic() < deadline:
+    state = {p: pid_state(p, born.get(p)) for p in seen}
+    while any(s != 'gone' for s in state.values()) and time.monotonic() < deadline:
         time.sleep(0.05)
-        alive = [p for p in alive if pid_alive(p)]
-    return max(len(alive), remaining or 0), how
+        state = {p: pid_state(p, born.get(p)) for p, s in state.items() if s != 'gone'}
+    unidentified = sorted(p for p, s in state.items() if s == 'unknown')
+    sure = sum(1 for s in state.values() if s == 'alive')
+    return max(sure, remaining or 0) + len(unidentified), how, unidentified
 
 
 def run_in_job(argv, stdin=b'', timeout=300, env=None, cwd=None, max_output=32768, extra_env_names=(), stderr_path=None):
     """Run argv inside a fresh job with a cleaned environment. Never leaves a process of the job running.
 
-    Returns: returncode (None on timeout), stdout, timed_out, survivors, peak_pids, cleanup ('job' or 'fallback'),
-    io_errors (always [] in a returned success).
+    Returns: returncode (None on timeout), stdout, timed_out, survivors, unidentified (pids counted in survivors only
+    because their creation time could not be read: not proven to be the job's, not proven otherwise), peak_pids,
+    peak_created (for each pid the creation times Windows confirmed inside the job; a pid alone is reused at once),
+    cleanup ('job' or 'fallback'), io_errors (always [] in a returned success).
     Raises OutputLimit (with .result) as soon as the command writes more than max_output bytes.
     Raises JobIOError (with .result) when reading the output or delivering the input failed.
     stderr_path: file that receives the command's stderr (trial diagnostics); default is to discard it.
@@ -244,6 +304,7 @@ def run_in_job(argv, stdin=b'', timeout=300, env=None, cwd=None, max_output=3276
 
     private = None
     seen = set()
+    born = {}
     process = None
     chunks = []
     overflow = threading.Event()
@@ -251,7 +312,7 @@ def run_in_job(argv, stdin=b'', timeout=300, env=None, cwd=None, max_output=3276
     io_errors = []
     threads = []
     timed_out = False
-    survivors, how = 0, 'job'
+    survivors, how, unidentified = 0, 'job', []
     job = Job()
     errors = None
     try:
@@ -293,7 +354,7 @@ def run_in_job(argv, stdin=b'', timeout=300, env=None, cwd=None, max_output=3276
         deadline = time.monotonic() + timeout
         while True:
             try:
-                seen.update(job.pids())
+                _note(job, seen, born)
             except OSError:
                 pass
             if overflow.is_set() or io_failed.is_set() or process.poll() is not None:
@@ -303,7 +364,7 @@ def run_in_job(argv, stdin=b'', timeout=300, env=None, cwd=None, max_output=3276
                 break
             time.sleep(0.05)
     finally:
-        survivors, how = _cleanup(job, process, seen)
+        survivors, how, unidentified = _cleanup(job, process, seen, born=born)
         for t in threads:
             t.join(timeout=5)
             if t.is_alive():
@@ -320,7 +381,8 @@ def run_in_job(argv, stdin=b'', timeout=300, env=None, cwd=None, max_output=3276
             shutil.rmtree(private, ignore_errors=True)
 
     result = {'returncode': None if (timed_out or overflow.is_set()) else process.returncode, 'stdout': b''.join(chunks),
-              'timed_out': timed_out, 'survivors': survivors, 'peak_pids': sorted(seen), 'cleanup': how,
+              'timed_out': timed_out, 'survivors': survivors, 'unidentified': unidentified, 'peak_pids': sorted(seen), 'cleanup': how,
+              'peak_created': {str(pid): sorted(created_iso(t) for t in times) for pid, times in sorted(born.items())},
               'io_errors': list(io_errors)}
     if overflow.is_set():
         result['stdout'] = b''
