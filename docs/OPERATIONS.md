@@ -102,7 +102,7 @@ After any Nginx reload, wait a few seconds before retesting: an old worker may s
 | Old database backups in `/var/lib/kryuk24` | Several `.sqlite` and `.json`, mode 644 | They exist | Readable by the collector's group since the install; move into `0700 kryuk-run` is planned, **not executed**; nothing is deleted |
 | Repository | Git bundle with all refs in `D:\KRYUK24_backup\` | Yes, 07.10.2026 | `git bundle verify`; a fresh clone has the same commit count, HEAD, branches and tags. The create command is not recorded in the sources |
 | Files git does not hold | 15 files, 9.4 MB, in `D:\KRYUK24_backup\untracked_2026-10-07\` with `MANIFEST.sha256.txt` | Yes, 07.10.2026 | Each copy compared with its source by sha256 |
-| Off-disk copy | — | **No** | `D:` is the same physical disk as `C:`. The backup protects against deleting the folder, not against losing the disk |
+| Off-disk copy | copy, then sha256 of every file against its source | **Yes, 07.10.2026** | `E:\Kryuk24\backup_2026-10-07\` on an external USB disk (a different physical disk): the bundle with all refs (167 commits, checked by a clone), the media for Drive, the private materials, the files git never held. Every copy compared with its source by sha256, 07.10.2026. It is a copy of that day; it is not refreshed automatically |
 
 The backup folder holds the private materials and the local `.mcp.json`; it is treated as secret-bearing and is restricted to the owner account and SYSTEM.
 
@@ -264,7 +264,7 @@ Nginx-ի reload-ից հետո մի քանի վայրկյան սպասել, նո�
 | Հին բազայի պահուստները `/var/lib/kryuk24`-ում | Մի քանի `.sqlite` ու `.json`, mode 644 | Կան | Install-ից հետո collector-ի խումբը կարդում ա. `0700 kryuk-run` տանելը պլանավորված ա, **արված չի**. ոչինչ չի ջնջվում |
 | Repo | Git bundle բոլոր ref-երով՝ `D:\KRYUK24_backup\` | Հա, 07.10.2026 | `git bundle verify`. թարմ clone-ում նույն commit-ների քանակը, HEAD-ը, ճյուղերն ու պիտակները։ Ստեղծելու հրամանը աղբյուրներում գրված չի |
 | Git-ից դուրս ֆայլեր | 15 ֆայլ, 9.4 ՄԲ՝ `D:\KRYUK24_backup\untracked_2026-10-07\`, `MANIFEST.sha256.txt`-ով | Հա, 07.10.2026 | Ամեն պատճեն համեմատված ա աղբյուրի հետ sha256-ով |
-| Պատճեն սկավառակից դուրս | — | **Չէ** | `D:`-ն նույն ֆիզիկական սկավառակն ա, ինչ `C:`-ն։ Պահուստը պաշտպանում ա թղթապանակի ջնջումից, ոչ սկավառակի կորստից |
+| Պատճեն սկավառակից դուրս | պատճենել, հետո ամեն ֆայլի sha256-ը համեմատել բնօրինակի հետ | **Հա, 07.10.2026** | `E:\Kryuk24\backup_2026-10-07\`՝ արտաքին USB սկավառակ (ուրիշ ֆիզիկական սկավառակ). bundle-ը բոլոր ճյուղերով (167 commit, clone-ով ստուգված), Drive-ի media-ն, մասնավոր նյութերը, git-ից դուրս ֆայլերը։ Ամեն պատճեն sha256-ով համեմատված ա բնօրինակի հետ, 07.10.2026։ Էդ օրվա պատճենն ա, ինքն իրան չի թարմանում |
 
 Պահուստի թղթապանակում են անձնական նյութերն ու տեղային `.mcp.json`-ը. համարվում ա գաղտնիք պարունակող ու փակ ա միայն տիրոջ հաշվի ու SYSTEM-ի համար։
 
@@ -275,7 +275,7 @@ Nginx-ի reload-ից հետո մի քանի վայրկյան սպասել, նո�
 | Դեպք | Ինչ կա | Վիճակ |
 | --- | --- | --- |
 | Repo-ի թղթապանակը կորել կամ փչացել ա | Clone `D:\KRYUK24_backup\`-ի bundle-ից. հետ դնել 15 ֆայլը `untracked_2026-10-07\`-ից | Clone-ը փորձվել ա ու համընկնում ա։ Նախագիծը դրանից աշխատացնելը չի փորձվել։ `tools/.venv`-ը նորից ա հավաքվելու, փաթեթների ցուցակը գրված չի |
-| Սկավառակը կորել ա | Էս սկավառակից դուրս ոչինչ չկա | **Բաց։** Տես [`ROADMAP.md`](ROADMAP.md), կետ 5 |
+| Սկավառակը կորել ա | Կոդն ու փաստաթղթերը՝ GitHub-ից. պատմությունը, media-ն ու մասնավոր նյութերը՝ `E:\Kryuk24\backup_2026-10-07\`-ից (07.10.2026-ի պատճեն) | Վերականգնումը փորձված չի |
 | API reader-ի patch-ը պիտի հետ գնա | Բաժին 4 | Իրական սերվերում արված չի |
 | `apply`-ը ավարտվել ա `PARTIAL`-ով կամ պրոցեսը մեռել ա | `install_patch.py … rollback`, մինչև `ROLLED BACK`. մինչև էդ ոչինչ չմիացնել | Փորձված ա իրոք սպանված պրոցեսով, իրական սերվերում՝ չէ |
 | Սերվերի բազան պիտի վերականգնվի | Install-ից առաջվա պատճենն ու ամենօրյա պահուստը կան | Աղբյուրներում վերականգնման կարգ չկա. UNKNOWN։ Չի փորձվել |

@@ -2,7 +2,9 @@
 
 Prepared by Claude on 07.10.2026, branch `cleanup/stage2-structure` (from `main` at `7b1c92f`). For GPT's review.
 
-**Not done and not attempted:** no remote, no push, no Drive upload, no history rewrite. Nothing on the server was changed by this stage (one read-only fetch of the code). `main` is untouched and stays the working branch until this one is reviewed.
+> **Written before publication.** What follows is the state of the branch on 07.10.2026 before the first push. The push, the off-disk copy, the Drive upload and the CI results came after it and are in `GITHUB_SETUP_RESULT.md` and `docs/CURRENT_STATE.md`.
+
+**At the time of writing:** no remote, no push, no Drive upload, no history rewrite. Nothing on the server was changed by this stage (one read-only fetch of the code). `main` is untouched and stays the working branch until this one is reviewed.
 
 ## 1. The new tree (as it would be published: 500 files, 30.7 MB)
 
