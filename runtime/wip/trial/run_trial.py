@@ -72,7 +72,7 @@ POWERSHELL = r'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
 ORDER = ['T1', 'T2', 'T3', 'T3B', 'T4', 'T5', 'T6', 'T7', 'T8A', 'T8B', 'T9', 'T10', 'T11']
 REVIEW_BEFORE_NEXT = ('T1',)        # evidence of these cases must be reviewed by a person before any later case
 TRIAL_MODEL = 'sonnet'              # the trial runs on a Sonnet model; the model actually resolved is recorded
-HARNESS_VERSION = 'v5.3'
+HARNESS_VERSION = 'v5.4'
 CLAUDE_EXTENSION_ID = 'fcoeoabgfenejglbffodgkkbkcdhcgfn'
 COMPONENT_LOCATIONS = (5, 10)       # Chrome's own built-in extensions (component, external component)
 # Chrome child kinds whose exit during a run is ordinary browser housekeeping. Everything else is never tolerated.
@@ -670,7 +670,7 @@ class Trial:
         events = read_jsonl(folder / 'events.jsonl')
         return {'planned': False, 'case_dir': folder, 'attempt': number, 'tag': '%s-%02d' % (case, number),
                 'job': meta.get('job') or {}, 'failure': meta.get('failure'), 'elapsed': meta.get('elapsed') or 0.0, 'started': meta.get('started'),
-                'harness_pid': meta.get('harness_pid'),
+                'harness_pid': meta.get('harness_pid'), 'job_ended': meta.get('job_ended'),
                 'stream': attach_events(parse_stream(raw), events), 'stdout_text': raw.decode('utf-8', 'replace'), 'events': events,
                 'access': read_jsonl(folder / 'access_slice.jsonl'), 'proc_before': stored('proc_before.json', []), 'proc_after': stored('proc_after.json', []),
                 'chrome_exits': stored('chrome_exits.json'), 'verdict': stored('verdict.json'), 'gate_state': stored('gate_state.json'),
@@ -708,14 +708,15 @@ class Trial:
         except (win_job.OutputLimit, win_job.JobIOError) as error:
             result, failure = error.result, type(error).__name__
         elapsed = time.monotonic() - t0
-        time.sleep(1.0)
+        job_ended = now()                                   # the job object is closed: nothing created later can be in it
+        time.sleep(1.0)                                     # at least a second, so that the list below starts in a later second
         after_proc = processes()
         chrome_exits = watch.collect()
         self.probe(tag + '-after')
         (folder / 'stdout.jsonl').write_bytes(result['stdout'])
         (folder / 'chrome_exits.json').write_text(json.dumps(chrome_exits), encoding='utf-8')
         (folder / 'run_meta.json').write_text(json.dumps({'harness_version': HARNESS_VERSION, 'attempt': number, 'started': started.isoformat(),
-                                                           'elapsed': round(elapsed, 1), 'failure': failure, 'harness_pid': os.getpid(),
+                                                           'elapsed': round(elapsed, 1), 'failure': failure, 'harness_pid': os.getpid(), 'job_ended': job_ended.isoformat(),
                                                            'job': {k: v for k, v in result.items() if k != 'stdout'}}), encoding='utf-8')
         (folder / 'proc_before.json').write_text(json.dumps(before_proc), encoding='utf-8')
         (folder / 'proc_after.json').write_text(json.dumps(after_proc), encoding='utf-8')
@@ -736,7 +737,8 @@ class Trial:
         events = read_jsonl(folder / 'events.jsonl')
         return {'planned': False, 'case_dir': folder, 'attempt': number, 'tag': tag,
                 'job': {k: v for k, v in result.items() if k != 'stdout'}, 'failure': failure,
-                'elapsed': round(elapsed, 1), 'started': started.isoformat(), 'stream': attach_events(parse_stream(result['stdout']), events),
+                'elapsed': round(elapsed, 1), 'started': started.isoformat(), 'job_ended': job_ended.isoformat(),
+                'stream': attach_events(parse_stream(result['stdout']), events),
                 'stdout_text': result['stdout'].decode('utf-8', 'replace'), 'events': events, 'chrome_exits': chrome_exits, 'harness_pid': os.getpid(),
                 'access': access, 'proc_before': before_proc, 'proc_after': after_proc, 'verdict': verdict, 'gate_state': gate_state,
                 'stderr': (folder / 'stderr.txt').read_text(encoding='utf-8', errors='replace')[:3000] if (folder / 'stderr.txt').exists() else ''}
@@ -773,10 +775,29 @@ class Trial:
         parent = {p.get('ProcessId'): p.get('ParentProcessId') for p in after} if valid else {}
         valid = valid and isinstance(run.get('started'), str)
         floor = (datetime.fromisoformat(run['started']) - timedelta(seconds=5)).strftime('%Y-%m-%dT%H:%M:%S') if valid else ''
+        # A pid is reused by Windows as soon as its process is gone. The process list is taken by a powershell.exe that
+        # starts a second after the job ended and is in its own list; when it got the pid of a job process that had just
+        # ended, it was reported as a leftover (seen twice on the hosted runner on 07.10.2026). Whatever was created
+        # after the job ended cannot have been in the job, so its own pid proves nothing. Its parents are still followed:
+        # a process that escaped the job and is alive was created before the end and is reported itself.
+        ended = run.get('job_ended')
+        ceiling = datetime.fromisoformat(ended).strftime('%Y-%m-%dT%H:%M:%S') if valid and isinstance(ended, str) else None   # attempts before v5.4: none
 
-        def from_job(pid, depth=0):
-            return pid in peak or (depth < 20 and pid in parent and parent[pid] != pid and from_job(parent[pid], depth + 1))
-        leftovers = [p for p in after if from_job(p.get('ProcessId')) and (not p.get('Start') or str(p['Start'])[:19] >= floor)] if valid else []
+        def within(p):
+            start = str(p.get('Start') or '')[:19]
+            return not start or (start >= floor and (ceiling is None or start <= ceiling))
+        alive = {p.get('ProcessId'): p for p in after} if valid else {}
+
+        def from_job(p, depth=0):
+            if p.get('ProcessId') in peak and within(p):
+                return True
+            up = p.get('ParentProcessId')
+            mother = alive.get(up)
+            # A parent is older than its child. A younger process under the parent's pid is a reuse: the parent is gone.
+            if mother is None or mother is p or (mother.get('Start') and p.get('Start') and str(mother['Start']) > str(p['Start'])):
+                return up in peak
+            return depth < 20 and from_job(mother, depth + 1)
+        leftovers = [p for p in after if from_job(p) and (not p.get('Start') or str(p['Start'])[:19] >= floor)] if valid else []
         before_ids = {ident(p) for p in before} if valid else set()
         new_claude = [p for p in after if ident(p) not in before_ids and str(p.get('Name', '')).lower().startswith(('claude', 'node'))] if valid else []
         chrome = [p for p in before if str(p.get('Name', '')).lower() == 'chrome.exe'] if valid else []
@@ -816,7 +837,7 @@ class Trial:
         hosts_after = [h for h in native_hosts(after, {ident(p) for p in chrome}) if h['rooted_in_chrome']] if valid else []
         infra_ids = {(h['pid'], h['start']) for h in hosts_after}
         stray = [{'pid': p.get('ProcessId'), 'start': p.get('Start'), 'name': p.get('Name'), 'parent': p.get('ParentProcessId')}
-                 for p in new_claude if not from_job(p.get('ProcessId')) and ident(p) not in infra_ids]
+                 for p in new_claude if not from_job(p) and ident(p) not in infra_ids]
         stray_check = chk(cid + '.c', 'No new, unexplained claude/node process outlives the run outside the job', 'Windows process list before/after (pid + creation time)',
                           (True if not stray else None) if valid else None,
                           'unexplained, needs a recorded review per process (pid, creation time, owner, proof, reviewer): %s' % stray if stray else '')

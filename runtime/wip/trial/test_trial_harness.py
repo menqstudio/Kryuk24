@@ -4,6 +4,7 @@ It shows that the harness collects its evidence and reaches PASS / FAIL / INCONC
 where a careless harness would report a false PASS. It shows nothing about the real Claude Code: no Claude process is
 started, no subscription is used, no Chrome is driven. The fake page server runs on two free local ports.
 """
+import ast
 import hashlib
 import json
 import os
@@ -338,10 +339,12 @@ class FalsePass(Base):
             self.assertIsNone(f(bad)[0], bad)
 
     # ---- 5. Chrome cleanup by pid + creation time; partial loss is not a PASS
-    def cleanup(self, before, after, peak=(), survivors=0, exits=None):
+    def cleanup(self, before, after, peak=(), survivors=0, exits=None, ended=None):
         me = {'ProcessId': os.getpid(), 'ParentProcessId': 1, 'Name': 'python.exe', 'Start': '2026-01-01T00:00:00.0000000Z'}
         run = {'proc_before': [me] + before, 'proc_after': [me] + after, 'job': {'peak_pids': list(peak), 'survivors': survivors},
                'started': datetime(2026, 10, 7, 1, 0, 0, tzinfo=timezone.utc).isoformat()}
+        if ended is not None:
+            run['job_ended'] = ended.isoformat()
         if exits is not None:
             run['chrome_exits'] = {'watched': [], 'exited': exits}
         return {c['id'][-1]: c for c in self.trial().cleanup_checks('X', run)}
@@ -394,6 +397,19 @@ class FalsePass(Base):
         self.assertEqual(self.cleanup([], [child], peak=[5000])['b']['status'], 'FAIL', 'descendant of a job pid, started during the run')
         old = self.proc(5000, 4, name='svchost.exe', start='2026-10-01T00:00:00.0000000Z')
         self.assertEqual(self.cleanup([old], [old], peak=[5000])['b']['status'], 'PASS', 'a process older than the run is not from this job')
+
+    def test_a_job_pid_reused_after_the_job_ended_is_not_a_leftover(self):
+        ended = datetime(2026, 10, 7, 1, 0, 40, 900000, tzinfo=timezone.utc)
+        lister = self.proc(5000, os.getpid(), name='powershell.exe', start='2026-10-07T01:00:41.9500000Z')   # takes the list, got a job pid
+        self.assertEqual(self.cleanup([], [lister], peak=[5000], ended=ended)['b']['status'], 'PASS', 'created after the job ended')
+        self.assertEqual(self.cleanup([], [lister], peak=[5000])['b']['status'], 'FAIL', 'an attempt without the end time keeps the old rule')
+        alive = self.proc(5000, 4, name='node.exe', start='2026-10-07T01:00:40.1000000Z')
+        self.assertEqual(self.cleanup([], [alive], peak=[5000], ended=ended)['b']['status'], 'FAIL', 'created before the job ended and still alive')
+        escaped = self.proc(5001, 5000, name='node.exe', start='2026-10-07T01:00:20.0000000Z')              # its parent is gone, the pid 5000 is reused
+        child = self.proc(5002, 5001, name='cmd.exe', start='2026-10-07T01:00:45.0000000Z')                 # started by the escaped one after the end
+        got = self.cleanup([], [lister, escaped, child], peak=[5000, 5001], ended=ended)['b']
+        self.assertEqual(got['status'], 'FAIL')
+        self.assertEqual([row[0] for row in ast.literal_eval(got['detail'])], [5001, 5002], 'the escaped process and what it started, not the lister')
 
     # ---- v5, rule 1: a success needs one matching result AND one matching PostToolUse event
     NAME = 'mcp__claude-in-chrome__list_connected_browsers'
