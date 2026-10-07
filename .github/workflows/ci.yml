@@ -61,6 +61,8 @@ jobs:
         run: sha256sum -c SHA256SUMS.txt
       - name: Site, static references
         run: python tools/check_site_assets.py
+      - name: Operator page in KRYUK24 colours (prepared file equals what the patch makes from the installed one)
+        run: python runtime/wip/dashboard_colours/make_patch.py --check
       - name: Action approval (internal contract, no executor) against the server code
         env:
           PYTHONPATH: runtime/server

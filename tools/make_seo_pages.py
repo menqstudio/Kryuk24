@@ -228,7 +228,7 @@ def page(slug, title, desc, h1, lead_html, hero_photo, sections, faq, schema_ext
 <link rel="icon" href="/favicon.ico?v=18" sizes="any">
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg?v=18">
 <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png?v=18">
-<meta name="theme-color" content="#111111">
+<meta name="theme-color" content="#FFFFFF">
 <meta property="og:url" content="{url}">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
