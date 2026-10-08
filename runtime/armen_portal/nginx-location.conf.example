@@ -1,0 +1,20 @@
+# Insert into EXISTING runtime.kryuk24.ru HTTPS server; do not replace its config.
+# Existing TLS/basic-auth/Bro/owner routes remain as installed.
+# The exact portal subtree uses its own backend login (armen / optional gev).
+# Never turn off auth_basic for /operator or the whole host.
+location = /operator/work/armen { return 301 /operator/work/armen/; }
+location ^~ /operator/work/armen/ {
+    auth_basic off;
+    client_max_body_size 20m;
+    client_body_timeout 45s;
+    limit_req zone=kryuk_operator burst=15 nodelay;
+    limit_req_status 429;
+    proxy_pass http://127.0.0.1:8790;
+    proxy_set_header Host $host;
+    proxy_set_header Authorization $http_authorization;
+    proxy_read_timeout 60s;
+    proxy_send_timeout 60s;
+    access_log off;
+}
+# Confirm the existing kryuk_operator limit_req_zone actually exists.
+# If its name differs, use the verified current zone; do not declare a duplicate.
