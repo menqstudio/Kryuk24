@@ -1,0 +1,65 @@
+Armen portal, server install: password minimum 8 (code update) and step 2 of 3. Outputs as printed on the server.
+Armen's password was stored by Gev in his own terminal at 2026-10-08T10:06:17Z (deploy/provision.sh).
+Not done at the end of this file: Nginx unchanged, so the portal answers on the loopback address only.
+
+# 1. deploy/update_code.sh, package made from commit 0b3b235
+== time
+2026-10-08T10:01:21Z
+package: matches its checksums
+== tests of the new package on this server, as the service user
+----------------------------------------------------------------------
+Ran 22 tests in 23.916s
+
+OK
+== replace
+replaced portal.py
+replaced provision.py
+same     app.js
+same     login.js
+same     index.html
+same     login.html
+same     style.css
+same     requirements.txt
+ee5437ebc9558044b720132b5809355136222fdb0c681dfb9cde9b3ae670715a  portal.py
+93f830625f7e519241466addeacc9a75f3c42d4fec1908f194d406bfff3f2b7d  provision.py
+5dcbfa23bfdc8e4dc602c5b6c4b6a5ab948c5f174eab0d8a64baab962d73d4ed  app.js
+38372c8084e8daa26712da92836b4eea10347d16a922cfe31b5a46e35e2e3edc  login.js
+c126d5a50d2f5753d5b03ecf681f92cc5b7e5f61363f575fa9bdbe03d1a9f9af  index.html
+1657796f5cbc2b2f4dc982f0fc853f82c84c29237f2c0cda203893d7b29c27c7  login.html
+1a76d45786e6daf6d639f057556b8357bfa5c9fda628961139394e66e69cdd63  style.css
+41b54a6fb2918667ca47a61d73b522629d84490f3d78f0f20b21135faba10d35  requirements.txt
+code folder: everything owned by root; portal: inactive
+2026-10-08T10:01:45Z
+== update done
+
+# 2. deploy/install_2_start.sh
+== time
+2026-10-08T10:06:37Z
+== preconditions
+preconditions: ok
+== one start (not enabled)
+active: active; enabled: disabled
+sockets on 8790: 127.0.0.1:8790 
+NRestarts=0 MemoryCurrent=17121280 MemoryMax=805306368 User=kryuk-armen 
+timers that name the portal: 0
+== loopback checks, no real password
+ok   login form without a session: 200
+ok   login form is the Russian form: 1
+ok   state without a session: 401
+ok   a preview without a session: 401
+ok   another path: 401
+ok   answer without a session: 401
+ok   login with a wrong password: 401
+ok   login from another origin: 403
+ok   login without an origin: 403
+ok   a Basic header alone: 401
+== data folder (owner:group mode name)
+kryuk-armen:kryuk-armen 700 /var/lib/kryuk24-armen
+kryuk-armen:kryuk-armen 700 /var/lib/kryuk24-armen/photos
+kryuk-armen:kryuk-armen 600 /var/lib/kryuk24-armen/portal.sqlite
+== the other services are as before
+kryuk-capture.service: active
+kryuk-bro-api.service: active
+nginx.service: active
+2026-10-08T10:06:38Z
+== step 2 done
