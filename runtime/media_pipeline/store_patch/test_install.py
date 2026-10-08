@@ -115,15 +115,34 @@ class Install(unittest.TestCase):
 
 HOLD = '90-kryuk-store-lock-install.conf'
 ONESHOTS = ['kryuk-api-read.service', 'kryuk-backup.service', 'kryuk-operations.service']
+GUARDED = sorted(ONESHOTS + ['kryuk-capture.service'])
 STANDINS = {
     'systemctl': r"""#!/usr/bin/env bash
 # A stand-in for systemd: answers from files in $KRYUK_STANDIN and writes every call into its log.
-# A one-shot unit that is running is "activating". A unit whose loaded drop-in holds a condition on a file
-# that exists is not started (as ConditionPathExists=!file does); a drop-in counts only after daemon-reload.
+# A one-shot unit that is running is "activating". Drop-ins count only after daemon-reload (a copy is kept, as
+# systemd keeps what it loaded). A unit with a loaded drop-in starts only when its conditions hold, read from the
+# drop-in itself: "ConditionPathExists=!P" fails while P exists, "ConditionPathExists=P" fails while P is missing.
 S="$KRYUK_STANDIN"; echo "systemctl $*" >> "$S/log"
 NAME=90-kryuk-store-lock-install.conf
 new() { grep -q 'LOCKING=1' "$KRYUK_CODE_DIR/ops_media.py"; }
 listed() { grep -qx "$2" "$S/$1" 2>/dev/null; }
+blocked() {
+  local line p
+  [ -e "$S/loaded.d/$1" ] || return 1
+  while IFS= read -r line; do
+    case "$line" in
+      'ConditionPathExists=!'*) p="${line#ConditionPathExists=!}"; if [ -e "$p" ]; then return 0; fi;;
+      ConditionPathExists=*) p="${line#ConditionPathExists=}"; if [ ! -e "$p" ]; then return 0; fi;;
+    esac
+  done < "$S/loaded.d/$1"
+  return 1
+}
+come_up() {   # the service starts, unless a condition says no or it dies with the new files
+  if blocked "$1"; then echo "start $1: skipped by its condition" >> "$S/log"; return 0; fi
+  if [ -e "$S/dies-with-new" ] && new; then return 0; fi
+  echo "$1" >> "$S/active"; date -u '+%a %Y-%m-%d %H:%M:%S UTC' > "$S/started"
+  if new; then echo "start $1: STARTED with the new files on the disk" >> "$S/log"; else echo "start $1: STARTED with the original files on the disk" >> "$S/log"; fi
+}
 u="${@: -1}"
 case "$1" in
   is-active) if listed active "$u"; then [ "$2" = --quiet ] || echo active; exit 0; else [ "$2" = --quiet ] || echo inactive; exit 3; fi;;
@@ -131,23 +150,26 @@ case "$1" in
   show) case "$3" in
       User) cat "$S/user";;
       ActiveState) if listed running "$u"; then echo activating; elif listed active "$u"; then echo active; else echo inactive; fi;;
-      DropInPaths) if listed loaded "$u"; then echo "$KRYUK_HOLD_DIR/$u.d/$NAME"; fi;;
+      DropInPaths) if [ -e "$S/loaded.d/$u" ]; then echo "$KRYUK_HOLD_DIR/$u.d/$NAME"; fi;;
       NeedDaemonReload) if listed stale "$u"; then echo yes; else echo no; fi;;
       TriggeredBy) case "$u" in kryuk-operations.service) echo kryuk-operations.timer;; kryuk-backup.service) echo kryuk-backup.timer;; esac;;
       NextElapseUSecRealtime) cat "$S/next-$u" 2>/dev/null || echo "Fri 2036-01-04 00:04:57 UTC";;
+      ExecMainStartTimestamp) cat "$S/started";;
       *) echo "stand-in: unexpected systemctl $*" >&2; exit 64;;
     esac;;
   daemon-reload) [ -e "$S/reload-fails" ] && exit 1
-    : > "$S/loaded"
-    for d in "$KRYUK_HOLD_DIR"/*.d; do [ -e "$d/$NAME" ] && basename "$d" .d >> "$S/loaded"; done
+    rm -rf "$S/loaded.d"; mkdir "$S/loaded.d"
+    for d in "$KRYUK_HOLD_DIR"/*.d; do if [ -e "$d/$NAME" ]; then cp "$d/$NAME" "$S/loaded.d/$(basename "$d" .d)"; fi; done
     exit 0;;
-  start) if listed loaded "$u" && [ -e "$KRYUK_HOLD_DIR/$u.d/$NAME" ]; then echo "start $u: skipped by its condition" >> "$S/log"; exit 0; fi
-    echo "$u" >> "$S/running"
-    if new; then echo "start $u: STARTED with the new files on the disk" >> "$S/log"; else echo "start $u: STARTED with the original files on the disk" >> "$S/log"; fi;;
+  start) case "$u" in
+      kryuk-capture.service) come_up "$u";;
+      *) if blocked "$u"; then echo "start $u: skipped by its condition" >> "$S/log"; exit 0; fi
+         echo "$u" >> "$S/running"
+         if new; then echo "start $u: STARTED with the new files on the disk" >> "$S/log"; else echo "start $u: STARTED with the original files on the disk" >> "$S/log"; fi;;
+    esac;;
   restart) [ -e "$S/restart-fails" ] && exit 1
     grep -vx "$u" "$S/active" > "$S/active.next" || true; mv "$S/active.next" "$S/active"
-    if [ -e "$S/dies-with-new" ] && new; then exit 0; fi
-    echo "$u" >> "$S/active";;
+    come_up "$u";;
   *) echo "stand-in: unexpected systemctl $*" >&2; exit 64;;
 esac
 """,
@@ -164,11 +186,13 @@ echo '{"ok":true,"stand-in":true}'
 """,
     'runuser': r"""#!/usr/bin/env bash
 S="$KRYUK_STANDIN"; echo "runuser $1 $2" >> "$S/log"; outside
+if [ -e "$S/kill-script" ]; then kill -9 "$PPID"; exit 1; fi   # the install script dies here, as in a power cut
 shift 4   # -u USER -- /usr/bin/python3
 exec "$KRYUK_PYTHON" "$@"
 """,
     'id': '#!/usr/bin/env bash\ncat "$KRYUK_STANDIN/uid"\n',
-    'stat': '#!/usr/bin/env bash\ncat "$KRYUK_STANDIN/owner"\n',
+    # the owner of a file is the stand-in's answer; the time of its last change is the real one
+    'stat': '#!/usr/bin/env bash\nif [ "$2" = "%Y" ]; then exec /usr/bin/stat "$@"; fi\ncat "$KRYUK_STANDIN/owner"\n',
     'install': r"""#!/usr/bin/env bash
 # the real install without the owner; fails on purpose for a source named in the file install-fails
 S="$KRYUK_STANDIN"; outside
@@ -188,6 +212,8 @@ case "$2" in unit=) echo "${line#* }";; *) echo "a stand-in process";; esac
 }
 ORIGINALS = {'ops_media.py': 'original', 'ops_work.py': 'original'}
 NEW = {'ops_media.py': 'new', 'ops_work.py': 'new'}
+MIXED = {'ops_media.py': 'new', 'ops_work.py': 'original'}
+SKIPPED = ': skipped by its condition'
 
 
 @unittest.skipIf(os.name == 'nt' and not os.environ.get('KRYUK_TEST_INSTALL_ON_WINDOWS'), 'the install script is a Linux script')
@@ -197,19 +223,20 @@ class RealModeWithStandIns(Install):
     def setUp(self):
         super().setUp()
         self.standin = Path(self.tmp.name) / 'standin'
-        self.hold = Path(self.tmp.name) / 'run-systemd-system'
-        self.standin.mkdir()
-        self.hold.mkdir()
+        self.hold = Path(self.tmp.name) / 'etc-systemd-system'      # on the disk: outlives a restart of the server
+        self.run = Path(self.tmp.name) / 'run'                      # in memory: emptied by a restart of the server
+        for folder in (self.standin, self.hold, self.run, self.standin / 'loaded.d'):
+            folder.mkdir()
         for name, text in STANDINS.items():
             (self.standin / name).write_text(text, encoding='utf-8', newline='\n')
             os.chmod(self.standin / name, 0o755)
         self.normal()
-        self.answer(log='')
+        self.answer(log='', started=time.strftime('%a %Y-%m-%d %H:%M:%S UTC', time.gmtime(time.time() + 1)))
 
-    def normal(self):
-        self.answer(active='kryuk-capture.service\n', user='kryuk-run\n', uid='0\n', owner='root:root 644\n', running='', loaded='', stale='',
+    def normal(self):           # every answer as on an ordinary day; what systemd has loaded is left as it is
+        self.answer(active='kryuk-capture.service\n', user='kryuk-run\n', uid='0\n', owner='root:root 644\n', running='', stale='',
                     processes='101 kryuk-capture.service\n102 kryuk-bro-api.service\n', install_fails='')
-        for name in ('silent-with-new', 'silent-always', 'dies-with-new', 'restart-fails', 'reload-fails', 'try-start', 'next-kryuk-backup.timer'):
+        for name in ('silent-with-new', 'silent-always', 'dies-with-new', 'restart-fails', 'reload-fails', 'try-start', 'kill-script', 'next-kryuk-backup.timer'):
             (self.standin / name).unlink(missing_ok=True)
 
     def answer(self, **files):
@@ -218,7 +245,7 @@ class RealModeWithStandIns(Install):
 
     def environment(self, code=None):
         env = {**os.environ, 'KRYUK_CODE_DIR': str(code or self.code), 'KRYUK_PYTHON': sys.executable, 'KRYUK_STANDIN': str(self.standin),
-               'KRYUK_HOLD_DIR': self.hold.as_posix(), 'PATH': str(self.standin) + os.pathsep + os.environ['PATH']}
+               'KRYUK_HOLD_DIR': self.hold.as_posix(), 'KRYUK_RUN_DIR': self.run.as_posix(), 'PATH': str(self.standin) + os.pathsep + os.environ['PATH']}
         env.pop('KRYUK_INSTALL_REHEARSAL', None)
         return env
 
@@ -227,11 +254,22 @@ class RealModeWithStandIns(Install):
                               capture_output=True, text=True, timeout=180)
         return done.returncode, done.stdout + done.stderr
 
-    def outside_start(self):
-        """Somebody starts a one-shot unit now; what the stand-in systemd did with it."""
+    def systemctl(self, *args):
+        subprocess.run([os.environ.get('KRYUK_BASH', 'bash'), str(self.standin / 'systemctl'), *args], env=self.environment(), check=True, timeout=60)
+
+    def outside_start(self, unit='kryuk-operations.service'):
+        """Somebody starts a unit now (a timer, a person, the boot); what the stand-in systemd did with it."""
         before = len(self.log('start '))
-        subprocess.run([os.environ.get('KRYUK_BASH', 'bash'), str(self.standin / 'systemctl'), 'start', 'kryuk-operations.service'], env=self.environment(), check=True, timeout=60)
+        self.systemctl('start', unit)
         return self.log('start ')[before:]
+
+    def server_restarts(self):
+        """A restart of the server: /run is empty, nothing runs, systemd loads what is on the disk, enabled units start."""
+        for f in self.run.iterdir():
+            f.unlink()
+        self.answer(active='', running='')
+        self.systemctl('daemon-reload')
+        return self.outside_start('kryuk-capture.service') + self.outside_start('kryuk-operations.service')
 
     def log(self, word):
         return [line for line in (self.standin / 'log').read_text(encoding='utf-8').splitlines() if line.startswith(word)]
@@ -242,11 +280,12 @@ class RealModeWithStandIns(Install):
     def restarts(self):
         return [line for line in self.log('systemctl restart')]
 
-    def held(self):             # the hold as it is on the disk and as the stand-in systemd has it loaded
-        return sorted(f.parent.name[:-2] for f in self.hold.glob('*.d/' + HOLD)), sorted((self.standin / 'loaded').read_text().split())
+    def held(self):             # the hold as it is on the disk, as the stand-in systemd has it loaded, and the marker
+        return (sorted(f.parent.name[:-2] for f in self.hold.glob('*.d/' + HOLD)), sorted(f.name for f in (self.standin / 'loaded.d').iterdir()),
+                sorted(f.name for f in self.run.iterdir()))
 
-    FREE = ([], [])
-    HELD = (ONESHOTS, ONESHOTS)
+    FREE = ([], [], [])
+    HELD = (GUARDED, GUARDED, [])       # all four drop-ins on the disk and loaded; the marker of the run is gone
 
     # ---- the ordinary way
     def test_a_kept_copy_in_the_way_stops_it_and_a_rehearsal_is_refused_on_the_real_folder(self):
@@ -259,6 +298,7 @@ class RealModeWithStandIns(Install):
         self.assertEqual((code, self.state()), (0, NEW), out)
         self.assertEqual(self.verbs(), ['daemon-reload', 'restart', 'daemon-reload'], 'hold, one restart, release; nothing else')
         self.assertEqual(self.restarts(), ['systemctl restart kryuk-capture.service'])
+        self.assertEqual(self.log('start '), ['start kryuk-capture.service: STARTED with the new files on the disk'], 'the guarded service does start while the script runs')
         self.assertEqual(self.log('runuser'), ['runuser -u kryuk-run'])
         self.assertIn('health: OK', out)
         self.assertEqual(self.held(), self.FREE)
@@ -300,7 +340,7 @@ class RealModeWithStandIns(Install):
             # a hold that could not be confirmed gone is the one case here that needs a person
             self.assertEqual((code, words in out), (2 if 'reload_fails' in answers else 1, True), out)
             self.assertEqual((self.state(), self.kept(), self.restarts()), (ORIGINALS, [], []), words)
-            self.assertEqual(self.held()[0], [], words + ': no hold file is left')
+            self.assertEqual((self.held()[0], self.held()[2]), ([], []), words + ': no hold file and no marker is left')
 
     # ---- the hold
     def test_a_one_shot_unit_started_from_outside_at_any_moment_of_the_install_does_not_start(self):
@@ -309,9 +349,9 @@ class RealModeWithStandIns(Install):
         self.answer(running='', try_start='')
         code, out = self.run_script()
         self.assertEqual((code, self.state()), (0, NEW), out)
-        tried = self.log('start ')[1:]
+        tried = [line for line in self.log('start kryuk-operations')[1:]]
         self.assertGreaterEqual(len(tried), 6, 'before the files, at each file, at the self-test, after the restart')
-        self.assertEqual(set(tried), {'start kryuk-operations.service: skipped by its condition'})
+        self.assertEqual(set(tried), {'start kryuk-operations.service' + SKIPPED})
         self.assertEqual(self.held(), self.FREE)
         (self.standin / 'try-start').unlink()
         self.assertEqual(self.outside_start(), ['start kryuk-operations.service: STARTED with the new files on the disk'], 'after the install it starts again, with the new code')
@@ -325,8 +365,8 @@ class RealModeWithStandIns(Install):
         self.answer(try_start='')
         code, out = self.run_script('rollback')
         self.assertEqual((code, self.state(), self.held()), (0, ORIGINALS, self.FREE), out)
-        self.assertGreaterEqual(len(self.log('start ')), 8)
-        self.assertEqual(set(self.log('start ')), {'start kryuk-operations.service: skipped by its condition'})
+        self.assertGreaterEqual(len(self.log('start kryuk-operations')), 8)
+        self.assertEqual(set(self.log('start kryuk-operations')), {'start kryuk-operations.service' + SKIPPED})
 
     def test_rollback_waits_for_a_running_one_shot_unit(self):
         self.assertEqual(self.run_script()[0], 0)
@@ -353,11 +393,10 @@ class RealModeWithStandIns(Install):
         self.assertEqual(code, 2, out)
         self.assertIn('restore: ops_work.py could not be put back; the next file was not touched', out)
         self.unresolved(out, NEW, restarts=1)
-        self.assertEqual(self.outside_start(), ['start kryuk-operations.service: skipped by its condition'])
+        self.assertEqual(self.outside_start(), ['start kryuk-operations.service' + SKIPPED])
         self.normal()
-        self.answer(loaded='\n'.join(ONESHOTS) + '\n')
         code, out = self.run_script('status')
-        self.assertEqual((code, out.count(', HELD')), (0, 3), out)
+        self.assertEqual((code, out.count(', HELD'), out.count('GUARDED (cannot start)')), (0, 3, 1), out)
         code, out = self.run_script('rollback')     # a person, after looking: the way back still works
         self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
 
@@ -366,10 +405,10 @@ class RealModeWithStandIns(Install):
         code, out = self.run_script()
         self.assertEqual(code, 2, out)
         self.assertIn('restore: ops_media.py could not be put back', out)
-        self.unresolved(out, {'ops_media.py': 'new', 'ops_work.py': 'original'}, restarts=1)
+        self.unresolved(out, MIXED, restarts=1)
 
     def test_a_rollback_whose_first_or_second_step_fails_stops_the_same_way_and_can_be_run_again(self):
-        for source, state in (('ops_work.py.before-store-lock', NEW), ('ops_media.py.before-store-lock', {'ops_media.py': 'new', 'ops_work.py': 'original'})):
+        for source, state in (('ops_work.py.before-store-lock', NEW), ('ops_media.py.before-store-lock', MIXED)):
             self.normal()
             self.answer(log='')
             self.assertEqual(self.run_script()[0], 0)
@@ -378,7 +417,6 @@ class RealModeWithStandIns(Install):
             self.assertEqual(code, 2, out)
             self.unresolved(out, state, restarts=1)     # the one restart is the install's
             self.normal()
-            self.answer(loaded='\n'.join(ONESHOTS) + '\n')
             code, out = self.run_script('rollback')
             self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
 
@@ -388,19 +426,78 @@ class RealModeWithStandIns(Install):
         self.assertEqual((code, 'did not restart with the new files' in out, 'the originals are back, but the service did not restart' in out), (2, True, True), out)
         self.assertEqual((self.state(), len(self.kept()), self.held()), (ORIGINALS, 2, self.HELD), out)
 
-    def test_rollback_refuses_a_kept_copy_that_is_not_the_original_and_release_takes_a_left_hold_away(self):
+    # ---- a state that is not confirmed stays closed (GPT's review of 4795423)
+    def test_release_is_refused_while_the_two_files_are_not_a_pair(self):
+        self.answer(silent_with_new='', install_fails='ops_media.py.before-store-lock')
+        self.assertEqual(self.run_script()[0], 2)
+        self.normal()
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'not confirmed: the two installed files are not a pair (new, original)' in out, 'STOP: the hold stays' in out), (2, True, True), out)
+        self.assertEqual((self.held(), self.state()), (self.HELD, MIXED), 'a refused release changes nothing')
+        self.assertEqual(self.outside_start(), ['start kryuk-operations.service' + SKIPPED])
+
+    def test_release_is_refused_while_the_service_runs_other_files_than_the_disk_holds_or_does_not_answer(self):
+        self.answer(silent_with_new='', install_fails='ops_work.py.before-store-lock')
+        self.assertEqual(self.run_script()[0], 2)           # both new on the disk, the service runs them and does not answer
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'runs the files on the disk but does not answer' in out, self.held()), (2, True, self.HELD), out)
+        self.normal()                                       # it answers again, but a file was changed after it started
+        later = time.time() + 3600
+        os.utime(self.code / 'ops_work.py', (later, later))
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'was started before ops_work.py was last changed' in out, self.held()), (2, True, self.HELD), out)
+        for answers, words in (({'running': 'kryuk-backup.service\n'}, 'not confirmed: a one-shot unit is running'),
+                               ({'processes': '555 session-9.scope\n'}, 'not confirmed: something else runs code of this folder')):
+            self.normal()
+            self.answer(**answers)
+            code, out = self.run_script('release')
+            self.assertEqual((code, words in out, self.held()), (2, True, self.HELD), out)
+
+    def test_release_takes_a_left_hold_away_when_the_state_is_a_pair_the_service_runs_and_it_answers(self):
+        self.assertEqual(self.run_script()[0], 0)
+        for unit in GUARDED:                        # a hold left by a killed run
+            (self.hold / (unit + '.d')).mkdir()
+            (self.hold / (unit + '.d') / HOLD).write_text('[Unit]\nConditionPathExists=' + ('' if unit == 'kryuk-capture.service' else '!') + (self.hold / (unit + '.d') / HOLD).as_posix() + '\n', newline='\n')
+        self.systemctl('daemon-reload')
+        self.assertEqual(self.outside_start(), ['start kryuk-operations.service' + SKIPPED])
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'confirmed: a pair (new)' in out, 'released (can start again)' in out, self.held()), (0, True, True, self.FREE), out)
+        self.assertEqual(sorted(p.name for p in self.hold.iterdir()), [], 'the empty folders are gone too')
+        self.assertEqual(self.outside_start(), ['start kryuk-operations.service: STARTED with the new files on the disk'])
+
+    def test_after_a_stop_the_hold_outlives_a_restart_of_the_server_and_the_service_does_not_start_by_itself(self):
+        self.answer(silent_with_new='', install_fails='ops_media.py.before-store-lock')
+        self.assertEqual(self.run_script()[0], 2)
+        self.normal()
+        self.assertEqual(self.server_restarts(), ['start kryuk-capture.service' + SKIPPED, 'start kryuk-operations.service' + SKIPPED],
+                         'the boot starts neither the service nor a one-shot unit on a pair that was not confirmed')
+        self.assertEqual((self.held(), self.state(), (self.standin / 'active').read_text()), (self.HELD, MIXED, ''))
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'are not a pair' in out, self.held()), (2, True, self.HELD), out)
+        code, out = self.run_script('rollback')     # the way out: the originals, then everything is let go
+        self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+        self.assertIn('kryuk-capture.service was not running', out)
+        self.assertEqual(self.outside_start('kryuk-capture.service'), ['start kryuk-capture.service: STARTED with the original files on the disk'])
+
+    def test_a_server_restart_in_the_middle_of_an_install_leaves_everything_held(self):
+        """The script is killed (kill -9, no clean-up runs) after both new files were put in place."""
+        self.answer(kill_script='')
+        code, out = self.run_script()
+        self.assertNotEqual(code, 0, out)
+        self.assertEqual((self.state(), self.held()[0]), (NEW, GUARDED), 'killed with both new files in place; the drop-ins are on the disk')
+        self.normal()
+        self.assertEqual(self.server_restarts(), ['start kryuk-capture.service' + SKIPPED, 'start kryuk-operations.service' + SKIPPED])
+        code, out = self.run_script('status')
+        self.assertEqual((out.count(', HELD'), out.count('GUARDED (cannot start)')), (3, 1), out)
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+
+    def test_rollback_refuses_a_kept_copy_that_is_not_the_original(self):
         self.assertEqual(self.run_script()[0], 0)
         with (self.code / 'ops_work.py.before-store-lock').open('ab') as f:
             f.write(b'\n# not the original any more\n')
         code, out = self.run_script('rollback')
         self.assertEqual((code, 'is not the original: nothing was changed' in out, self.state(), self.restarts()), (1, True, NEW, ['systemctl restart kryuk-capture.service']), out)
-        for unit in ONESHOTS:                       # a hold left by a killed run
-            (self.hold / (unit + '.d')).mkdir()
-            (self.hold / (unit + '.d') / HOLD).write_text('[Unit]\n')
-        self.answer(loaded='\n'.join(ONESHOTS) + '\n')
-        code, out = self.run_script('release')
-        self.assertEqual((code, 'released (can start again)' in out, self.held()), (0, True, self.FREE), out)
-        self.assertEqual(sorted(p.name for p in self.hold.iterdir()), [], 'the empty folders are gone too')
 
 
 class Order(unittest.TestCase):

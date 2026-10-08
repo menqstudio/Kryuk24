@@ -104,6 +104,7 @@ jobs:
         run: |
           bash -n runtime/media_pipeline/store_patch/install.sh
           bash -n runtime/media_pipeline/store_patch/trial_on_server.sh
+          bash -n runtime/media_pipeline/store_patch/trial_overlay_on_server.sh
           python -m unittest discover -s runtime/media_pipeline/store_patch -p "test_*.py"
       - name: README visuals hold nothing GitHub would block or that loads from outside
         run: |

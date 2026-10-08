@@ -3,16 +3,22 @@
 #   sudo bash install.sh              install
 #   sudo bash install.sh rollback     put the two original files back
 #   sudo bash install.sh status       say what is installed and what is held; changes nothing
-#   sudo bash install.sh release      let the one-shot units start again, after a STOP that left them held
+#   sudo bash install.sh release      take a left hold away; refused unless the files and the service are confirmed
 # NOT TO BE RUN until Gev says so for this script. It was written on 08.10.2026 for review.
 #
 # What it changes: /opt/kryuk24/ops_media.py and /opt/kryuk24/ops_work.py (replaced by the files beside this
 # script), and one restart of kryuk-capture, the only long-running service that loads them (kryuk-bro-api does not).
 # While it works it holds the one-shot units that run code of this folder (kryuk-operations, kryuk-api-read,
-# kryuk-backup): a drop-in under /run/systemd/system with a condition that is false while the drop-in exists, so
-# no timer and no hand can start them, and it takes the hold away when it has finished. It changes no timer and
-# no unit file; a restart of the server removes /run by itself.
+# kryuk-backup): a drop-in under /etc/systemd/system/<unit>.d/ with a condition that is false while the drop-in
+# exists, so no timer and no hand can start them. kryuk-capture gets a drop-in too: it can start only while a
+# marker of this run exists under /run. When the script has finished and the state is confirmed, all four drop-ins
+# and the marker are taken away. When it stops in a state it could not confirm (exit 2), or the server restarts
+# in the middle, the drop-ins stay (they are on the disk) and the marker is gone: nothing that loads these files
+# starts, the service included, until a person has run rollback or release.
+# It changes no timer and no unit file; the drop-ins are four small files of its own.
 # What it never touches: any database, any media file, any credential, Nginx, the portal.
+# The hold is for systemd. A person who starts ops_cli.py or bro_worker.py by hand during the install is not
+# stopped by it (the script looks for such a process twice): nobody runs them during the maintenance window.
 #
 # Why the hold. A process that has loaded the original files writes into the store without the lock. If one
 # started after the check and was still running beside the restarted service, the two could meet in the store.
@@ -23,7 +29,8 @@
 #
 # Exit codes. 0: done. 1: stopped or failed, and the installed files are the originals (or were never touched).
 # 2: it needs a person: the two files or the service are in a state it could not bring back by itself. The kept
-# copies stay, the service was not restarted on a pair it could not confirm, the one-shot units stay held.
+# copies stay, the service was not restarted on a pair it could not confirm, the one-shot units stay held and the
+# service cannot be started, also after a restart of the server.
 # The script does not rely on "set -e" where a file is put in place: every such step is checked by name.
 set -uo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -38,8 +45,9 @@ ONESHOTS="kryuk-operations.service kryuk-api-read.service kryuk-backup.service"
 MAY_RUN="kryuk-capture.service kryuk-bro-api.service"
 HEALTH=http://127.0.0.1:8788/health
 SUFFIX=.before-store-lock
-HOLD_DIR="${KRYUK_HOLD_DIR:-/run/systemd/system}"
+HOLD_DIR="${KRYUK_HOLD_DIR:-/etc/systemd/system}"   # on the disk: the hold must outlive a restart of the server
 HOLD_NAME=90-kryuk-store-lock-install.conf
+MARKER="${KRYUK_RUN_DIR:-/run}/kryuk-store-lock-install.running"   # in memory: gone after a restart of the server
 TIMER_MARGIN=600   # seconds: not started when a timer of a held unit fires sooner than this
 HELD=0   # 1 while this run holds the one-shot units
 KEEP=0   # 1 while the files and the service are in a state this run has not confirmed
@@ -97,29 +105,34 @@ hold() {      # no one-shot unit can start from here on; 1 when that could not b
   if [ "$DRY" = 1 ]; then say "hold: not done (rehearsal)"; return 0; fi
   local u
   HELD=1
+  : > "$MARKER" || return 1
   for u in $ONESHOTS; do
     mkdir -p "$HOLD_DIR/$u.d" || return 1
-    printf '# Put by store_patch/install.sh for the minutes of an install. While this file exists the unit does not start.\n# To let it start again: sudo bash install.sh release (or delete this file and run systemctl daemon-reload).\n[Unit]\nConditionPathExists=!%s\n' "$(hold_file "$u")" > "$(hold_file "$u")" || return 1
+    printf '# Put by store_patch/install.sh for the minutes of an install. While this file exists the unit does not start.\n# It is taken away by: sudo bash install.sh release (which first checks that the state is safe).\n[Unit]\nConditionPathExists=!%s\n' "$(hold_file "$u")" > "$(hold_file "$u")" || return 1
   done
+  mkdir -p "$HOLD_DIR/$SERVICE.d" || return 1
+  printf '# Put by store_patch/install.sh for the minutes of an install. While this file exists the service starts only\n# while that script is running (its marker under /run). After a STOP or a restart of the server it does not start.\n# It is taken away by: sudo bash install.sh release (which first checks that the state is safe).\n[Unit]\nConditionPathExists=%s\n' "$MARKER" > "$(hold_file "$SERVICE")" || return 1
   systemctl daemon-reload || { say "systemctl daemon-reload failed"; return 1; }
-  for u in $ONESHOTS; do
+  for u in $ONESHOTS $SERVICE; do
     hold_loaded "$u" || { say "the hold is not loaded for $u"; return 1; }
   done
   say "held (cannot start until this script has finished): $ONESHOTS"
+  say "guarded (starts only while this script runs): $SERVICE"
 }
 release() {   # the one-shot units can start again; 1 when that could not be confirmed
   if [ "$DRY" = 1 ]; then return 0; fi
   local u bad=0
-  for u in $ONESHOTS; do
+  for u in $ONESHOTS $SERVICE; do
     rm -f "$(hold_file "$u")" || bad=1
     rmdir "$HOLD_DIR/$u.d" 2>/dev/null || true
     if [ -e "$(hold_file "$u")" ]; then bad=1; fi
   done
   systemctl daemon-reload || bad=1
-  for u in $ONESHOTS; do
+  for u in $ONESHOTS $SERVICE; do
     if hold_loaded "$u"; then bad=1; fi
   done
-  if [ "$bad" = 0 ]; then HELD=0; say "released (can start again): $ONESHOTS"; return 0; fi
+  rm -f "$MARKER" || bad=1
+  if [ "$bad" = 0 ]; then HELD=0; say "released (can start again): $ONESHOTS $SERVICE"; return 0; fi
   say "STOP: the hold could not be taken away completely. Look at $HOLD_DIR/*.d/$HOLD_NAME, then: sudo bash $0 release"
   return 1
 }
@@ -128,8 +141,10 @@ finish() {    # every way out of the script passes here
   trap - EXIT
   if [ "$HELD" = 1 ]; then
     if [ "$KEEP" = 1 ]; then
+      rm -f "$MARKER"
       say "The one-shot units STAY HELD ($ONESHOTS): they must not start while the files and the service are in this state."
-      say "When the state is put right: sudo bash $0 release"
+      say "$SERVICE cannot be started or restarted, also not by a restart of the server, until this is put right."
+      say "The hold is on the disk ($HOLD_DIR/*.d/$HOLD_NAME). Way out: sudo bash $0 rollback; then, if anything is still held: sudo bash $0 release"
       [ "$code" -ge 2 ] || code=2
     else
       release || code=2
@@ -189,6 +204,28 @@ nothing_else_runs() { # no process runs code of this folder except the services 
   done
   return "$found"
 }
+confirmed() { # 0 only when nothing runs, or could start with, files other than a whole pair; says why not
+  local f a b at m
+  a="$(state ops_media.py)"; b="$(state ops_work.py)"
+  if [ "$a $b" != "original original" ] && [ "$a $b" != "new new" ]; then say "not confirmed: the two installed files are not a pair ($a, $b)"; return 1; fi
+  for f in $FILES; do
+    if [ -e "$DEST/$f.store-lock-part" ]; then say "not confirmed: a half-put file is left: $DEST/$f.store-lock-part"; return 1; fi
+  done
+  oneshots_idle || { say "not confirmed: a one-shot unit is running"; return 1; }
+  nothing_else_runs || { say "not confirmed: something else runs code of this folder"; return 1; }
+  if systemctl is-active --quiet "$SERVICE"; then
+    at="$(date -u -d "$(systemctl show -p ExecMainStartTimestamp --value "$SERVICE" 2>/dev/null)" +%s 2>/dev/null)" || at=""
+    if [ -z "$at" ]; then say "not confirmed: the start time of $SERVICE could not be read"; return 1; fi
+    for f in $FILES; do
+      m="$(stat -c %Y "$DEST/$f" 2>/dev/null)" || m=""
+      if [ -z "$m" ] || [ "$at" -lt "$m" ]; then say "not confirmed: $SERVICE was started before $f was last changed: it does not run the files on the disk"; return 1; fi
+    done
+    health || { say "not confirmed: $SERVICE runs the files on the disk but does not answer"; return 1; }
+    say "confirmed: a pair ($a), $SERVICE started after both files and answers"
+  else
+    say "confirmed: a pair ($a), and $SERVICE is not running: nothing runs other files"
+  fi
+}
 restore() {   # 0 only when both installed files are the originals; stops at the first step that fails
   local f s
   for f in $FILES; do
@@ -232,12 +269,15 @@ status)
       if [ -e "$(hold_file "$u")" ] || hold_loaded "$u"; then h=HELD; else h="not held"; fi
       say "$u: $(systemctl show -p ActiveState --value "$u" 2>/dev/null), $h"
     done
-    say "$SERVICE: $(systemctl is-active "$SERVICE" || true)"
+    if [ -e "$(hold_file "$SERVICE")" ] || hold_loaded "$SERVICE"; then h="GUARDED (cannot start)"; else h="not guarded"; fi
+    say "$SERVICE: $(systemctl is-active "$SERVICE" || true), $h"
   fi
   exit 0;;
 
 release)
   if [ "$DRY" = 1 ]; then stop "a rehearsal holds nothing"; fi
+  for t in curl systemctl pgrep ps date stat; do command -v "$t" >/dev/null || stop "$t is not on this server"; done
+  confirmed || { say "STOP: the hold stays. Put the state right first (sudo bash $0 rollback), then release."; exit 2; }
   HELD=1
   exit 0;;   # finish() takes the hold away and says so
 
@@ -262,7 +302,7 @@ rollback)
     restart || needs_a_person "the originals are back, but the service did not restart" "Look at: systemctl status $SERVICE"
     health || needs_a_person "the originals are back and the service restarted, but it does not answer" "Look at: journalctl -u $SERVICE"
   else
-    say "$SERVICE was not running ($was): this script does not start what was stopped"
+    say "$SERVICE was not running ($was): this script does not start what was stopped. When ready: sudo systemctl start $SERVICE"
   fi
   for f in $FILES; do rm -f "$DEST/$f$SUFFIX"; done   # the installed files are the originals again and the service runs them
   KEEP=0
