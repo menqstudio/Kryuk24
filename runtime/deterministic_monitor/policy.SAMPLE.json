@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "expected_mode": "STAGING",
+  "expected_sending": false,
+  "max_age_seconds": {
+    "health": 3600,
+    "backup": 3600,
+    "hosting": 3600,
+    "certificate": 3600
+  },
+  "backup_max_age_seconds": 86400,
+  "hosting_min_days": 7,
+  "certificate_min_days": 14
+}
