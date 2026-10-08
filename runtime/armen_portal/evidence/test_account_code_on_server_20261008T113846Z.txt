@@ -1,0 +1,72 @@
+Armen portal: the code with the test account and the outbox (switched off) on the live server. Output as printed.
+After it: the unit has no --outbox (count 0), so no photo leaves the portal. The account "test" has no password yet.
+The line "Permission denied" at the end is the plain user asking for a folder inside the closed data folder; it says nothing
+about whether that folder exists. With no --outbox the portal does not create it.
+
+== time
+2026-10-08T11:38:18Z
+data before: 3 files; credential file: root:kryuk-armen 640
+== time
+2026-10-08T11:38:18Z
+package: matches its checksums
+== tests of the new package on this server, as the service user
+----------------------------------------------------------------------
+Ran 26 tests in 27.656s
+
+OK
+== replace
+replaced portal.py
+replaced provision.py
+same     exclude.py
+replaced app.js
+same     login.js
+same     theme.js
+same     index.html
+same     login.html
+same     style.css
+same     tokens.css
+same     fonts.css
+same     logo-light.webp
+same     logo-dark.webp
+same     font-golos-cyrillic.woff2
+same     font-golos-latin.woff2
+same     font-robotocond-700-cyrillic.woff2
+same     font-robotocond-700-latin.woff2
+same     requirements.txt
+fab4ba40d79b56d3830f1db5a82d2f2e97dc3377c38f4eb44eb446be29443c2d  portal.py
+aed7cf94f0d0c4094dad35793679ec41f00da1fb43cd0fdb114da7f8437524bb  provision.py
+6ec99ea0fd2d9ae4d31d0e1585210ca99899c02136970c7158bd4dd73015f405  exclude.py
+521e16ce25e5ae907d167c4591ca63b2c2f2ffdf2d781c6378aae8214c6ceb9d  app.js
+38372c8084e8daa26712da92836b4eea10347d16a922cfe31b5a46e35e2e3edc  login.js
+aca785eb129b3b9729616f94a87de0ffcd8514b7d9667b37c23ba9fa3e402b3e  theme.js
+46aab5c212dde19e58d98a54ad2d2f9a88670bf31c8974dafa4ec137fc616b00  index.html
+ec1b1f06c14c3cd3338e8ea776f7f768e32742c33250db6028d2f3c25113cbd9  login.html
+80e6b3d79708bb723ec22a33d64e551b762f782abda58e1a247d2eeb10e3459f  style.css
+279c5f54ce63076b0e8277ec0b71de49e7c078e2f8d544852ed859f1c55f2b33  tokens.css
+5c6398703fd86257459f749a9d7a6e1b9c3a8c782eeccabc2560e9338a01ca91  fonts.css
+88dbfa573cadba7b88a5ed570c335d05232cad234173a0c437e9bcbb33dfd1da  logo-light.webp
+27124c329f9a99afaaf538766d0aa8c7b4dce3d5606746cc44566310877b17d6  logo-dark.webp
+17d048ca05cb1218af3c0d6dcdf882989e6d1cc5dcb598ea50eaf54850ff7229  font-golos-cyrillic.woff2
+9a69d0aa4734c4022224c002a3d944a702e0204972a49d892789f5668b922c2a  font-golos-latin.woff2
+7b9ef131039e058b622d4da5cbb6d2e783526d137cbf74738f8984c25c2d3fbf  font-robotocond-700-cyrillic.woff2
+ab74f0c2d7ec37e44e017b9586675dd00c519591207dc3bbc8e003c5628dc9b7  font-robotocond-700-latin.woff2
+41b54a6fb2918667ca47a61d73b522629d84490f3d78f0f20b21135faba10d35  requirements.txt
+code folder: everything owned by root; portal: inactive
+2026-10-08T11:38:46Z
+== update done
+== after the start: active active, enabled disabled, code updated: yes
+data after: 3 files; credential file: root:kryuk-armen 640
+login form: 200; state without a session: 401; page script without a session: 401
+tokens.css: 200
+fonts.css: 200
+style.css: 200
+theme.js: 200
+logo-light.webp: 200
+logo-dark.webp: 200
+font-golos-cyrillic.woff2: 200
+wrong password: 401
+2026-10-08T11:38:46Z
+== update and restart done
+exit=0
+0
+ls: cannot open file '/var/lib/kryuk24-armen/outbox': Permission denied

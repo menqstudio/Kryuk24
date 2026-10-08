@@ -1,3 +1,6 @@
+NOTE added 08.10.2026 11:40 UTC: this is the rehearsal of v0.1, whose intake read the portal database. v0.2 reads the outbox only;
+its rehearsal is rehearsal_outbox_backup_rollback_20261008T113734Z.txt. Kept as the record of what was run then.
+
 Media pipeline: rehearsal of the whole chain on the server (deploy/chain_rehearsal.sh). Output as printed.
 A temporary portal instance (installed portal code, port 8791, SAMPLE password), sample pictures made on the server,
 a temporary runtime database and media folder. NOT a phone, NOT a real account, NOT HTTPS, NOT real data.
