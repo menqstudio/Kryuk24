@@ -7,6 +7,7 @@ import sqlite3
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -21,6 +22,32 @@ from media_pipeline import MediaPipeline, PLATFORMS, VARIANTS, sha256
 from portal import Store
 
 YEREVAN = timezone(timedelta(hours=4))
+CHILD_ENV = {**__import__('os').environ, 'PYTHONPATH': __import__('os').pathsep.join(sys.path)}
+
+
+def elsewhere(call):
+    """Run a call in another thread and give back what it raised (None when it did not). The store's lock is re-entrant
+    for the thread that holds it, so "somebody else" must really be another thread or another process."""
+    box = []
+
+    def run():
+        try:
+            call()
+            box.append(None)
+        except BaseException as e:
+            box.append(e)
+    t = threading.Thread(target=run)
+    t.start()
+    t.join(60)
+    return box[0] if box else RuntimeError('did not finish')
+
+
+def wait_for(path, what, seconds=40):
+    deadline = time.monotonic() + seconds
+    while not Path(path).exists():
+        if time.monotonic() > deadline:
+            raise AssertionError('timed out waiting for ' + what)
+        time.sleep(0.02)
 PLATE = [900, 1400, 1300, 1500]  # in the upright picture
 
 
@@ -316,8 +343,15 @@ print(MediaPipeline(sys.argv[1], sys.argv[2]).intake(sys.argv[3]))
                                ('processing', lambda: other.prepare('MEDIA-' + '0' * 32, 'agent', [], True)),
                                ('submit', lambda: other.submit(['MEDIA-' + '0' * 32], self.day, 'agent', 'SITE', 'KRYUK24', 'SAMPLE', 'SAMPLE')),
                                ('rollback', lambda: media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json', lock_wait=0.2))):
-                with self.assertRaises(TimeoutError, msg=name):
-                    call()
+                self.assertIsInstance(elsewhere(call), TimeoutError, name)
+            # the thread that holds the lock may call the store, which takes the same lock again: no deadlock
+            self.assertEqual(self.pipe.storage()['status'], 'OK')
+            with self.pipe.media.lock(0.2):
+                pass
+            # and an importer of the store itself, from elsewhere, waits like everybody else and is refused
+            (self.base / 'other.jpg').write_bytes(photo(colour=(4, 4, 4)))
+            blocked = elsewhere(lambda: MediaPipeline(self.db, self.media_root).media.__class__(self.db, self.media_root).lock(0.2).__enter__())
+            self.assertIsInstance(blocked, TimeoutError, 'the store lock')
         self.assertEqual((self.pipe.queue(), (self.base / 'history.json').exists(), self.files('originals')), ([], False, []), 'the refused operations changed nothing')
         self.assertEqual(other.intake(self.outbox)['imported'], 1, 'and the lock is free again afterwards')
 
@@ -545,6 +579,61 @@ print(MediaPipeline(sys.argv[1], sys.argv[2]).intake(sys.argv[3]))
         self.assertEqual((self.pipe.cleanup()['removed'], self.rows('SELECT count(*) FROM media_work_deletions')), ([], [(0,)]))
         self.assertEqual((len(self.files('prepared')), self.files('originals')), (3, [original_id]))
 
+    def test_an_importer_between_its_file_and_its_row_is_safe_from_a_pending_deletion(self):
+        # Review of 85ad816, finding 1, with two real processes. A line left on the deletion list by an earlier clean-up
+        # names a path. An importer of the store writes exactly that file and has not registered it yet when the
+        # clean-up runs. Before: the clean-up removed the file; the importer registered a row without a file.
+        work = self.prepared()['id']
+        ((oid,),) = self.rows('SELECT original_id FROM media_work')
+        raw = photo(colour=(77, 66, 55), size=(800, 600))
+        (self.base / 'variant.jpg').write_bytes(raw)
+        relative = 'prepared/%s/%s.jpg' % (oid, hashlib.sha256(raw).hexdigest())
+        self.rows('INSERT INTO media_work_deletions VALUES(?,?,?)', (relative, 'UNUSED_VARIANT', '2026-10-08T00:00:00+00:00'))
+        written, go = self.base / 'file-written', self.base / 'go-on'
+        importer = """
+import sys, time
+from pathlib import Path
+from ops_media import MediaStore
+db, media, original, source, written, go = sys.argv[1:7]
+store = MediaStore(db, media)
+real = store.store
+def slow(*a):
+    done = real(*a)                      # the file is under its final name now
+    Path(written).write_text('x')
+    while not Path(go).exists(): time.sleep(0.02)
+    return done                          # ... and only now does prepared() go on to write the row
+store.store = slow
+print(store.prepared(original, source, 'SAMPLE: an operator variant', reviewed=True)['id'])
+"""
+        cleaner = """
+import sys
+from media_pipeline import MediaPipeline
+print(MediaPipeline(sys.argv[1], sys.argv[2], lock_wait=60).cleanup())
+"""
+        first = subprocess.Popen([sys.executable, '-c', importer, str(self.db), str(self.media_root), oid, str(self.base / 'variant.jpg'), str(written), str(go)], env=CHILD_ENV, stdout=subprocess.DEVNULL)
+        second = None
+        try:
+            wait_for(written, 'the importer to write its file')
+            self.assertTrue((self.media_root / relative).is_file())
+            second = subprocess.Popen([sys.executable, '-c', cleaner, str(self.db), str(self.media_root)], env=CHILD_ENV, stdout=subprocess.PIPE, text=True)
+            time.sleep(1.5)
+            self.assertIsNone(second.poll(), 'the clean-up waits while the importer is between its file and its row')
+            self.assertTrue((self.media_root / relative).is_file(), 'and has removed nothing meanwhile')
+            go.write_text('x')
+            self.assertEqual((first.wait(60), second.wait(90)), (0, 0))
+        finally:
+            go.write_text('x')
+            for child in (first, second):
+                if child is not None and child.poll() is None:
+                    child.kill()
+                    child.wait(30)
+                if child is not None and child.stdout:
+                    child.stdout.close()
+        self.assertEqual(self.rows('SELECT count(*) FROM ops_assets WHERE path=?', (relative,)), [(1,)], 'the importer registered its row')
+        self.assertEqual((self.media_root / relative).read_bytes(), raw, 'and the row has its file, whole')
+        self.assertEqual(self.rows('SELECT count(*) FROM media_work_deletions'), [(0,)], 'the stale line is gone, without a removal')
+        self.assertEqual(self.pipe.get(work)['status'], 'PREPARED')
+
     def test_a_clean_up_cut_off_never_leaves_a_row_without_its_file(self):
         # Review of a52d133, finding 3: the file was deleted before the database step was committed; an error after the
         # first file rolled the rows back and left a registered variant whose file was gone.
@@ -649,7 +738,7 @@ class BackupAndRollback(Base):
         self.assertEqual([(e['work_id'], e['kind']) for e in archive['media_work_events']], history, 'every accepted work and what happened to it is in the archive')
         self.assertEqual((len(archive['media_work']), len(archive['media_work_sources']), len(archive['ops_originals']), len(archive['ops_assets'])), (2, 2, 2, 2))
         after = media_rollback.snapshot(self.db)
-        self.assertEqual(sorted(after), sorted(set(before) - set(media_rollback.TABLES)), 'the four pipeline tables are gone, no other table appeared or went')
+        self.assertEqual(sorted(after), sorted(set(before) - set(media_rollback.TABLES)), "the pipeline's tables are gone, no other table appeared or went")
         self.assertEqual({t: after[t] for t in untouched}, {t: before[t] for t in untouched})
         self.assertEqual((after['ops_originals'], after['ops_assets']), (before['ops_originals'], before['ops_assets']))
         self.assertEqual((self.files('originals'), self.files('prepared'), self.files('tmp')), ([], [], []))
@@ -686,6 +775,71 @@ class BackupAndRollback(Base):
         self.assertTrue(stranger.exists())
         archive = json.loads((self.base / 'history.json').read_text(encoding='utf-8'))
         self.assertEqual([o['id'] for o in archive['ops_originals']], [first['id']], 'what the work used is in the archive too')
+
+    def test_an_importer_registering_the_same_original_during_a_rollback_keeps_its_file(self):
+        # Review of 85ad816, finding 2, with two real processes. The rollback has committed its database step (the row of
+        # the original is gone) and is about to remove the file. An importer of the store takes the same picture in
+        # right then: it found the whole file there and registered a new row. Before: the rollback then removed the
+        # file from under that new row.
+        raw = photo(plate=PLATE)
+        self.upload(raw)
+        self.take_in()
+        digest = hashlib.sha256(raw).hexdigest()
+        (self.base / 'again.jpg').write_bytes(raw)
+        about_to_remove, go = self.base / 'about-to-remove', self.base / 'go-on'
+        roller = """
+import pathlib, sys, time
+import media_rollback
+db, media, outbox, archive, flag, go = sys.argv[1:7]
+real = pathlib.Path.unlink
+def slow(self, *a, **k):
+    if self.parent.name == 'originals' and not pathlib.Path(flag).exists():
+        pathlib.Path(flag).write_text('x')          # the database step is committed; the first file is about to go
+        while not pathlib.Path(go).exists(): time.sleep(0.02)
+    return real(self, *a, **k)
+pathlib.Path.unlink = slow
+print(media_rollback.rollback(db, media, outbox, archive))
+"""
+        importer = """
+import sys
+from ops_media import MediaStore
+store = MediaStore(sys.argv[1], sys.argv[2])
+with store.lock(60):
+    pass                                             # only to be sure the wait is long enough on a slow machine
+print(store.original(sys.argv[3], 'OPERATOR: the same picture, taken in during the rollback', 'SAMPLE')['id'])
+"""
+        first = subprocess.Popen([sys.executable, '-c', roller, str(self.db), str(self.media_root), str(self.outbox), str(self.base / 'history.json'), str(about_to_remove), str(go)], env=CHILD_ENV, stdout=subprocess.PIPE, text=True)
+        second = None
+        try:
+            wait_for(about_to_remove, 'the rollback to reach its first file')
+            self.assertEqual(self.rows('SELECT count(*) FROM ops_originals'), [(0,)], 'the database step is committed')
+            self.assertTrue((self.media_root / 'originals' / (digest + '.jpg')).is_file(), 'the file is still there')
+            second = subprocess.Popen([sys.executable, '-c', importer, str(self.db), str(self.media_root), str(self.base / 'again.jpg')], env=CHILD_ENV, stdout=subprocess.PIPE, text=True)
+            time.sleep(1.5)
+            self.assertIsNone(second.poll(), 'the importer waits while the rollback is between its commit and its removals')
+            self.assertEqual(self.rows('SELECT count(*) FROM ops_originals'), [(0,)], 'and has registered nothing meanwhile')
+            go.write_text('x')
+            self.assertEqual((first.wait(60), second.wait(90)), (0, 0))
+        finally:
+            go.write_text('x')
+            for child in (first, second):
+                if child is not None and child.poll() is None:
+                    child.kill()
+                    child.wait(30)
+                if child is not None and child.stdout:
+                    child.stdout.close()
+        rows = self.rows('SELECT digest,path,provenance FROM ops_originals')
+        self.assertEqual([(r[0], r[2]) for r in rows], [(digest, 'OPERATOR: the same picture, taken in during the rollback')])
+        self.assertEqual((self.media_root / rows[0][1]).read_bytes(), raw, 'the row the importer wrote has its file, whole')
+
+    def test_the_pipeline_and_the_rollback_refuse_a_store_whose_importers_do_not_lock(self):
+        import ops_media
+        with patch.object(ops_media.MediaStore, 'LOCKING', 0):
+            with self.assertRaises(RuntimeError):
+                MediaPipeline(self.db, self.media_root)
+            with self.assertRaises(ValueError):
+                media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json')
+        self.assertFalse((self.base / 'history.json').exists())
 
     def test_rollback_never_removes_an_original_that_is_the_only_copy(self):
         raw = photo(plate=PLATE)

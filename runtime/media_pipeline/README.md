@@ -1,4 +1,4 @@
-# Media pipeline v0.4 / Մեդիայի հոսք v0.4
+# Media pipeline v0.5 / Մեդիայի հոսք v0.5
 
 ## EN
 
@@ -10,7 +10,7 @@ This module is the part between the portal's hand-over and Gev's approval. It is
 
 ### What it reads of the portal
 
-One folder, the outbox, where the portal itself puts Armen's own photos: for each a file and a small metadata file (id, sha256, format, file, actor, uploaded, purpose). It has no code that opens the portal's database, its photo folder, an answer, a preview or a row of the test account, and it needs none (since v0.2; v0.1 of the same day read the portal's database). v0.3 is v0.2 with the seven fixes of GPT's review of head `02c21fb`, v0.4 adds the five of his review of head `a52d133`; both lists are in `INSTALL_PLAN.md`, sections 0 and 0b.
+One folder, the outbox, where the portal itself puts Armen's own photos: for each a file and a small metadata file (id, sha256, format, file, actor, uploaded, purpose). It has no code that opens the portal's database, its photo folder, an answer, a preview or a row of the test account, and it needs none (since v0.2; v0.1 of the same day read the portal's database). v0.3 is v0.2 with the seven fixes of GPT's review of head `02c21fb`, v0.4 adds the five of his review of head `a52d133`; v0.5 the fix of his review of head `85ad816`: the shared store itself becomes lock-aware (`store_patch/`), so its importers and this pipeline write, register and delete one at a time. The three lists are in `INSTALL_PLAN.md`, sections 0, 0b and 0c.
 
 ### What it does
 
@@ -23,7 +23,7 @@ One folder, the outbox, where the portal itself puts Armen's own photos: for eac
 | 5. Clean-up and storage (`cleanup`, `storage`) | Removes temporary folders of work nobody holds, the files an interrupted processing left, variants no work and no draft names: rows first, files after, through a list kept in the database, so a run cut off never leaves a row without its file. Sizes against a limit (5 GiB by default): `OK`, `WARN` from 80 %, `FULL` | Never an original. Never anything of unfinished work. Never a file it cannot prove is its own. It writes nothing outside the runtime's media folder |
 | Withdrawn | A photo the portal takes back (marked as a test after the hand-over) gets a record of its own, `<id>.withdrawn`, and leaves the queue when the next intake runs. Only that record proves a take-back: a missing file, an empty or wrong folder changes nothing | Work already before Gev, or published, is not touched: that is his to decide |
 
-One operation at a time: intake, processing, submit, sync, clean-up and rollback take one lock across processes (`media_lock.py`); a second one is refused after a short wait and changes nothing.
+One writer in the store at a time: the store's own lock (`ops_media.StoreLock` in the lock-aware store, `store_patch/ops_media.py`). The store's importers take it around "write the file" + "write the row"; intake, processing, submit, sync, clean-up and rollback take it for their whole run. A second one waits and is then refused, changing nothing. The pipeline refuses a store whose importers do not lock.
 
 `media_rollback.py`: `backup` (a checked copy of the database), `snapshot` (row count and content fingerprint of every table), `rollback` (alone, in one transaction; the history archived first; an original the pipeline did not make is never removed; an original that is the only copy stays; published work stays whole; refuses while a draft that names its variants is before Gev, read from the tasks themselves).
 
@@ -37,13 +37,14 @@ One operation at a time: intake, processing, submit, sync, clean-up and rollback
 
 ### Verification
 
-32 tests, on Windows (Python 3.12.10) and on the server (Python 3.14.4), 08.10.2026: 27 on the chain and 5 for backup and rollback; among them the regression tests of the two reviews, one of them with two real processes. The chain (intake facts, repeats, wrong files, the storage limit, the lease, covering, sizes, no EXIF, the draft and Gev's approval path, sent back, an interrupted attempt, a failed attempt, clean-up), the outbox as the only source (the intake run with the portal's database and photo folder deleted); the test account and marked photos never entering, a later mark withdrawing; an intake cut off after the copy and in the middle of it.
+35 tests, on Windows (Python 3.12.10) and on the server (Python 3.14.4), 08.10.2026: 28 on the chain and 7 for backup and rollback; among them the regression tests of the three reviews, three of them with two real processes. The server's own 102 tests pass with the patched store. The chain (intake facts, repeats, wrong files, the storage limit, the lease, covering, sizes, no EXIF, the draft and Gev's approval path, sent back, an interrupted attempt, a failed attempt, clean-up), the outbox as the only source (the intake run with the portal's database and photo folder deleted); the test account and marked photos never entering, a later mark withdrawing; an intake cut off after the copy and in the middle of it.
 
-Rehearsal on the server, 08.10.2026 12:32 UTC (`deploy/chain_rehearsal.sh`, output in `evidence/`): the real users `kryuk-armen` and `kryuk-run` on temporary folders, a temporary portal instance with sample pictures, the live runtime data hidden from every process. **It is not a phone, not Armen's account, not HTTPS and not the real data.**
+Rehearsal on the server, 08.10.2026 13:07 UTC (`deploy/chain_rehearsal.sh`, output in `evidence/`): the real users `kryuk-armen` and `kryuk-run` on temporary folders, a temporary portal instance with sample pictures, the live runtime data hidden from every process. **It is not a phone, not Armen's account, not HTTPS and not the real data.**
 
 ```bash
 python -m pip install -r runtime/armen_portal/requirements.txt
-PYTHONPATH=runtime/server:runtime/armen_portal python -m unittest discover -s runtime/media_pipeline -p "test_*.py"
+PYTHONPATH=runtime/media_pipeline/store_patch:runtime/server:runtime/armen_portal python -m unittest discover -s runtime/media_pipeline -p "test_*.py"
+python runtime/media_pipeline/store_patch/make_patch.py --check && python runtime/media_pipeline/store_patch/make_patch.py --server-tests
 ```
 
 ## HY
@@ -54,7 +55,7 @@ PYTHONPATH=runtime/server:runtime/armen_portal python -m unittest discover -s ru
 
 **Վիճակը. repo-ում ա, թեստերով, ու փորձարկված ա սերվերում ժամանակավոր տեղում։ Դրված չի. կենդանի կաբինետը ոչինչ չի փոխանցում (unit-ում outbox չկա), ու կենդանի runtime-ում ոչինչ էս մոդուլի մասին չգիտի։** Առաջարկվող տեղադրումը, իրավունքները, պահուստն ու rollback-ը՝ [`INSTALL_PLAN.md`](INSTALL_PLAN.md)։
 
-**Ինչ ա կարդում կաբինետից.** մեկ պանակ՝ outbox-ը, որտեղ կաբինետն ինքն ա դնում Արմենի նկարները. ամեն մեկի համար ֆայլ ու փոքր metadata ֆայլ։ Կաբինետի բազան, նկարների պանակը, պատասխանները, preview-ները կամ test հաշվի տողերը բացող կոդ չունի ու դրա կարիքը չունի (v0.2-ից. նույն օրվա v0.1-ը կարդում էր կաբինետի բազան)։ v0.3-ը v0.2-ն ա՝ GPT-ի առաջին review-ի յոթ ուղղումով, v0.4-ը ավելացնում ա երկրորդի հինգը (`INSTALL_PLAN.md`, 0 ու 0բ բաժիններ). բնօրինակի անվան տակ ոչինչ չի ջնջվում, հետկանչը նկարի սեփական գրառումն ա, մաքրումը վերականգնվող ա. մեկ գործողություն միաժամանակ՝ միջպրոցեսային կողպեքով։
+**Ինչ ա կարդում կաբինետից.** մեկ պանակ՝ outbox-ը, որտեղ կաբինետն ինքն ա դնում Արմենի նկարները. ամեն մեկի համար ֆայլ ու փոքր metadata ֆայլ։ Կաբինետի բազան, նկարների պանակը, պատասխանները, preview-ները կամ test հաշվի տողերը բացող կոդ չունի ու դրա կարիքը չունի (v0.2-ից. նույն օրվա v0.1-ը կարդում էր կաբինետի բազան)։ v0.3-ը v0.2-ն ա՝ GPT-ի առաջին review-ի յոթ ուղղումով, v0.4-ը ավելացնում ա երկրորդի հինգը (`INSTALL_PLAN.md`, 0 ու 0բ բաժիններ). բնօրինակի անվան տակ ոչինչ չի ջնջվում, հետկանչը նկարի սեփական գրառումն ա, մաքրումը վերականգնվող ա. v0.5-ում ընդհանուր պահեստն ինքն ա դառնում կողպեքով (`store_patch/`), որ իր importer-ներն ու հոսքը գրեն, գրանցեն ու ջնջեն մեկ-մեկ (0գ բաժին). մեկ գործողություն միաժամանակ՝ միջպրոցեսային կողպեքով։
 
 | Քայլ | Ինչ ա լինում | Ինչ երբեք չի անում |
 | --- | --- | --- |
@@ -69,4 +70,4 @@ PYTHONPATH=runtime/server:runtime/armen_portal python -m unittest discover -s ru
 
 Սահմանները. փակումը հենվում ա ագենտի հայտարարածի ու Գևի նայելու վրա. օրը մեկ սևագիր. HTTP ճանապարհ, ծառայություն, timer չկա. հրապարակումից հետո նկարը դեռ երկու տեղ կա (կաբինետի ֆայլն ու inbox-ի բնօրինակը). հոսքը աշխատում ա runtime-ի user-ով։
 
-Ստուգում. 32 թեստ՝ Windows-ում ու սերվերում, 08.10.2026։ Փորձ սերվերում, 12:32 UTC (`deploy/chain_rehearsal.sh`, ելքը `evidence/`-ում). իրական `kryuk-armen` ու `kryuk-run` user-ները ժամանակավոր պանակների վրա, փորձնական նկարներ, կենդանի runtime-ի տվյալը թաքցված ամեն պրոցեսից։ **Դա հեռախոս չի, Արմենի հաշիվը չի, HTTPS չի ու իրական տվյալ չի։**
+Ստուգում. 35 թեստ՝ Windows-ում ու սերվերում, 08.10.2026 (երեքը՝ երկու իրական պրոցեսով). սերվերի 102 թեստը անցնում ա patched պահեստով։ Փորձ սերվերում, 13:07 UTC (`deploy/chain_rehearsal.sh`, ելքը `evidence/`-ում). իրական `kryuk-armen` ու `kryuk-run` user-ները ժամանակավոր պանակների վրա, փորձնական նկարներ, կենդանի runtime-ի տվյալը թաքցված ամեն պրոցեսից։ **Դա հեռախոս չի, Արմենի հաշիվը չի, HTTPS չի ու իրական տվյալ չի։**

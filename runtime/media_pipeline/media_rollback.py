@@ -8,7 +8,8 @@ backup    an online copy of the database (SQLite's own backup), checked for inte
           and content fingerprint of the copy printed. The target must not exist; mode 600.
 snapshot  row count and content fingerprint of every table: run before and after, compare.
 rollback  takes the pipeline out again and keeps what must not be lost:
-          - it runs alone: under the pipeline's lock (no intake, processing, submit or clean-up at the same time) and
+          - it runs alone: under the store's lock, which the store's own importers take too (no intake, processing,
+            submit, clean-up or import at the same time, from the first read to the last removed file) and
             inside one write transaction of the database, from reading the history to dropping the tables. What it
             archives is exactly what it removes;
           - the whole history of accepted work (the pipeline's tables, every inbox original a work used and the
@@ -34,6 +35,7 @@ import sys
 from pathlib import Path
 
 from media_lock import PipelineLock
+from ops_media import MediaStore
 
 TABLES = ('media_work', 'media_work_sources', 'media_work_assets', 'media_work_events', 'media_work_deletions')
 TRUST = 'AGENT_DECLARED_MASKS'
@@ -93,6 +95,8 @@ def backup(db, target):
 
 def rollback(db, media_root, outbox, archive, lock_wait=30.0):
     root, outbox, archive = Path(media_root).resolve(), Path(outbox), Path(archive)
+    if getattr(MediaStore, 'LOCKING', 0) != 1:
+        raise ValueError('this media store does not lock its importers; removing files beside it is not safe, nothing was changed')
     with PipelineLock(root, lock_wait):
         c = connect(db)
         written = False
@@ -168,12 +172,26 @@ def rollback(db, media_root, outbox, archive, lock_wait=30.0):
             raise
         finally:
             c.close()
-        # Files go after the database step is committed, still under the lock: a run cut off here leaves files nobody
-        # names, never a missing one.
-        for path in doomed:
-            if path.is_file() and not path.is_symlink():
-                os.chmod(path, 0o600)
-                path.unlink()
+        # Files go after the database step is committed, still under the store's lock: a run cut off here leaves files
+        # nobody names, never a missing one. The store's importers take the same lock around "write the file" + "write
+        # the row", so none of them can register one of these files between the commit above and its removal here
+        # (review of 85ad816, finding 2). Each file is checked once more against the rows right before it goes.
+        kept_named_again = []
+        c = connect(db)
+        try:
+            for path in doomed:
+                relative = path.relative_to(root).as_posix()
+                c.execute('BEGIN IMMEDIATE')
+                named = c.execute('SELECT 1 FROM ops_assets WHERE path=? UNION ALL SELECT 1 FROM ops_originals WHERE path=?', (relative, relative)).fetchone()
+                if named:
+                    kept_named_again.append(relative)
+                elif path.is_file() and not path.is_symlink():
+                    os.chmod(path, 0o600)
+                    path.unlink()
+                c.execute('COMMIT')
+        finally:
+            c.close()
+        result['files_kept_because_a_row_names_them_again'] = kept_named_again
         shutil.rmtree(root / 'tmp', ignore_errors=True)
         return result
 

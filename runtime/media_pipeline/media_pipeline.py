@@ -23,7 +23,7 @@ from pathlib import Path
 
 from PIL import Image, ImageFilter, ImageOps
 
-from media_lock import PipelineLock
+from media_lock import PipelineLock, require_locking_store
 from ops_work import Operations
 from runtime import encode, now
 
@@ -80,6 +80,7 @@ class MediaPipeline:
         self.lock_wait = lock_wait
         self.ops = Operations(db, media_root)
         self.media = self.ops.media
+        require_locking_store(type(self.media))   # the store's importers must take the same lock, or a removal is not safe
         self.runtime = self.ops.runtime
         self.root = self.media.root
         self.limit = limit
@@ -97,7 +98,7 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
 CREATE TABLE IF NOT EXISTS media_work_deletions(path TEXT PRIMARY KEY, kind TEXT NOT NULL, created TEXT NOT NULL);
 ''')
 
-    # ---- one operation at a time, across processes (media_lock.py)
+    # ---- one writer in the store at a time, across processes: the store's own lock, which its importers take too
     def lock(self):
         return PipelineLock(self.root, self.lock_wait)
 
@@ -552,7 +553,9 @@ CREATE TABLE IF NOT EXISTS media_work_deletions(path TEXT PRIMARY KEY, kind TEXT
 
     def finish_deletions(self):
         """Remove the files on the deletion list, one at a time: the file, then its line. A path some row names again by
-        now is taken off the list and its file is kept."""
+        now is taken off the list and its file is kept. It runs under the store's lock (the callers hold it), which the
+        store's importers take around "write the file" + "write the row": no importer is between its file and its
+        row while a file is checked and removed here (review of 85ad816, finding 1)."""
         done = []
         with self.runtime.db() as c:
             queue = c.execute('SELECT path,kind FROM media_work_deletions ORDER BY rowid').fetchall()

@@ -93,8 +93,13 @@ jobs:
         run: python -m unittest discover -s runtime/deterministic_monitor -p "test_*.py"
       - name: Media pipeline (portal uploads to the shared inbox, agent queue, covered variants, Gev's review; not installed, publishes nothing)
         env:
-          PYTHONPATH: "runtime/server:runtime/armen_portal"
+          # the lock-aware store first: the pipeline refuses the store as installed (its importers take no lock)
+          PYTHONPATH: "runtime/media_pipeline/store_patch:runtime/server:runtime/armen_portal"
         run: python -m unittest discover -s runtime/media_pipeline -p "test_*.py"
+      - name: Media store patch (the file is what the patch makes from the installed one; the server's own suites pass with it)
+        run: |
+          python runtime/media_pipeline/store_patch/make_patch.py --check
+          python runtime/media_pipeline/store_patch/make_patch.py --server-tests
       - name: README visuals hold nothing GitHub would block or that loads from outside
         run: |
           ! grep -l -E "<script|foreignObject|@font-face|<image|href=|url\(http" docs/assets/readme/*.svg
@@ -152,7 +157,7 @@ jobs:
         run: python -m unittest discover -s runtime/deterministic_monitor -p "test_*.py"
       - name: Media pipeline (portal uploads to the shared inbox, agent queue, covered variants, Gev's review; not installed, publishes nothing)
         env:
-          PYTHONPATH: "runtime/server;runtime/armen_portal"
+          PYTHONPATH: "runtime/media_pipeline/store_patch;runtime/server;runtime/armen_portal"
         run: python -m unittest discover -s runtime/media_pipeline -p "test_*.py"
       - name: Design system (same check as on Linux; Windows encoding and line endings)
         run: python design/scripts/validate_design.py

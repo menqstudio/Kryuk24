@@ -53,6 +53,7 @@ brief() { "$PY" -c "import json,sys;[print(' ', w['id'][:14], w['status'], 'atte
 pick() { "$PY" -c "import json,sys;d=json.load(sys.stdin);print(json.dumps({k:d[k] for k in sys.argv[1:] if k in d}))" "$@"; }
 
 echo "== time"; date -u +"%FT%TZ"
+echo "the store in this rehearsal is the lock-aware one: $(grep -c 'LOCKING=1' "$W/code/ops_media.py") (1 = yes)"
 echo "== 0. the tests of both packages on this server"
 T=$(mktemp -d /tmp/media_tests.XXXXXX); cp "$PKG"/*.py "$PKG"/portal_files/* "$T/"; chown -R kryuk-armen:kryuk-armen "$T"
 (cd "$T" && runuser -u kryuk-armen -- "$PY" -B -m unittest test_portal 2>&1 | tail -n 3 | tr '\n' ' '; echo)

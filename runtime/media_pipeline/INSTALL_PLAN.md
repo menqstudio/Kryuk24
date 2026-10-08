@@ -1,8 +1,8 @@
-# Media pipeline: install plan for the server, r4 / Մեդիայի հոսք. սերվերում դնելու պլան, r4
+# Media pipeline: install plan for the server, r5 / Մեդիայի հոսք. սերվերում դնելու պլան, r5
 
 **Status: a plan for review. Nothing in it has been done on the live runtime, and by Gev's word of 08.10.2026 nothing will be until GPT has reviewed the current head, the diff and the evidence.** Server facts were read on 08.10.2026 11:13 UTC with a read-only script. What was tried was tried in a temporary place on the server (11:37 UTC); each such line says so.
 
-r4 adds the fixes of GPT's second review, of head `a52d133` (section 0b), to r3. r3 added the fixes of GPT's review of head `02c21fb` (section 0) to r2; the rest of the plan is r2's, with the numbers of the new rehearsal. r2 replaced r1 of the same day. What changed in r2: the runtime no longer gets read access to the portal's database or photo folder; test data is kept apart by an account, not by marks; backup and rollback are code with tests and were tried.
+r5 adds the fix of GPT's third review, of head `85ad816` (section 0c: the store itself becomes lock-aware, which adds one step to the install), and corrects "four tables" to five in the instructions. Numbers inside the evidence files of earlier rounds are left as they were: they are the record of those runs. r4 added the fixes of GPT's second review, of head `a52d133` (section 0b), to r3. r3 added the fixes of GPT's review of head `02c21fb` (section 0) to r2; the rest of the plan is r2's, with the numbers of the new rehearsal. r2 replaced r1 of the same day. What changed in r2: the runtime no longer gets read access to the portal's database or photo folder; test data is kept apart by an account, not by marks; backup and rollback are code with tests and were tried.
 
 ## EN
 
@@ -34,6 +34,26 @@ Run against the reviewed code (`02c21fb`) the new tests fail: 10 of the pipeline
 One more of the same kind, found while fixing these and not in the review: the clean-up swept "files without a row" beside an original, which could have been somebody else's write in progress. It now removes only what a row or the deletion list says is the pipeline's: a processing puts the names of its variant files on the list before it writes them and takes them off when it registers them (`test_interrupted_processing_is_taken_over_and_its_leftovers_go`).
 
 Run against the reviewed code (`a52d133`) the new tests fail: 8 of the pipeline's 32 and 3 of the portal's 28. On this head both suites pass on Windows and on the server (Linux, including the two-process test). The rehearsal was run again with this code at 12:32 UTC.
+
+### 0c. Review of head `85ad816` (GPT, 08.10.2026): two data-loss cases, one root, fixed at the root
+
+| # | Found | Fix | Test (two real processes, Linux and Windows) |
+| --- | --- | --- | --- |
+| 1 | A line left on the deletion list by an earlier clean-up named a path; an importer of the store had just written that file and not yet registered it; `finish_deletions()` removed it; the importer registered a row without a file | See below: the importer is never between its file and its row while a removal runs | `test_an_importer_between_its_file_and_its_row_is_safe_from_a_pending_deletion` |
+| 2 | After the rollback's database commit and before its file removal an importer registered the same whole file again; the rollback then removed it from under the new row | The same; and each file is checked against the rows once more right before it goes | `test_an_importer_registering_the_same_original_during_a_rollback_keeps_its_file` |
+
+**The root and the fix.** The shared store (`ops_media.MediaStore`, installed, used by the dashboard's server and by the command line) wrote a file under its final name and registered its row afterwards, as two steps that nobody else could see as one. Any removal beside it could fall between the two. A lock inside the pipeline cannot close that: the importer does not take it. So the store itself changes, by the protected-file procedure (`store_patch/make_patch.py`: exact replacements from the recorded installed file, a different source stops it, `--check` in CI, the server's own 102 tests run with the patched file):
+
+- `StoreLock`: one lock of the operating system on `<media root>/.pipeline.lock`, across processes, released by the system when a process dies, re-entrant for the thread that holds it;
+- `MediaStore.original()` and `MediaStore.prepared()` take it around "store the file" + "write the row";
+- `MediaStore.store()` writes a new file whole or not at all (temporary name, then a hard link to the final name, which never writes over an existing one);
+- the pipeline takes the same lock for intake, processing, submit, sync, clean-up and rollback, from the first read to the last removed file, and refuses to run on a store that does not lock its importers (`MediaStore.LOCKING`).
+
+So writing, registering and deleting in this store are serialised for everybody who uses the store's own code: the dashboard's server, the command line, the pipeline.
+
+**What this does not cover, said outright:** a program that writes into the media folder and the database without the store's code takes no lock, and no design on this side can coordinate with it. Nothing in the repository does that. And until the patched `ops_media.py` is installed on the server, the pipeline does not run there at all: that is the refusal above, on purpose.
+
+Against the reviewed code (`85ad816`, with the store as installed) the two tests fail exactly where the loss began: the clean-up did not wait, the importer did not wait. On this head the pipeline's 35 tests pass on Windows and on the server (Linux), the portal's 28 unchanged. The rehearsal was run again with the lock-aware store at 13:07 UTC.
 
 ### 1. What the photo flow actually needs from the portal
 
@@ -96,16 +116,16 @@ Five new tables in `runtime.sqlite`, `CREATE TABLE IF NOT EXISTS`: `media_work`,
 
 | Rule | Tried in the rehearsal |
 | --- | --- |
-| The history of accepted work is written to an archive file first (the four tables and the pipeline's inbox rows); without the archive nothing is removed; an existing archive is never written over | archive of 5726 bytes, mode 600, with the events `TAKEN_IN`, `TAKEN_IN`, `CLAIMED`, `PREPARED` |
+| The history of accepted work is written to an archive file first (the pipeline's five tables and the inbox rows its works used); without the archive nothing is removed; an existing archive is never written over | archive of 5726 bytes, mode 600, with the events `TAKEN_IN`, `TAKEN_IN`, `CLAIMED`, `PREPARED` |
 | An original leaves the inbox only when the outbox still holds the same bytes | two originals removed, both photos whole in the outbox afterwards |
 | **An original that is the only copy the pipeline can see is never removed** | one photo taken out of the outbox before the rollback: its original stayed in the inbox, whole, with its row |
 | Work whose publication is recorded keeps its original, final variant and approval records | by test |
 | It refuses while a draft of this pipeline is before Gev | by test |
-| The four tables are dropped; every other table is as it was before the pipeline | 14 tables before, 14 after, none differs |
+| The pipeline's five tables are dropped; every other table is as it was before the pipeline | 14 tables before, 14 after, none differs |
 | A second run does nothing | "nothing to roll back" |
 | Files are removed after the database step: a run cut off there leaves unnamed files, never a missing one | by the order in the code |
 
-Beyond the database: take `--outbox` out of the portal's unit and restart it, remove the outbox folder (its photos are the same files as in `photos`, which stay), put `/var/lib/kryuk24-armen` back to 700 and `kryuk-armen`, remove the group, remove `/opt/kryuk24-media` and an empty `/var/lib/kryuk24/media`.
+Beyond the database: put the original `ops_media.py` back from its kept copy and restart the services that use it (only when nothing else needs the lock-aware store), take `--outbox` out of the portal's unit and restart it, remove the outbox folder (its photos are the same files as in `photos`, which stay), put `/var/lib/kryuk24-armen` back to 700 and `kryuk-armen`, remove the group, remove `/opt/kryuk24-media` and an empty `/var/lib/kryuk24/media`.
 
 ### 8. Repeated and interrupted runs, tried
 
@@ -128,9 +148,10 @@ Beyond the database: take `--outbox` out of the portal's unit and restart it, re
 
 1. Read-only facts; the two backups.
 2. Group `kryuk-media-in` with its two members; the outbox folder; the data folder to 710. Check as in the rehearsal: what `kryuk-run` can and cannot reach, on the real paths.
-3. Portal unit: add `--outbox`; one restart; `hand_over` runs at the next upload. Today it would hand over nothing: the only photo is Gev's marked test.
-4. `/opt/kryuk24-media` with its Python; the 32 tests on the server.
-5. Media folder; `storage` once (creates the four tables); snapshot compared with step 1: no existing table changed.
+3. **The store becomes lock-aware.** `/opt/kryuk24/ops_media.py` is replaced by `store_patch/ops_media.py` with a small install script of the same kind as the operator page's: both files checked by sha256 (installed `5ca3e4de…`, new `67c80488…`), the original kept beside it, an import check, a restart of `kryuk-capture` (the service that uses the store), a health check, and the original put back by itself when the import or the health check fails. The script is not written yet: it is written and reviewed before the install. Without this step the pipeline refuses to run on the server.
+3a. Portal unit: add `--outbox`; one restart; `hand_over` runs at the next upload. Today it would hand over nothing: the only photo is Gev's marked test.
+4. `/opt/kryuk24-media` with its Python; the 35 tests on the server.
+5. Media folder; `storage` once (creates the five tables); snapshot compared with step 1: no existing table changed.
 6. From here a real photo of Armen's: upload → outbox → `intake` → an agent claims, looks, declares the regions → variants → `submit` → the draft in Gev's dashboard. Started by hand; no service, no timer.
 7. Facts again; evidence; `docs/CURRENT_STATE.md`.
 
@@ -173,6 +194,22 @@ r2-ը փոխարինում ա նույն օրվա r1-ին։ Ինչ փոխվեց.
 
 Review-ած կոդի վրա նոր թեստերն ընկնում են (հոսքի 32-ից 8-ը, կաբինետի 28-ից 3-ը). էս head-ի վրա երկու հավաքածուն էլ անցնում են Windows-ում ու սերվերում (Linux, ներառյալ երկու պրոցեսով թեստը)։ Փորձը նորից քշվել ա 12:32 UTC-ին։
 
+### 0գ. `85ad816` head-ի review-ը (GPT, 08.10.2026). տվյալակորստի երկու դեպք, մեկ արմատ, ուղղված արմատից
+
+1. **`finish_deletions()`.** Նախորդ մաքրումից մնացած ջնջման տողը ջնջում էր importer-ի հենց նոր գրած, դեռ չգրանցված ֆայլը։
+2. **`rollback()`.** Բազայի commit-ից հետո, մինչև ֆայլի ջնջումը, importer-ը նույն ֆայլը նորից գրանցում էր, ու rollback-ը հետո ջնջում էր այն։
+
+**Արմատն ու ուղղումը.** Ընդհանուր պահեստը (`ops_media.MediaStore`, դրված, օգտագործում են վահանակի սերվերն ու հրամանային գործիքը) ֆայլը գրում էր վերջնական անվան տակ, իսկ տողը՝ հետո, երկու քայլով։ Հոսքի ներսի կողպեքը դա չի փակում, որովհետև importer-ը այն չի վերցնում։ Դրա համար փոխվում ա պահեստն ինքը՝ պաշտպանված ֆայլի ընթացակարգով (`store_patch/make_patch.py`. ճշգրիտ փոխարինումներ դրված ֆայլի գրառումից, `--check` CI-ում, սերվերի 102 թեստը patched ֆայլով).
+
+- `StoreLock`՝ ՕՀ-ի մեկ կողպեք `<media root>/.pipeline.lock`-ի վրա, պրոցեսների միջև, նույն թելի համար re-entrant.
+- `MediaStore.original()`-ն ու `prepared()`-ը այն վերցնում են «ֆայլը գրել» + «տողը գրել»-ի շուրջ.
+- `MediaStore.store()`-ը նոր ֆայլը գրում ա ամբողջ կամ ընդհանրապես չի գրում.
+- հոսքը նույն կողպեքն ա վերցնում ընդունման, մշակման, submit-ի, sync-ի, մաքրման ու rollback-ի համար՝ առաջին կարդալուց մինչև վերջին ջնջված ֆայլը, ու հրաժարվում ա աշխատել էնպիսի պահեստի վրա, որի importer-ները չեն կողպում։
+
+**Ինչ սա չի ծածկում, ուղիղ.** ծրագիր, որը media պանակում ու բազայում գրում ա առանց պահեստի կոդի, կողպեք չի վերցնում։ Repo-ում էդպիսի բան չկա։ Ու մինչև patched `ops_media.py`-ն սերվերում չդրվի, հոսքը էնտեղ ընդհանրապես չի աշխատի։
+
+Review-ած կոդի վրա երկու թեստն ընկնում են հենց էնտեղ, որտեղ կորուստը սկսվում էր։ Էս head-ի վրա հոսքի 35 թեստն անցնում են Windows-ում ու սերվերում (Linux), կաբինետի 28-ը անփոփոխ ա։ Փորձը նորից քշվել ա 13:07 UTC-ին։
+
 ### 1. Ինչ ա իրականում պետք նկարների հոսքին
 
 Նկարի ֆայլը՝ բայթ առ բայթ, կաբինետի ID-ն, sha256-ը, ֆորմատը, ով ա դրել (միշտ `armen`) ու երբ, Արմենի ընտրած նպատակը։ **Պետք չի ու չի տրվում.** օրվա հարցերի պատասխանները, հարցումների բանալիները, preview-ները, test հաշվի տողերը, թեստ նշված տողերը, գաղտնաբառի ֆայլը, կաբինետի բազան որպես այդպիսին։
@@ -208,7 +245,7 @@ Review-ած կոդի վրա նոր թեստերն ընկնում են (հոսք�
 
 ### 5. Բազայի migration
 
-Չորս նոր աղյուսակ `runtime.sqlite`-ում (`CREATE TABLE IF NOT EXISTS`)։ Եղած ոչ մի աղյուսակ չի փոխվում։ Աշխատելիս տողեր են ավելանում `ops_originals`-ում ու `ops_assets`-ում եղած կոդով, ու գրվում ա օրվա `MEDIA_INBOX` գործի սևագիրը։
+Հինգ նոր աղյուսակ `runtime.sqlite`-ում (`CREATE TABLE IF NOT EXISTS`. հինգերորդը՝ `media_work_deletions`, դեռ ջնջվելիք ֆայլերի ցուցակն ա)։ Եղած ոչ մի աղյուսակ չի փոխվում։ Աշխատելիս տողեր են ավելանում `ops_originals`-ում ու `ops_assets`-ում եղած կոդով, ու գրվում ա օրվա `MEDIA_INBOX` գործի սևագիրը։
 
 ### 6. Պահուստ, փորձված
 
@@ -220,7 +257,7 @@ Review-ած կոդի վրա նոր թեստերն ընկնում են (հոսք�
 - Բնօրինակը inbox-ից հանվում ա միայն երբ outbox-ը նույն բայթերը դեռ ունի։ Փորձում՝ երկու բնօրինակ հանվեց, երկու նկարն էլ outbox-ում ամբողջ մնացին։
 - **Բնօրինակը, որը հոսքի տեսած միակ պատճենն ա, երբեք չի հանվում։** Փորձում՝ մեկ նկար հանվեց outbox-ից rollback-ից առաջ. իր բնօրինակը մնաց inbox-ում, ամբողջ, իր տողով։
 - Հրապարակումը գրանցած գործը պահում ա բնօրինակը, վերջնական տարբերակն ու հաստատման գրառումները (թեստ)։ Մերժում ա, քանի դեռ էս հոսքի սևագիրը Գևի առաջ ա (թեստ)։
-- Չորս աղյուսակը ջնջվում ա. մնացած ամեն աղյուսակ նույնն ա, ինչ մինչև հոսքը։ Փորձում՝ 14 առաջ, 14 հետո, ոչ մեկը չի տարբերվում։ Երկրորդ գործարկումը ոչինչ չի անում։
+- Հոսքի հինգ աղյուսակը ջնջվում ա. մնացած ամեն աղյուսակ նույնն ա, ինչ մինչև հոսքը։ Փորձում՝ 14 առաջ, 14 հետո, ոչ մեկը չի տարբերվում։ Երկրորդ գործարկումը ոչինչ չի անում։
 - Ֆայլերը հանվում են բազայի քայլից հետո. էնտեղ ընդհատված գործարկումը թողնում ա անանուն ֆայլեր, երբեք՝ պակաս։
 
 ### 8. Կրկնակի ու ընդհատված գործարկում, փորձված
@@ -235,9 +272,10 @@ Review-ած կոդի վրա նոր թեստերն ընկնում են (հոսք�
 
 1. Միայն-կարդացող փաստեր. երկու պահուստ։
 2. `kryuk-media-in` խումբը երկու անդամով. outbox-ի պանակը. տվյալների պանակը՝ 710։ Ստուգում իրական ճանապարհների վրա. ինչին ա `kryuk-run`-ը հասնում, ինչին՝ չէ։
-3. Կաբինետի unit-ում `--outbox`. մեկ restart։ Այսօր ոչինչ չէր փոխանցվի. միակ նկարը Գևի նշված տեստն ա։
-4. `/opt/kryuk24-media`-ն իր Python-ով. 32 թեստը սերվերում։
-5. Media պանակը. `storage` մեկ անգամ (ստեղծում ա չորս աղյուսակը). snapshot-ը համեմատվում ա 1-ին քայլի հետ։
+3. **Պահեստը դառնում ա կողպեքով։** `/opt/kryuk24/ops_media.py`-ն փոխարինվում ա `store_patch/ops_media.py`-ով՝ փոքր install սկրիպտով, ինչպես Գևի էջինը. երկու ֆայլն էլ ստուգվում են sha256-ով, բնօրինակը պահվում ա կողքին, import-ի ստուգում, `kryuk-capture`-ի restart, health-ի ստուգում, ձախողման դեպքում բնօրինակը ինքն ա հետ դրվում։ Սկրիպտը դեռ գրված չի. կգրվի ու կնայվի տեղադրումից առաջ։ Առանց էս քայլի հոսքը սերվերում հրաժարվում ա աշխատել։
+3ա. Կաբինետի unit-ում `--outbox`. մեկ restart։ Այսօր ոչինչ չէր փոխանցվի. միակ նկարը Գևի նշված տեստն ա։
+4. `/opt/kryuk24-media`-ն իր Python-ով. 35 թեստը սերվերում։
+5. Media պանակը. `storage` մեկ անգամ (ստեղծում ա հինգ աղյուսակը). snapshot-ը համեմատվում ա 1-ին քայլի հետ։
 6. Էստեղից Արմենի իրական նկարը. upload → outbox → `intake` → ագենտը վերցնում ա, նայում, նշում տեղերը → տարբերակներ → `submit` → սևագիր Գևի վահանակում։ Ձեռքով. ծառայություն ու timer չկա։
 7. Նորից փաստեր. evidence. `docs/CURRENT_STATE.md`։
 

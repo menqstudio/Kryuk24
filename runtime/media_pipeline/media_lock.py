@@ -1,53 +1,24 @@
-"""One operation of the media pipeline at a time, across processes.
+"""The lock of the media store, as the pipeline uses it.
 
-Intake, processing, submit, clean-up and rollback each change files and database rows in several steps. Two of them
-running at once could see each other's half-done work (review of 08.10.2026: a repair removing a file another intake
-had just registered; a rollback archiving the history while an intake was adding to it). They take this lock for
-their whole run. It is a lock of the operating system on one file in the media folder, so it holds between processes
-and is released by the system when a process dies.
+The lock is the store's own: `ops_media.StoreLock`, in the lock-aware version of the installed store
+(`store_patch/ops_media.py`, made by `store_patch/make_patch.py`). The store's importers take it around "write the
+file" + "write the row"; the pipeline takes it for the whole of intake, processing, submit, sync, clean-up and
+rollback. So everybody who writes, registers or deletes in the store through its own code does so one at a time,
+across processes (GPT's reviews of 08.10.2026: a lock inside the pipeline alone cannot protect a file an importer
+has written and not yet registered).
+
+It must be one and the same class for both sides: the pipeline calls the store while it holds the lock, and the lock
+is re-entrant only for the object that knows it is already held. Hence the import, and no second implementation here.
 """
-import os
-import time
-from pathlib import Path
+try:
+    from ops_media import StoreLock as PipelineLock
+except ImportError:
+    raise ImportError('the media pipeline needs the lock-aware media store: put runtime/media_pipeline/store_patch before '
+                      'runtime/server on the Python path (on the server: the patched /opt/kryuk24/ops_media.py)') from None
 
 
-class PipelineLock:
-    def __init__(self, media_root, wait=30.0):
-        self.path = Path(media_root) / '.pipeline.lock'
-        self.wait = wait
-        self.file = None
-
-    def __enter__(self):
-        self.path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        self.file = open(self.path, 'a+b')
-        deadline = time.monotonic() + self.wait
-        while True:
-            try:
-                if os.name == 'nt':
-                    import msvcrt
-                    self.file.seek(0)
-                    msvcrt.locking(self.file.fileno(), msvcrt.LK_NBLCK, 1)
-                else:
-                    import fcntl
-                    fcntl.flock(self.file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-                return self
-            except OSError:
-                if time.monotonic() >= deadline:
-                    self.file.close()
-                    self.file = None
-                    raise TimeoutError('another media pipeline operation holds the lock; nothing was changed') from None
-                time.sleep(0.05)
-
-    def __exit__(self, *exc):
-        try:
-            if os.name == 'nt':
-                import msvcrt
-                self.file.seek(0)
-                msvcrt.locking(self.file.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                import fcntl
-                fcntl.flock(self.file.fileno(), fcntl.LOCK_UN)
-        finally:
-            self.file.close()
-            self.file = None
-        return False
+def require_locking_store(store_class):
+    """Refuse to work on a store whose importers do not take the lock: with it a removal could take a file from
+    under an importer."""
+    if getattr(store_class, 'LOCKING', 0) != 1:
+        raise RuntimeError('this media store does not lock its importers (MediaStore.LOCKING is missing); the pipeline does not run on it')
