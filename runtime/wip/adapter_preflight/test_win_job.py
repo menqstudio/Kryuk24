@@ -175,6 +175,28 @@ class JobTests(unittest.TestCase):
             live.kill(); live.wait()
         self.assertEqual(win_job.pid_state(live.pid, {1}), 'gone')
 
+    def test_refused_open_is_unknown_and_a_pid_nobody_has_is_gone(self):
+        # Real calls. The System process (pid 4) always exists; without elevation Windows refuses to open it (error 5).
+        self.assertNotEqual(win_job.pid_state(4), 'gone', 'a process that is there is never "gone"')
+        self.assertTrue(win_job.pid_alive(4))
+        self.assertEqual(win_job.pid_state(0x7FFFFFFC), 'gone', 'no process has this pid: Windows says "invalid parameter"')
+        # Simulation: the open is refused with the given error, whatever the pid is.
+        for error, expected in ((5, 'unknown'), (8, 'unknown'), (0, 'unknown'), (win_job.ERROR_INVALID_PARAMETER, 'gone')):
+            with mock.patch.object(win_job.k32, 'OpenProcess', return_value=None), mock.patch.object(win_job.ctypes, 'get_last_error', return_value=error):
+                self.assertEqual(win_job.pid_state(os.getpid()), expected, 'error %d' % error)
+                self.assertEqual(win_job.pid_state(os.getpid(), {1}), expected, 'error %d, with recorded times' % error)
+        with mock.patch.object(win_job.k32, 'OpenProcess', return_value=None), mock.patch.object(win_job.ctypes, 'get_last_error', return_value=5):
+            survivors, how, unidentified = win_job._cleanup(win_job.Job(), None, {os.getpid()}, wait=0.3)
+        self.assertEqual((survivors, unidentified), (1, [os.getpid()]))
+
+    def test_exit_code_that_cannot_be_read_is_unknown(self):
+        # Simulation: the process is real and alive, the handle is real; only the reading of the exit code is made to fail.
+        with mock.patch.object(win_job.k32, 'GetExitCodeProcess', return_value=0):
+            self.assertEqual(win_job.pid_state(os.getpid()), 'unknown')
+            self.assertEqual(win_job.pid_state(os.getpid(), {1}), 'unknown')
+            self.assertTrue(win_job.pid_alive(os.getpid()))
+        self.assertEqual(win_job.pid_state(os.getpid()), 'alive')
+
     def test_result_names_unidentified_pids(self):
         r = win_job.run_in_job([PY, '-c', 'pass'], timeout=30, env=ENV)
         self.assertEqual((r['survivors'], r['unidentified']), (0, []))

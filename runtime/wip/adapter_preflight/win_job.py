@@ -33,6 +33,7 @@ JobObjectBasicProcessIdList = 3
 JobObjectExtendedLimitInformation = 9
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
 STILL_ACTIVE = 259
+ERROR_INVALID_PARAMETER = 87
 TARGET_START_FAILED_EXIT = 96
 GATE_TIMEOUT_EXIT = 97
 
@@ -115,13 +116,19 @@ def created_iso(ticks):
 def pid_state(pid, born=None):
     """'gone', 'alive' or 'unknown'. With `born` (creation times seen for this pid inside the job) a live process
     created at another time is 'gone': Windows gave the pid of an ended job process to something else. A live process
-    whose creation time cannot be read is 'unknown': it cannot be told apart from the job's, so it is never 'gone'."""
+    whose creation time cannot be read is 'unknown': it cannot be told apart from the job's, so it is never 'gone'.
+    The same holds for every question Windows does not answer: a pid it refuses to open for another reason than "no
+    such process", and an exit code it does not give."""
     handle = k32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, False, pid)
     if not handle:
-        return 'gone'
+        # "Invalid parameter" is what Windows says for a pid no process has. Any other refusal (access denied for a
+        # protected process, for one) means a process is there and cannot be examined.
+        return 'gone' if ctypes.get_last_error() == ERROR_INVALID_PARAMETER else 'unknown'
     try:
         code = wintypes.DWORD()
-        if not (k32.GetExitCodeProcess(handle, ctypes.byref(code)) and code.value == STILL_ACTIVE):
+        if not k32.GetExitCodeProcess(handle, ctypes.byref(code)):
+            return 'unknown'
+        if code.value != STILL_ACTIVE:
             return 'gone'
         if not born:
             return 'alive'
@@ -134,7 +141,7 @@ def pid_state(pid, born=None):
 
 
 def pid_alive(pid, born=None):
-    """Is the process alive? 'unknown' counts as alive: an unreadable creation time never says "no leftover"."""
+    """Is the process alive? 'unknown' counts as alive: what Windows did not answer never says "no leftover"."""
     return pid_state(pid, born) != 'gone'
 
 
@@ -248,7 +255,8 @@ def _note(job, seen, born):
 def _cleanup(job, process, seen, wait=5.0, born=None):
     """End everything, whatever already failed. Returns (survivors, how, unidentified).
 
-    `unidentified`: pids still alive whose creation time could not be read, so they may or may not be the job's.
+    `unidentified`: pids for which Windows did not answer (not opened, no exit code, no creation time), so a process
+    under them may or may not be the job's.
     They are counted in `survivors` too: a caller that reads only that number never sees "no leftover"."""
     how = 'job'
     remaining = None
@@ -287,7 +295,7 @@ def run_in_job(argv, stdin=b'', timeout=300, env=None, cwd=None, max_output=3276
     """Run argv inside a fresh job with a cleaned environment. Never leaves a process of the job running.
 
     Returns: returncode (None on timeout), stdout, timed_out, survivors, unidentified (pids counted in survivors only
-    because their creation time could not be read: not proven to be the job's, not proven otherwise), peak_pids,
+    because Windows did not answer for them: not proven to be the job's, not proven otherwise), peak_pids,
     peak_created (for each pid the creation times Windows confirmed inside the job; a pid alone is reused at once),
     cleanup ('job' or 'fallback'), io_errors (always [] in a returned success).
     Raises OutputLimit (with .result) as soon as the command writes more than max_output bytes.
