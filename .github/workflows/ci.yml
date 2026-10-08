@@ -61,6 +61,8 @@ jobs:
         run: sha256sum -c SHA256SUMS.txt
       - name: Site, static references
         run: python tools/check_site_assets.py
+      - name: Design system (generated files, pinned component copy, token coverage, contrast, brand separation)
+        run: python design/scripts/validate_design.py
       - name: Action approval (internal contract, no executor) against the server code
         env:
           PYTHONPATH: runtime/server
@@ -125,6 +127,8 @@ jobs:
         run: python -m unittest discover -s runtime/business_service -p "test_*.py"
       - name: Deterministic monitor (offline evaluation of supplied observations; no collector, no timer, no alert)
         run: python -m unittest discover -s runtime/deterministic_monitor -p "test_*.py"
+      - name: Design system (same check as on Linux; Windows encoding and line endings)
+        run: python design/scripts/validate_design.py
       - name: WIP, Chrome proxy (stand-in upstream, no browser)
         working-directory: runtime/wip/chrome_proxy
         run: python -m unittest test_bro_chrome_proxy

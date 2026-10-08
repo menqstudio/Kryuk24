@@ -27,6 +27,7 @@ A working-rules draft (`RULES.md`, 06.10.2026) was never approved by Gev. It is 
 | 06.10.2026 | Prices and terms as answered: 1 500 ₽ for each blocked wheel; the trip to the customer is "по договоренности" and is not promised as free; payment "по ситуации"; he goes to Khimki and Balashikha, no limit in the region | Armen |
 | 06.10.2026 | City pages: do not touch; open Khimki. Armen had said the present districts do not interest him; Gev's decision is in force; which districts Armen wants is open | Gev |
 | 06.10.2026 | The brand colour is blue | Gev |
+| 07.10.2026 (21:52 UTC) | KRYUK24 gets its own design system in `design/`: its own tokens (navy and orange), rules and components, Bro's screens included, brought to a final form. The MenQ component library is used inside it as a pinned copy, as building blocks only. KRYUK24 stays fully separate: no MenQ colour, logo or name is shown and nothing is written into MenQ repositories | Gev |
 | 06.10.2026 | The eight generated pictures in the card's "Equipment" section stay until real ones exist; deleting them is done by Gev's hand | Gev |
 | 06.10.2026 | The second number in the card is hidden; only the public business number is shown | Hidden 06.10.2026; who decided is not recorded in the sources. Whether to show it again is Armen's |
 | 06.10.2026 | Claude works only in the Chrome profile "KRYUK24 — Armen"; Gev's main browser is not used, no other browser is opened | Gev |
@@ -146,6 +147,7 @@ Other open points that are decisions waiting for a person, not contradictions be
 | 06.10.2026 | Գներն ու պայմանները՝ ոնց պատասխանել ա. 1 500 ₽ ամեն փակ անիվին. ճանապարհը մինչև հաճախորդ «по договоренности» ա ու անվճար չի խոստացվում. վճարում՝ «по ситуации». գնում ա Химки ու Балашиха, մարզում սահման չկա | Արմեն |
 | 06.10.2026 | Քաղաքների էջեր. չդիպչել. Химки-ն բացել։ Արմենն ասել էր՝ ներկա շրջանները իրան չեն հետաքրքրում. գործում ա Գևի որոշումը. որ շրջաններն ա ուզում Արմենը՝ բաց ա | Գև |
 | 06.10.2026 | Բրենդի գույնը կապույտ ա | Գև |
+| 07.10.2026 (21:52 UTC) | КРЮК24-ը ստանում ա իր դիզայն սիստեմը `design/`-ում. իր token-ները (navy ու նարնջագույն), կանոններն ու կոմպոնենտները, Bro-ի էկրաններն էլ, վերջնական տեսքով։ MenQ-ի կոմպոնենտների գրադարանը ներսում ա՝ ամրագրված պատճենով, միայն որպես շինանյութ։ КРЮК24-ը լրիվ առանձին ա մնում. MenQ-ի գույն, լոգո կամ անուն չի երևում, MenQ-ի repo-ներում ոչինչ չի գրվում | Գև |
 | 06.10.2026 | Քարտի «Оборудование» բաժնի ութ գեներացված նկարը մնում են, մինչև իսկականը լինի. ջնջում ա միայն Գևը, իրա ձեռքով | Գև |
 | 06.10.2026 | Քարտում երկրորդ համարը թաքցված ա. երևում ա միայն հանրային համարը | Թաքցվել ա 06.10.2026-ին. ով ա որոշել՝ աղբյուրներում գրված չի։ Նորից ցույց տալը Արմենի որոշումն ա |
 | 06.10.2026 | Claude-ը աշխատում ա միայն Chrome-ի «KRYUK24 — Armen» պրոֆիլում. Գևի հիմնական զննարկիչը չի օգտագործվում, ուրիշ զննարկիչ չի բացվում | Գև |
