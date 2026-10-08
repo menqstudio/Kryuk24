@@ -25,7 +25,7 @@ done
 echo "== after the start: active $(systemctl is-active "$UNIT"), enabled $(systemctl is-enabled "$UNIT" || true), code updated: $UPDATED"
 echo "data after: $(find /var/lib/kryuk24-armen -type f | wc -l) files; credential file: $(stat -c '%U:%G %a' /etc/kryuk24-armen/users.json)"
 echo "login form: $(code "$BASE"); state without a session: $(code "${BASE}api/state"); page script without a session: $(code "${BASE}app.js")"
-for name in tokens.css fonts.css style.css theme.js logo-light.webp logo-dark.webp font-golos-cyrillic.woff2; do echo "$name: $(code "$BASE$name")"; done
+for name in tokens.css fonts.css style.css theme.js logo-light.webp logo-dark.webp bro.webp font-golos-cyrillic.woff2; do echo "$name: $(code "$BASE$name")"; done
 echo "wrong password: $(code -X POST -H 'Content-Type: application/json' -H 'Origin: https://runtime.kryuk24.ru' -d '{"username":"armen","password":"wrong-SAMPLE-not-a-real-password"}' "${BASE}api/login")"
 date -u +"%FT%TZ"
 [ "$UPDATED" = yes ] || stop "the code was not updated; the portal runs with the code it had"
