@@ -11,7 +11,7 @@ rollback  takes the pipeline out again and keeps what must not be lost:
           - it runs alone: under the pipeline's lock (no intake, processing, submit or clean-up at the same time) and
             inside one write transaction of the database, from reading the history to dropping the tables. What it
             archives is exactly what it removes;
-          - the whole history of accepted work (the four pipeline tables, every inbox original a work used and the
+          - the whole history of accepted work (the pipeline's tables, every inbox original a work used and the
             pipeline's variants) is written to the archive file first; the file is removed again if the step fails;
           - an original leaves the inbox only when this pipeline made it AND the portal's outbox still holds the same
             bytes (sha256) AND nothing else in the inbox uses it. An original the inbox had before the pipeline, from
@@ -20,7 +20,7 @@ rollback  takes the pipeline out again and keeps what must not be lost:
           - it refuses while anything of this pipeline is before Gev. That is read from the tasks themselves (a draft
             in review or approved that names a variant of this pipeline), not only from the works' own status, and a
             submit that was cut off counts too;
-          - the four pipeline tables are dropped. No other table is altered; from `ops_originals` and `ops_assets`
+          - the pipeline's own tables are dropped. No other table is altered; from `ops_originals` and `ops_assets`
             only rows this pipeline made are taken, and only as described above.
           A second run finds nothing to do. A run cut off after the database step leaves files behind, never a hole.
 """
@@ -35,7 +35,7 @@ from pathlib import Path
 
 from media_lock import PipelineLock
 
-TABLES = ('media_work', 'media_work_sources', 'media_work_assets', 'media_work_events')
+TABLES = ('media_work', 'media_work_sources', 'media_work_assets', 'media_work_events', 'media_work_deletions')
 TRUST = 'AGENT_DECLARED_MASKS'
 
 
@@ -128,7 +128,9 @@ def rollback(db, media_root, outbox, archive, lock_wait=30.0):
             result = {'done': True, 'archive': str(archive), 'archive_sha256': hashlib.sha256(raw).hexdigest(), 'history_rows': {k: len(v) for k, v in history.items()},
                       'originals_removed': [], 'originals_kept_only_copy': [], 'originals_kept_still_used': [], 'originals_kept_not_made_by_the_pipeline': [],
                       'kept_published': [], 'variants_removed': 0, 'variants_kept_named_by_a_draft': 0}
-            doomed = []
+            # what an interrupted clean-up still had on its list goes with the rest, unless a row names it
+            doomed = [root / q['path'] for q in c.execute('SELECT path FROM media_work_deletions')
+                      if not c.execute('SELECT 1 FROM ops_assets WHERE path=? UNION ALL SELECT 1 FROM ops_originals WHERE path=?', (q['path'], q['path'])).fetchone()]
             for w in works:
                 if w['status'] == 'PUBLISHED':
                     result['kept_published'].append(w['id'])

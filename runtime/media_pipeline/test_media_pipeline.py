@@ -4,7 +4,10 @@ import io
 import json
 import shutil
 import sqlite3
+import subprocess
+import sys
 import tempfile
+import time
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -104,7 +107,7 @@ class Tests(Base):
     def test_upload_becomes_one_original_and_one_work_with_its_facts(self):
         raw = photo(plate=PLATE)
         ident = self.upload(raw, purpose='EQUIPMENT')
-        self.assertEqual(self.take_in(), {'seen': 1, 'imported': 1, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'withdrawn': 0, 'repaired': 0, 'withdrawal_checked': True})
+        self.assertEqual(self.take_in(), {'seen': 1, 'imported': 1, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'withdrawn': 0, 'repaired': 0, 'blocked': 0, 'taken_back_at_the_source': 0})
         (work,) = self.pipe.queue()
         self.assertEqual((work['status'], work['actor'], work['purpose'], work['format'], work['attempts']), ('NEW', 'armen', 'EQUIPMENT', 'JPEG', 0))
         self.assertEqual(work['sha256'], hashlib.sha256(raw).hexdigest())
@@ -126,8 +129,7 @@ class Tests(Base):
         shutil.copytree(self.outbox, alone)
         self.portal_db.unlink()
         shutil.rmtree(self.portal_photos)
-        self.assertEqual(sorted(f.name.split('.', 1)[1] if f.name != 'INDEX.json' else f.name for f in alone.iterdir()), ['INDEX.json', 'jpg', 'json'],
-                         'one photo, its facts and the index: no answer, no preview, no test row, no database')
+        self.assertEqual(sorted(f.suffix for f in alone.iterdir()), ['.jpg', '.json'], 'one photo and its facts: no answer, no preview, no test row, no database')
         self.assertEqual(self.pipe.intake(alone)['imported'], 1)
         self.assertEqual((self.media_root / self.files('originals')[0]).read_bytes(), raw)
         source = Path(__file__).with_name('media_pipeline.py').read_text(encoding='utf-8')
@@ -214,6 +216,7 @@ class Tests(Base):
         result = self.take_in()
         self.assertEqual((result['imported'], result['repaired'], result['mismatched']), (1, 1, 0))
         self.assertEqual(half.read_bytes(), raw)
+        self.assertEqual([f.name for f in half.parent.iterdir() if f.name.startswith('.incoming-')], [], 'no temporary file stays')
         # An original an inbox row names, damaged later: nothing is written over it and nothing is imported twice.
         self.rows('DELETE FROM media_work_sources')
         half.chmod(0o600)
@@ -222,27 +225,87 @@ class Tests(Base):
         self.assertEqual((result['repaired'], result['mismatched'], result['imported']), (0, 1, 0))
         self.assertEqual(half.read_bytes(), b'damaged later')
 
-    def test_a_file_that_is_whole_or_registered_by_now_is_never_removed_by_the_repair(self):
-        # Review of 08.10.2026, finding 3: between "this is a half file nobody registered" and its removal another
-        # importer registered it, and the row was left without its file. The two orders in which that can happen:
+    def test_the_inbox_name_is_filled_whole_and_nothing_under_it_is_ever_deleted(self):
+        # Review of 02c21fb, finding 3, and of a52d133, finding 1: the pipeline used to delete a "half file" before
+        # writing the photo. Now it never deletes there: it moves a whole, checked file over the name in one step.
+        raw = photo(plate=PLATE)
+        ident = self.upload(raw)
+        digest = hashlib.sha256(raw).hexdigest()
+        target = self.media_root / 'originals' / (digest + '.jpg')
+        source = self.outbox / (ident + '.jpg')
+        self.assertEqual(self.pipe.place(source, target, digest), 'placed')
+        self.assertEqual((target.read_bytes() == raw, self.pipe.place(source, target, digest)), (True, 'whole'))
+        target.chmod(0o600)
+        target.write_bytes(raw[:1000])                                     # a half file nobody registered
+        self.assertEqual((self.pipe.place(source, target, digest), target.read_bytes() == raw), ('replaced', True))
+        self.assertEqual([f.name for f in target.parent.iterdir()], [target.name], 'no temporary file stays')
+        self.pipe.media.original(source, 'OPERATOR: registered by somebody else', 'SAMPLE')
+        target.chmod(0o600)
+        target.write_bytes(b'damaged after it was registered')
+        self.assertEqual((self.pipe.place(source, target, digest), target.read_bytes()), ('registered_but_not_these_bytes', b'damaged after it was registered'))
+        self.assertEqual(self.take_in()['mismatched'], 1, 'and the intake reports it instead of writing over it')
+        source_code = Path(__file__).with_name('media_pipeline.py').read_text(encoding='utf-8')
+        intake = source_code.split('    def _intake(')[1].split('    def withdrawals(')[0]
+        self.assertNotIn('remove(target)', intake, 'the intake holds no deletion of a file under the name of an original')
+
+    def test_an_outside_importer_in_the_middle_of_its_write_does_not_lose_its_original(self):
+        # Review of a52d133, finding 1, with two real processes: an importer outside the pipeline (the inbox's own way:
+        # the file is written straight under its final name, the row comes after) is halfway through the file when the
+        # pipeline's intake runs in another process. Before: the intake deleted the half file, the importer finished
+        # into a file that was gone, and its row had no file.
         raw = photo(plate=PLATE)
         self.upload(raw)
-        target = self.media_root / 'originals' / (hashlib.sha256(raw).hexdigest() + '.jpg')
-        real = self.pipe.media.original
-        # (a) somebody completed the file in the meantime, nobody registered it yet: it is whole, so it stays and is used
+        digest = hashlib.sha256(raw).hexdigest()
+        target = self.media_root / 'originals' / (digest + '.jpg')
         target.parent.mkdir(parents=True)
-        target.write_bytes(raw)
-        with patch.object(self.pipe.media, 'original', side_effect=[ValueError('existing media file mismatch'), None]) as fake:
-            fake.side_effect = lambda *a: (_ for _ in ()).throw(ValueError('existing media file mismatch')) if fake.call_count == 1 else real(*a)
-            result = self.take_in()
-        self.assertEqual((result['imported'], result['repaired'], result['mismatched'], target.read_bytes() == raw), (1, 0, 0, True))
-        # (b) another importer registered it right after this one saw the mismatch: the row is found, the file is left alone
-        self.rows('DELETE FROM media_work_sources')
-        self.rows('DELETE FROM media_work')
-        with patch.object(self.pipe.media, 'original', side_effect=ValueError('existing media file mismatch')):
-            result = self.take_in()
-        self.assertEqual((result['repaired'], result['mismatched']), (0, 1))
-        self.assertEqual((target.read_bytes() == raw, self.rows('SELECT count(*) FROM ops_originals')), (True, [(1,)]), 'the row and its file are both there')
+        half, go, done = self.base / 'half-written', self.base / 'go-on', self.base / 'importer-done'
+        (self.base / 'whole.jpg').write_bytes(raw)
+        importer = """
+import hashlib, sqlite3, sys, time, uuid
+from pathlib import Path
+target, whole, db, half, go, done = [Path(a) for a in sys.argv[1:7]]
+raw = whole.read_bytes()
+with target.open('xb') as f:                 # as ops_media.MediaStore.store does: straight under the final name
+    f.write(raw[:1000]); f.flush()
+    half.write_text('x')
+    while not go.exists(): time.sleep(0.02)
+    f.write(raw[1000:])
+c = sqlite3.connect(db, timeout=30)          # and then the row, as MediaStore.original does
+digest = hashlib.sha256(raw).hexdigest()
+if not c.execute('SELECT 1 FROM ops_originals WHERE digest=?', (digest,)).fetchone():
+    c.execute('INSERT INTO ops_originals VALUES(?,?,?,?,?,?)', ('ORIGINAL-' + uuid.uuid4().hex, digest, 'originals/' + target.name, 'OPERATOR: outside importer', 'SAMPLE', '2026-10-08T00:00:00+00:00'))
+c.commit(); c.close()
+done.write_text('x')
+"""
+        intake = """
+import sys
+from media_pipeline import MediaPipeline
+print(MediaPipeline(sys.argv[1], sys.argv[2]).intake(sys.argv[3]))
+"""
+        env = {**__import__('os').environ, 'PYTHONPATH': __import__('os').pathsep.join(sys.path)}
+        first = subprocess.Popen([sys.executable, '-c', importer, str(target), str(self.base / 'whole.jpg'), str(self.db), str(half), str(go), str(done)])
+        try:
+            deadline = time.monotonic() + 30
+            while not half.exists():
+                self.assertLess(time.monotonic(), deadline, 'the importer did not start')
+                time.sleep(0.02)
+            self.assertEqual(target.stat().st_size, 1000, 'the importer is halfway')
+            second = subprocess.run([sys.executable, '-c', intake, str(self.db), str(self.media_root), str(self.outbox)], capture_output=True, text=True, env=env, timeout=120)
+            self.assertEqual(second.returncode, 0, second.stderr[-800:])
+            go.write_text('x')
+            self.assertEqual(first.wait(timeout=60), 0)
+        finally:
+            go.write_text('x')
+            if first.poll() is None:
+                first.kill()
+        self.assertTrue(done.exists())
+        for digest_, path in self.rows('SELECT digest,path FROM ops_originals'):
+            file = self.media_root / path
+            self.assertTrue(file.is_file(), 'a registered original has its file: ' + second.stdout)
+            self.assertEqual(sha256(file), digest_, 'and the file is whole')
+        self.assertEqual(self.rows('SELECT count(*) FROM ops_originals'), [(1,)])
+        self.take_in()
+        self.assertEqual(len(self.pipe.queue()), 1, 'and the photo is in the queue once, whichever of the two registered it: ' + second.stdout)
 
     def test_one_operation_at_a_time_across_processes(self):
         # Findings 2 and 3: a second intake, a clean-up, a sync or a rollback does not run beside another operation.
@@ -259,7 +322,7 @@ class Tests(Base):
         self.assertEqual(other.intake(self.outbox)['imported'], 1, 'and the lock is free again afterwards')
 
     def test_a_missing_wrong_or_empty_outbox_is_refused_or_ignored_and_withdraws_nothing(self):
-        # Finding 4: a folder that does not exist turned existing NEW work into WITHDRAWN.
+        # Review of 02c21fb, finding 4: a folder that does not exist turned existing NEW work into WITHDRAWN.
         work = self.one()
         for bad in (self.base / 'no-such-folder', self.portal_db):   # absent; a file, not a folder
             with self.assertRaises(ValueError):
@@ -267,19 +330,47 @@ class Tests(Base):
         self.assertEqual(self.pipe.get(work)['status'], 'NEW')
         empty = self.base / 'empty'
         empty.mkdir()
-        result = self.pipe.intake(empty)
-        self.assertEqual((result['withdrawn'], result['withdrawal_checked'], self.pipe.get(work)['status']), (0, False, 'NEW'), 'an empty folder proves nothing')
-        for index in ('not json', json.dumps({'outbox': 'SOMETHING_ELSE', 'generated': datetime.now(timezone.utc).isoformat(), 'ids': []}), json.dumps({'outbox': 'ARMEN_PORTAL', 'ids': []})):
-            (empty / 'INDEX.json').write_text(index)
-            result = self.pipe.intake(empty)
-            self.assertEqual((result['withdrawal_checked'], self.pipe.get(work)['status']), (False, 'NEW'), index[:20])
-        # the real outbox with the photo's files gone but the portal's index still naming it: not a take-back
-        for f in self.outbox.iterdir():
-            if f.name != 'INDEX.json':
-                f.chmod(0o600)
-                f.unlink()
+        self.assertEqual((self.pipe.intake(empty)['withdrawn'], self.pipe.get(work)['status']), (0, 'NEW'), 'an empty folder proves nothing')
+        for f in self.outbox.iterdir():   # the photo's own files gone from the real outbox: still no proof
+            f.chmod(0o600)
+            f.unlink()
+        self.assertEqual((self.take_in()['withdrawn'], self.pipe.get(work)['status']), (0, 'NEW'))
+
+    def test_only_the_portals_own_record_for_that_photo_withdraws_it(self):
+        # Review of a52d133, finding 2: the portal was cut off after the facts of a NEW photo and before its list of
+        # handed-over photos was rewritten; the intake took the photo in and at once withdrew it, because the old
+        # list did not name it. Now nothing is concluded from a list or from an absence.
+        first = self.upload(photo(plate=PLATE))
+        self.take_in()
+        marked = self.pipe.queue()[0]['id']
+        self.portal.exclude('photo', first, 'SAMPLE: marked later', 'GEV')        # writes <id>.withdrawn for that photo only
+        second = self.upload(photo(colour=(5, 6, 7)))                               # a new photo, handed over after it
+        (self.outbox / 'INDEX.json').write_text(json.dumps({'outbox': 'ARMEN_PORTAL', 'generated': datetime.now(timezone.utc).isoformat(), 'ids': []}))  # a stale list of an older portal
         result = self.take_in()
-        self.assertEqual((result['withdrawn'], result['withdrawal_checked'], self.pipe.get(work)['status']), (0, True, 'NEW'))
+        self.assertEqual((result['imported'], result['withdrawn'], result['mismatched']), (1, 1, 1), 'the stale list is just a file that is not a photo record')
+        states = {w['id']: w['status'] for w in self.pipe.queue()}
+        new = [w for w in states if w != marked][0]
+        self.assertEqual((states[marked], states[new]), ('WITHDRAWN', 'NEW'))
+        self.assertEqual(self.rows('SELECT source_id FROM media_work_sources WHERE work_id=?', (new,)), [(second,)])
+        for junk in ('null', '[]', '{"id": "%s"}' % second, '{"id": "%s", "withdrawn": "not a time"}' % second):   # not a whole record of that photo
+            (self.outbox / (second + '.withdrawn')).write_text(junk)
+            self.assertEqual((self.take_in()['withdrawn'], self.pipe.get(new)['status']), (0, 'NEW'), junk)
+        (self.outbox / (second + '.withdrawn')).write_text(json.dumps({'id': first, 'withdrawn': datetime.now(timezone.utc).isoformat()}))   # a record of another photo under this name
+        self.assertEqual((self.take_in()['withdrawn'], self.pipe.get(new)['status']), (0, 'NEW'))
+        # the facts of a photo still lying beside its take-back record (the portal cut off between the two) are not taken in
+        third = self.upload(photo(colour=(9, 8, 7)))
+        (self.outbox / (third + '.withdrawn')).write_text(json.dumps({'id': third, 'withdrawn': datetime.now(timezone.utc).isoformat()}))
+        result = self.take_in()
+        self.assertEqual((result['taken_back_at_the_source'], result['imported'], len(self.pipe.queue())), (1, 0, 2))
+
+    def test_one_damaged_entry_does_not_stop_the_photos_beside_it(self):
+        # Review of a52d133, finding 5: a facts file holding null raised TypeError and stopped the whole intake.
+        for n, junk in enumerate(('null', '[]', '"text"', '3', '{"id": null}', '', '{')):
+            (self.outbox / ('%032x.json' % n)).parent.mkdir(exist_ok=True)
+            (self.outbox / ('%032x.json' % n)).write_text(junk)
+        self.upload()
+        result = self.take_in()
+        self.assertEqual((result['seen'], result['mismatched'], result['imported']), (8, 7, 1))
 
     # ---- the agent's limited access
     def test_only_the_worker_holding_the_lease_reads_the_original(self):
@@ -426,24 +517,68 @@ class Tests(Base):
         work = self.one()
         self.pipe.claim(work, 'agent-1')
         original_id = self.files('originals')[0]
-        half = self.media_root / 'tmp' / work
-        half.mkdir(parents=True)
-        (half / 'FULL.jpg').write_bytes(b'half written')
         ((oid,),) = self.rows('SELECT original_id FROM media_work')
-        stray = self.media_root / 'prepared' / oid
-        stray.mkdir(parents=True)
-        (stray / ('0' * 64 + '.jpg')).write_bytes(b'stored but never registered')
-        self.assertEqual(self.pipe.cleanup()['removed'], [], 'work somebody holds is left alone')
+        store, calls = self.pipe.media.store, []
+
+        def dies_after_the_first_file(*a):
+            calls.append(a[0])
+            if len(calls) == 2:
+                raise RuntimeError('the process died between the two variant files')
+            return store(*a)
+        with patch.object(self.pipe.media, 'store', side_effect=dies_after_the_first_file):
+            with self.assertRaises(RuntimeError):
+                self.pipe.prepare(work, 'agent-1', [{'kind': 'PLATE', 'box': PLATE}])
+        self.assertEqual((len(self.files('prepared')), self.rows('SELECT count(*) FROM ops_assets'), self.rows('SELECT count(*) FROM media_work_deletions')), (1, [(0,)], [(2,)]),
+                         'one file written, no row yet, and both names on the list')
+        stranger = self.media_root / 'prepared' / oid / 'somebody-elses-file-in-progress.jpg'
+        stranger.write_bytes(b'not this pipeline')
         with self.assertRaises(ValueError):
             self.pipe.claim(work, 'agent-2')
         self.time[0] += timedelta(seconds=901)  # agent-1 never came back
         taken = self.pipe.claim(work, 'agent-2')
         self.assertEqual((taken['attempts'], self.files('tmp')), (2, []))
+        self.assertEqual([x['kind'] for x in self.pipe.cleanup()['removed']], ['INTERRUPTED_LEFTOVER'], 'exactly the file the list named')
+        self.assertTrue(stranger.exists(), 'a file the pipeline knows nothing about is left alone')
         with self.assertRaises(PermissionError):
             self.pipe.prepare(work, 'agent-1', [{'kind': 'PLATE', 'box': PLATE}])
         self.pipe.prepare(work, 'agent-2', [{'kind': 'PLATE', 'box': PLATE}])
-        self.assertEqual([x['kind'] for x in self.pipe.cleanup()['removed']], ['INTERRUPTED_LEFTOVER'])
-        self.assertEqual((len(self.files('prepared')), self.files('originals')), (2, [original_id]))
+        self.assertEqual((self.pipe.cleanup()['removed'], self.rows('SELECT count(*) FROM media_work_deletions')), ([], [(0,)]))
+        self.assertEqual((len(self.files('prepared')), self.files('originals')), (3, [original_id]))
+
+    def test_a_clean_up_cut_off_never_leaves_a_row_without_its_file(self):
+        # Review of a52d133, finding 3: the file was deleted before the database step was committed; an error after the
+        # first file rolled the rows back and left a registered variant whose file was gone.
+        work = self.prepared()['id']
+        self.publish([work])                                    # FULL is named by the draft; WEB is not used
+        self.upload(photo(colour=(3, 3, 3), plate=PLATE))
+        self.take_in()
+        second = [w['id'] for w in self.pipe.queue() if w['id'] != work][0]
+        self.pipe.claim(second, 'agent')
+        self.pipe.prepare(second, 'agent', [], nothing_to_mask=True)
+        self.pipe.reopen(second, 'SAMPLE: the plate was missed')
+        self.pipe.claim(second, 'agent')
+        self.pipe.prepare(second, 'agent', [{'kind': 'PLATE', 'box': PLATE}])   # other bytes: the first two variants of it are unused now
+        self.assertEqual(len(self.files('prepared')), 6, 'two of the published work, four of the second: three of the six are unused')
+
+        def every_row_has_its_file():
+            return all((self.media_root / path).is_file() for (path,) in self.rows('SELECT path FROM ops_assets'))
+        real, calls = __import__('media_pipeline').remove, []
+
+        def dies_after_the_first(path):
+            calls.append(path)
+            if len(calls) == 2:
+                raise RuntimeError('the process died after the first file was removed')
+            return real(path)
+        with patch('media_pipeline.remove', side_effect=dies_after_the_first):
+            with self.assertRaises(RuntimeError):
+                self.pipe.cleanup()
+        self.assertTrue(every_row_has_its_file(), 'cut off in the middle: no registered variant lost its file')
+        left = self.rows('SELECT count(*) FROM media_work_deletions')[0][0]
+        self.assertGreaterEqual(left, 1, 'what was not removed yet is still on the list')
+        done = self.pipe.cleanup()
+        self.assertEqual((len(done['removed']), self.rows('SELECT count(*) FROM media_work_deletions'), every_row_has_its_file()), (left, [(0,)], True), 'the next run finishes the list')
+        named = {path for (path,) in self.rows('SELECT path FROM ops_assets')}
+        self.assertEqual(set(self.files('prepared')), named, 'and afterwards every file has a row and every row a file')
 
     def test_failed_attempt_goes_back_to_the_queue_with_its_reason(self):
         work = self.one()

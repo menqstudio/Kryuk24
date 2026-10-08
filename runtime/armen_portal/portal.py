@@ -175,43 +175,49 @@ CREATE TABLE IF NOT EXISTS armen_excluded(kind TEXT,id TEXT,reason TEXT,marked_b
   return result
  def hand_over(self):
   """The only way a photo leaves the portal. For each of Armen's own photos (account 'armen', not marked as a test):
-  a hard link to the original and a small metadata file in the outbox folder, and one index of what is handed over
-  now. Nothing else is put there: no answer, no preview, no row of the test account, no database. A photo that is no
-  longer Armen's (marked later) is taken back out. Safe to run again at any time.
+  a hard link to the original and a small metadata file in the outbox folder. Nothing else is put there: no answer,
+  no preview, no row of the test account, no database. Safe to run again at any time.
   A hard link, never a copy: one file on the disk under two names, so there is nothing that can be half written.
   When the outbox is on another file system the link is refused and this raises: the photo stays in the portal and
-  is not handed over, and that is said, not hidden. The metadata file is written only after the outbox file was read
-  back and its sha256 is the recorded one; a file under the photo's name that is not the photo (what an older,
-  cut-off copy left) is replaced first."""
+  is not handed over, and that is said, not hidden.
+  Every run reads every handed-over file back and compares its sha256 with the one recorded at upload, also a photo
+  handed over long ago: when the bytes are no longer the photo, its metadata is taken away and it is reported
+  (review of a52d133: an early return had skipped this). The cost is one read of the outbox per run.
+  A photo that is no longer Armen's (marked as a test later) gets a record of its own, <id>.withdrawn, written before
+  its files are taken out. That record, and nothing else, tells the intake the photo was taken back: the absence of
+  a file or of a line in some list is no proof (review of a52d133: a list written after the metadata made a new
+  photo look withdrawn when the portal was cut off between the two)."""
   if not self.outbox:return {'handed_over':0,'taken_back':0,'outbox':None,'damaged':[]}
   with self.handing:
    self.outbox.mkdir(parents=True,exist_ok=True,mode=0o750)
    with self.db() as c:
     rows=[dict(r) for r in c.execute("SELECT id,actor,digest,format,original,purpose,created FROM armen_photos WHERE actor='armen' AND id NOT IN (SELECT id FROM armen_excluded WHERE kind='photo') ORDER BY rowid")]
-   wanted={r['id'] for r in rows};done=0;back=0;damaged=[]
-   for entry in sorted(self.outbox.iterdir()):
-    ident=entry.name.split('.')[0]
-    if re.fullmatch('[a-f0-9]{32}',ident) and ident not in wanted and entry.is_file() and not entry.is_symlink():
-     entry.unlink();back+=entry.suffix=='.json'   # the portal's own copy in the photo folder is untouched
+    marked=[dict(r) for r in c.execute("SELECT p.id,p.original,e.created FROM armen_photos p JOIN armen_excluded e ON e.kind='photo' AND e.id=p.id WHERE p.actor='armen' ORDER BY p.rowid")]
+   done=0;back=0;damaged=[]
+   for m in marked:
+    record=self.outbox/(m['id']+'.withdrawn')
+    if not record.exists():self._publish(record,{'id':m['id'],'withdrawn':now(),'marked':m['created']})   # the record first
+    for name in (m['id']+'.json',m['original']):
+     f=self.outbox/name
+     if f.is_file() and not f.is_symlink():f.unlink();back+=name.endswith('.json')   # the portal's own copy in the photo folder is untouched
    for r in rows:
     meta=self.outbox/(r['id']+'.json');source=self.root/r['original'];link=self.outbox/r['original']
-    if meta.exists() and link.is_file() and os.path.samefile(source,link):continue
     if link.exists() and not os.path.samefile(source,link):link.unlink()   # not the photo itself: a leftover under its name
     if not link.exists():os.link(source,link)   # OSError when the outbox is not on the photo folder's file system: no silent copy
     if _sha256(link)!=r['digest']:
-     # The portal's own original no longer matches what was recorded at upload: nothing is published for it.
+     # The file no longer is what was recorded at upload: nothing is, or stays, published for it. Not a take-back:
+     # no .withdrawn record is written, and work the intake already made from the whole photo is not touched.
      if meta.exists():meta.unlink()
      link.unlink();damaged.append(r['id']);continue
+    if meta.exists():continue
     os.chmod(link,0o640)
     try:os.chown(link,-1,self.outbox.stat().st_gid)   # readable by the outbox folder's group, by nobody else
     except (OSError,AttributeError):pass
     self._publish(meta,{'id':r['id'],'sha256':r['digest'],'format':r['format'],'file':r['original'],'actor':r['actor'],'uploaded':r['created'],'purpose':r['purpose']})
     done+=1
-   # The index: the portal's own statement of what it hands over now. The intake takes a photo for withdrawn only when
-   # this file says so; a missing file or an empty folder proves nothing.
-   handed=sorted(i for i in wanted-set(damaged) if (self.outbox/(i+'.json')).exists())
-   self._publish(self.outbox/'INDEX.json',{'outbox':'ARMEN_PORTAL','generated':now(),'ids':handed})
-   return {'handed_over':done,'taken_back':back,'outbox':len(handed),'damaged':damaged}
+   if damaged:print('hand-over: the stored photo no longer matches its sha256, not handed over: '+', '.join(damaged),file=sys.stderr,flush=True)
+   handed=sum(1 for r in rows if (self.outbox/(r['id']+'.json')).exists())
+   return {'handed_over':done,'taken_back':back,'outbox':handed,'damaged':damaged}
  def _publish(self,target,data):
   tmp=target.with_name(target.name+'.tmp');tmp.write_text(encode(data),encoding='utf-8')
   os.chmod(tmp,0o640);os.replace(tmp,target)   # appears whole or not at all
