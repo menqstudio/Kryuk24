@@ -538,10 +538,22 @@ class RealModeWithStandIns(Install):
         self.assertEqual(self.log('crash ')[-1], 'crash kryuk-capture.service: restarted by systemd', 'and again after the hold is gone')
 
     def test_the_marker_exists_only_while_the_script_itself_restarts_the_service(self):
-        (self.standin / 'runuser').write_text(STANDINS['runuser'].replace('outside\n', 'outside\nls "$KRYUK_RUN_DIR" | wc -l | sed "s/^/marker files at the self-test: /" >> "$S/log"\n', 1), encoding='utf-8', newline='\n')
+        count = 'ls "$KRYUK_RUN_DIR" | wc -l | sed "s/^/marker files at %s: /" >> "$S/log"\n'
+        for name, anchor, moment in (('runuser', 'outside\n', 'the self-test'), ('curl', 'outside\n', 'a health check'),
+                                     ('systemctl', 'restart) [ -e "$S/restart-fails" ] && exit 1\n', 'the restart')):
+            self.assertEqual(STANDINS[name].count(anchor), 1)
+            (self.standin / name).write_text(STANDINS[name].replace(anchor, anchor + count % moment), encoding='utf-8', newline='\n')
         code, out = self.run_script()
         self.assertEqual((code, self.held()), (0, self.FREE), out)
-        self.assertEqual([line.split(': ')[1].strip() for line in self.log('marker files')], ['0'], 'between the hold and the restart nothing could start the service')
+        seen = [(line.split(' at ')[1].split(':')[0], line.split(': ')[1].strip()) for line in self.log('marker files')]
+        self.assertEqual(seen, [('a health check', '0'), ('a health check', '0'), ('the self-test', '0'), ('the restart', '1'), ('a health check', '0'), ('a health check', '0')],
+                         'the service can be started in the seconds of the restart and at no other moment, before or after')
+        self.answer(log='', silent_with_new='')         # the same when the install fails and the originals are put back
+        self.assertEqual(self.run_script('rollback')[0], 0)
+        self.answer(log='')
+        code, out = self.run_script()
+        self.assertEqual((code, self.state(), self.held()), (1, ORIGINALS, self.FREE), out)
+        self.assertEqual(sorted(set(n for moment, n in [(line.split(' at ')[1].split(':')[0], line.split(': ')[1].strip()) for line in self.log('marker files')] if moment != 'the restart')), ['0'])
 
     def test_rollback_refuses_a_kept_copy_that_is_not_the_original(self):
         self.assertEqual(self.run_script()[0], 0)

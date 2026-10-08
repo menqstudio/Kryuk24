@@ -1,4 +1,4 @@
-time: 2026-10-08T18:13:15Z; Python 3.14.4; GNU bash, version 5.3.9(1)-release (x86_64-pc-linux-gnu); user: kryuk
+time: 2026-10-08T18:15:42Z; Python 3.14.4; GNU bash, version 5.3.9(1)-release (x86_64-pc-linux-gnu); user: kryuk
 install.sh sha256: a1e42f6197a28aaac0553d23a526ca834dcb29a64c3a027bdc44b40cc9d554d9
 test_a_failed_self_test_puts_both_originals_back (test_install.Install.test_a_failed_self_test_puts_both_originals_back) ... ok
 test_a_kept_copy_in_the_way_stops_it_and_a_rehearsal_is_refused_on_the_real_folder (test_install.Install.test_a_kept_copy_in_the_way_stops_it_and_a_rehearsal_is_refused_on_the_real_folder) ... ok
@@ -40,7 +40,7 @@ test_the_same_holds_while_an_install_fails_and_while_a_rollback_runs (test_insta
 test_the_self_test_passes_on_the_patched_files_and_fails_on_the_installed_ones (test_install.SelfTest.test_the_self_test_passes_on_the_patched_files_and_fails_on_the_installed_ones) ... ok
 
 ----------------------------------------------------------------------
-Ran 34 tests in 42.118s
+Ran 34 tests in 44.302s
 
 OK
 left in /tmp: 0
