@@ -823,6 +823,32 @@ class Trial:
             return depth < 20 and from_job(mother, depth + 1)
         leftovers = [p for p in after if from_job(p) and (not p.get('Start') or str(p['Start'])[:19] >= floor)] if valid else []
         doubtful = [p for p in after if own(p) == 'doubt' and p not in leftovers] if valid else []
+
+        def why(p):
+            """Everything the harness knows about one process it calls a leftover, so that a FAIL on a machine nobody can
+            look at afterwards (a hosted runner) still says which rule fired and what the parent was. Diagnosis only."""
+            times, up = recorded.get(str(p.get('ProcessId'))), p.get('ParentProcessId')
+            mother = alive.get(up) or {}
+            if own(p) != 'sure':
+                rule = 'not a job pid itself: an ancestor is a job process, or its parent pid is a job pid that is gone or reused'
+            elif times and isinstance(p.get('Start'), str):
+                rule = 'job pid, and its creation time equals one Windows confirmed inside the job'
+            elif ceiling is None or taken_by is None:
+                rule = 'job pid without a recorded creation time, attempt without the end of its job or without a harness pid: the old rule'
+            else:
+                rule = 'job pid without a recorded creation time, created during the run, parent is in the job or is the harness'
+            return {'pid': p.get('ProcessId'), 'name': p.get('Name'), 'created': p.get('Start'), 'kind': p.get('Kind'), 'rule': rule,
+                    'pid_is_a_job_pid': p.get('ProcessId') in peak, 'creation_times_recorded_for_this_pid': times,
+                    'parent': up, 'parent_name': mother.get('Name'), 'parent_created': mother.get('Start'), 'parent_alive': bool(mother),
+                    'parent_is_a_job_pid': up in peak, 'parent_is_the_harness': up == (taken_by or os.getpid()),
+                    'run_started': run.get('started'), 'job_ended': ended, 'harness_pid': taken_by, 'job_pids': len(peak)}
+        job_tree = chk(cid + '.b', 'No process of the job tree is alive afterwards', 'Windows process list taken by the harness after the run (Win32_Process)',
+                       (False if leftovers else (None if doubtful else True)) if valid else None,
+                       ([(p.get('ProcessId'), p.get('Name'), p.get('Start')) for p in leftovers] if leftovers or not doubtful else
+                        'a job pid is alive under a parent that was not in the job, most likely a reused pid, not proven (pid, name, created, parent): %s'
+                        % [(p.get('ProcessId'), p.get('Name'), p.get('Start'), p.get('ParentProcessId')) for p in doubtful]) if valid else 'process list not usable')
+        if leftovers:
+            job_tree['why'] = [why(p) for p in leftovers]
         before_ids = {ident(p) for p in before} if valid else set()
         new_claude = [p for p in after if ident(p) not in before_ids and str(p.get('Name', '')).lower().startswith(('claude', 'node'))] if valid else []
         chrome = [p for p in before if str(p.get('Name', '')).lower() == 'chrome.exe'] if valid else []
@@ -895,11 +921,7 @@ class Trial:
         return [
             chk(cid + '.a', 'Job reports no survivor', 'win_job result (job accounting + PIDs seen in the job)',
                 job_clean, run['job']),
-            chk(cid + '.b', 'No process of the job tree is alive afterwards', 'Windows process list taken by the harness after the run (Win32_Process)',
-                (False if leftovers else (None if doubtful else True)) if valid else None,
-                ([(p.get('ProcessId'), p.get('Name'), p.get('Start')) for p in leftovers] if leftovers or not doubtful else
-                 'a job pid is alive under a parent that was not in the job, most likely a reused pid, not proven (pid, name, created, parent): %s'
-                 % [(p.get('ProcessId'), p.get('Name'), p.get('Start'), p.get('ParentProcessId')) for p in doubtful]) if valid else 'process list not usable'),
+            job_tree,
             stray_check,
             chk(cid + '.d', 'Chrome was not killed: main process present; a lost child only of a short-lived kind with an exit record',
                 'Windows process list before/after (pid + creation time + kind) and exit records from handles opened before the run',

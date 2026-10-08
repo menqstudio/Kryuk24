@@ -2,7 +2,7 @@
 import argparse,getpass,json,os
 from pathlib import Path
 from portal import credential
-p=argparse.ArgumentParser();p.add_argument('--credentials',required=True);p.add_argument('--user',choices=['armen','gev'],required=True);a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--credentials',required=True);p.add_argument('--user',choices=['armen','gev','test'],required=True);a=p.parse_args()
 os.umask(0o077);target=Path(a.credentials)
 if target.is_symlink():raise SystemExit('symlink not allowed')
 users=json.loads(target.read_text()) if target.exists() else {}

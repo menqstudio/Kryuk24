@@ -1,6 +1,8 @@
-"""Tests of the media pipeline on temporary folders. The portal side is the real portal Store; no network."""
+"""Tests of the media pipeline on temporary folders. The portal side is the real portal Store with its outbox; no network."""
+import hashlib
 import io
 import json
+import shutil
 import sqlite3
 import tempfile
 import unittest
@@ -9,6 +11,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
+import media_rollback
+import portal as portal_module
 from media_pipeline import MediaPipeline, PLATFORMS, VARIANTS, sha256
 from portal import Store
 
@@ -34,15 +38,15 @@ def photo(size=(3000, 2000), colour=(70, 90, 110), orientation=None, gps=False, 
     return out.getvalue()
 
 
-class Tests(unittest.TestCase):
+class Base(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        base = Path(self.tmp.name)
-        self.portal_db, self.portal_photos = base / 'portal.sqlite', base / 'portal-photos'
-        self.portal = Store(self.portal_db, self.portal_photos)
+        self.base = base = Path(self.tmp.name)
+        self.portal_db, self.portal_photos, self.outbox = base / 'portal.sqlite', base / 'portal-photos', base / 'outbox'
+        self.portal = Store(self.portal_db, self.portal_photos, self.outbox)
         self.time = [datetime.now(timezone.utc)]
-        self.media_root = base / 'media'
-        self.pipe = MediaPipeline(base / 'runtime.sqlite', self.media_root, clock=lambda: self.time[0])
+        self.db, self.media_root = base / 'runtime.sqlite', base / 'media'
+        self.pipe = MediaPipeline(self.db, self.media_root, clock=lambda: self.time[0])
         self.day = datetime.now(YEREVAN).date().isoformat()
         self.pipe.ops.plan(self.day)
 
@@ -52,11 +56,20 @@ class Tests(unittest.TestCase):
                 f.chmod(0o600)  # stored media is read-only; Windows refuses to delete it otherwise
         self.tmp.cleanup()
 
+    def rows(self, sql, args=()):
+        c = sqlite3.connect(self.db)  # closed by hand: on Windows an open file cannot be deleted
+        try:
+            found = c.execute(sql, args).fetchall()
+            c.commit()
+            return found
+        finally:
+            c.close()
+
     def upload(self, raw=None, actor='armen', purpose='WORK'):
         return self.portal.photo(actor, raw or photo(plate=PLATE), purpose)['id']
 
     def take_in(self):
-        return self.pipe.intake_portal(self.portal_db, self.portal_photos)
+        return self.pipe.intake(self.outbox)
 
     def one(self):
         self.upload()
@@ -68,67 +81,83 @@ class Tests(unittest.TestCase):
         self.pipe.claim(work, 'agent')
         return self.pipe.prepare(work, 'agent', masks if masks is not None else [{'kind': 'PLATE', 'box': PLATE}])
 
-    def rows(self, sql, args=()):
-        c = sqlite3.connect(self.pipe.runtime.path)  # closed by hand: on Windows an open file cannot be deleted
-        try:
-            return c.execute(sql, args).fetchall()
-        finally:
-            c.close()
-
     def files(self, folder):
         return sorted(f.relative_to(self.media_root).as_posix() for f in (self.media_root / folder).rglob('*') if f.is_file()) if (self.media_root / folder).is_dir() else []
+
+    def names(self, folder):
+        return sorted(f.name for f in folder.iterdir())
 
     def submit(self, works, platform='YANDEX_BUSINESS'):
         return self.pipe.submit(works, self.day, 'agent', platform, 'KRYUK24', 'SAMPLE batch', 'SAMPLE reason')
 
+    def publish(self, works):
+        task = self.submit(works)
+        self.pipe.ops.approve(task['id'], task['digest'], 'GEV', 'SAMPLE approval reference')
+        self.pipe.ops.finish_approved(task['id'], task['digest'], 'SAMPLE result source', 'SAMPLE result')
+        self.pipe.sync()
+        return task
+
+
+class Tests(Base):
     # ---- intake
     def test_upload_becomes_one_original_and_one_work_with_its_facts(self):
         raw = photo(plate=PLATE)
         ident = self.upload(raw, purpose='EQUIPMENT')
-        self.assertEqual(self.take_in(), {'seen': 1, 'imported': 1, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'excluded': 0})
+        self.assertEqual(self.take_in(), {'seen': 1, 'imported': 1, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'withdrawn': 0, 'repaired': 0})
         (work,) = self.pipe.queue()
         self.assertEqual((work['status'], work['actor'], work['purpose'], work['format'], work['attempts']), ('NEW', 'armen', 'EQUIPMENT', 'JPEG', 0))
-        self.assertEqual(work['sha256'], __import__('hashlib').sha256(raw).hexdigest())
+        self.assertEqual(work['sha256'], hashlib.sha256(raw).hexdigest())
         self.assertTrue(datetime.fromisoformat(work['uploaded']).tzinfo)
         self.assertNotIn('path', json.dumps(work))
-        source = self.rows('SELECT source,source_id,work_id FROM media_work_sources')
-        (original,) = self.rows('SELECT provenance,permission FROM ops_originals')
-        self.assertEqual(source, [('ARMEN_PORTAL', ident, work['id'])])
-        self.assertIn('photo=' + ident, original[0])
-        self.assertIn('not a publication permission', original[1])
+        self.assertEqual(self.rows('SELECT source,source_id,work_id FROM media_work_sources'), [('ARMEN_PORTAL', ident, work['id'])])
+        ((provenance, permission),) = self.rows('SELECT provenance,permission FROM ops_originals')
+        self.assertIn('photo=' + ident, provenance)
+        self.assertIn('not a publication permission', permission)
         self.assertEqual((self.media_root / self.files('originals')[0]).read_bytes(), raw, 'the original is kept byte for byte')
+
+    def test_the_pipeline_reads_the_outbox_and_nothing_else_of_the_portal(self):
+        # The proof is by removal: with the portal's database and photo folder gone, the intake works the same.
+        raw = photo(plate=PLATE)
+        self.upload(raw)
+        self.portal.answer('armen', '0' * 32, dict(question='inquiries', answer='YES', day=portal_module.day()))
+        self.portal.photo('test', photo(colour=(1, 1, 1)), 'WORK')  # the test account: never handed over
+        alone = self.base / 'outbox-alone'
+        shutil.copytree(self.outbox, alone)
+        self.portal_db.unlink()
+        shutil.rmtree(self.portal_photos)
+        self.assertEqual(sorted(f.suffix for f in alone.iterdir()), ['.jpg', '.json'], 'one photo and its facts: no answer, no preview, no test row, no database')
+        self.assertEqual(self.pipe.intake(alone)['imported'], 1)
+        self.assertEqual((self.media_root / self.files('originals')[0]).read_bytes(), raw)
+        source = Path(__file__).with_name('media_pipeline.py').read_text(encoding='utf-8')
+        for word in ('armen_answers', 'armen_photos', 'armen_commands', 'sqlite3'):
+            self.assertNotIn(word, source, 'the pipeline has no code that opens the portal database')
 
     def test_repeat_makes_no_second_original_and_no_second_work(self):
         raw = photo(plate=PLATE)
-        self.upload(raw)
+        ident = self.upload(raw)
         self.take_in()
         self.assertEqual(self.take_in()['known'], 1)
         self.assertTrue(self.portal.photo('armen', raw, 'WORK')['duplicate'], 'the portal itself stores the same bytes once')
-        self.upload(raw, actor='second-account')  # the same bytes under another portal id
+        other = 'f' * 32   # the same bytes handed over under another id
+        shutil.copyfile(self.outbox / (ident + '.jpg'), self.outbox / (other + '.jpg'))
+        meta = json.loads((self.outbox / (ident + '.json')).read_text(encoding='utf-8'))
+        (self.outbox / (other + '.json')).write_text(json.dumps({**meta, 'id': other, 'file': other + '.jpg'}), encoding='utf-8')
         result = self.take_in()
         self.assertEqual((result['imported'], result['duplicates'], result['known']), (0, 1, 1))
         self.assertEqual(len(self.pipe.queue()), 1)
         self.assertEqual(len(self.files('originals')), 1)
         self.assertEqual(self.take_in()['known'], 2)
 
-    def test_a_photo_marked_as_a_test_in_the_portal_never_enters_the_inbox(self):
-        test = self.upload(photo(colour=(9, 9, 9)))
-        real = self.upload(photo(plate=PLATE))
-        self.portal.exclude('photo', test, 'SAMPLE: a test under the account', 'GEV')
-        result = self.take_in()
-        self.assertEqual((result['seen'], result['imported'], result['excluded']), (2, 1, 1))
-        self.assertEqual(len(self.pipe.queue()), 1)
-        self.assertEqual(self.rows('SELECT source_id FROM media_work_sources'), [(real,)])
-        self.assertEqual(len(self.files('originals')), 1)
-
-    def test_a_portal_file_that_is_not_what_was_recorded_is_not_taken_in(self):
-        self.upload()
-        (file,) = [f for f in self.portal_photos.iterdir() if 'preview' not in f.name]
-        file.chmod(0o600)
-        file.write_bytes(photo(colour=(1, 2, 3)))
+    def test_a_handed_over_file_that_is_not_what_its_facts_say_is_not_taken_in(self):
+        ident = self.upload()
+        target = self.outbox / (ident + '.jpg')
+        target.chmod(0o600)
+        target.write_bytes(photo(colour=(1, 2, 3)))
         self.assertEqual(self.take_in()['mismatched'], 1)
-        self.assertEqual(self.pipe.queue(), [])
-        self.assertEqual(self.files('originals'), [])
+        (self.outbox / 'not-an-id.json').write_text('{}')
+        (self.outbox / ('e' * 32 + '.json')).write_text(json.dumps({'id': 'e' * 32, 'sha256': '0' * 64, 'format': 'JPEG', 'file': '../x.jpg', 'actor': 'armen', 'uploaded': 'x', 'purpose': 'WORK'}))
+        self.assertEqual(self.take_in()['mismatched'], 3)
+        self.assertEqual((self.pipe.queue(), self.files('originals')), ([], []))
 
     def test_intake_stops_at_the_storage_limit_and_reports_it(self):
         self.pipe.limit = 1000
@@ -138,10 +167,58 @@ class Tests(unittest.TestCase):
         self.pipe.limit = 10 ** 9
         self.assertEqual(self.take_in()['imported'], 1)
         self.pipe.limit = self.pipe.used()
-        self.assertEqual(self.pipe.storage(self.portal_photos)['status'], 'FULL')
+        self.assertEqual(self.pipe.storage()['status'], 'FULL')
         self.pipe.limit = int(self.pipe.used() / 0.9)
-        report = self.pipe.storage(self.portal_photos)
-        self.assertEqual((report['status'], report['work']['NEW'], report['media_root']['originals']['files'], report['portal_photos']['files']), ('WARN', 1, 1, 2))
+        report = self.pipe.storage()
+        self.assertEqual((report['status'], report['work']['NEW'], report['media_root']['originals']['files']), ('WARN', 1, 1))
+
+    def test_the_test_account_and_marked_photos_never_enter_and_a_later_mark_withdraws(self):
+        self.portal.photo('test', photo(colour=(9, 9, 9)), 'WORK')
+        marked = self.upload(photo(colour=(8, 8, 8)))
+        self.portal.exclude('photo', marked, 'SAMPLE: somebody tried the account', 'GEV')
+        real = self.upload(photo(plate=PLATE))
+        result = self.take_in()
+        self.assertEqual((result['seen'], result['imported']), (1, 1), "only Armen's own unmarked photo is in the outbox at all")
+        self.assertEqual(self.rows('SELECT source_id FROM media_work_sources'), [(real,)])
+        work = self.pipe.queue()[0]['id']
+        self.pipe.claim(work, 'agent')
+        self.pipe.prepare(work, 'agent', [{'kind': 'PLATE', 'box': PLATE}])
+        self.portal.exclude('photo', real, 'SAMPLE: marked after it was handed over', 'GEV')
+        self.assertEqual(self.take_in()['withdrawn'], 1)
+        self.assertEqual(self.pipe.get(work)['status'], 'WITHDRAWN')
+        with self.assertRaises(ValueError):
+            self.submit([work])
+        with self.assertRaises(ValueError):
+            self.pipe.claim(work, 'agent')
+        self.assertEqual(sorted(x['kind'] for x in self.pipe.cleanup()['removed']), ['UNUSED_VARIANT', 'UNUSED_VARIANT'])
+        self.assertEqual(len(self.files('originals')), 1, 'the original stays: this code never deletes one')
+
+    # ---- interrupted intake
+    def test_intake_cut_off_after_the_copy_is_completed_by_the_next_run(self):
+        ident = self.upload()
+        self.pipe.media.original(self.outbox / (ident + '.jpg'), 'ARMEN_PORTAL photo=%s (the run died right after this)' % ident, 'SAMPLE')
+        self.assertEqual((len(self.files('originals')), self.pipe.queue()), (1, []))
+        result = self.take_in()
+        self.assertEqual((result['imported'], result['duplicates']), (1, 0))
+        self.assertEqual((len(self.files('originals')), len(self.pipe.queue()), self.rows('SELECT count(*) FROM ops_originals')), (1, 1, [(1,)]))
+        self.assertEqual(self.take_in()['known'], 1)
+
+    def test_intake_cut_off_in_the_middle_of_the_copy_is_repaired_and_a_named_original_is_never_touched(self):
+        raw = photo(plate=PLATE)
+        self.upload(raw)
+        half = self.media_root / 'originals' / (hashlib.sha256(raw).hexdigest() + '.jpg')
+        half.parent.mkdir(parents=True)
+        half.write_bytes(raw[:1000])                      # what a killed copy leaves: the right name, part of the bytes
+        result = self.take_in()
+        self.assertEqual((result['imported'], result['repaired'], result['mismatched']), (1, 1, 0))
+        self.assertEqual(half.read_bytes(), raw)
+        # An original an inbox row names, damaged later: nothing is written over it and nothing is imported twice.
+        self.rows('DELETE FROM media_work_sources')
+        half.chmod(0o600)
+        half.write_bytes(b'damaged later')
+        result = self.take_in()
+        self.assertEqual((result['repaired'], result['mismatched'], result['imported']), (0, 1, 0))
+        self.assertEqual(half.read_bytes(), b'damaged later')
 
     # ---- the agent's limited access
     def test_only_the_worker_holding_the_lease_reads_the_original(self):
@@ -149,7 +226,7 @@ class Tests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             self.pipe.original_bytes(work, 'agent')
         self.pipe.claim(work, 'agent')
-        self.assertEqual(__import__('hashlib').sha256(self.pipe.original_bytes(work, 'agent')).hexdigest(), self.pipe.get(work)['sha256'])
+        self.assertEqual(hashlib.sha256(self.pipe.original_bytes(work, 'agent')).hexdigest(), self.pipe.get(work)['sha256'])
         with self.assertRaises(PermissionError):
             self.pipe.original_bytes(work, 'another')
         with self.assertRaises(ValueError):
@@ -167,8 +244,7 @@ class Tests(unittest.TestCase):
         self.pipe.claim(work, 'agent')
         with Image.open(io.BytesIO(raw)) as im:
             self.assertTrue(im.getexif().get(0x8825), 'the sample original carries a GPS block')
-        # Upright the picture is 3000 x 2000 and the stripes lie where a viewer sees them.
-        upright_plate = [1700, 1400, 2100, 1500]
+        upright_plate = [1700, 1400, 2100, 1500]  # upright the picture is 3000 x 2000 and the stripes lie where a viewer sees them
         done = self.pipe.prepare(work, 'agent', [{'kind': 'PLATE', 'box': upright_plate}])
         self.assertEqual((done['status'], sorted(done['variants'])), ('PREPARED', sorted(VARIANTS)))
         for variant, edge in VARIANTS.items():
@@ -231,8 +307,7 @@ class Tests(unittest.TestCase):
         self.assertEqual([a['id'] for a in task['draft']['assets']], [done['variants'][PLATFORMS['SITE']]])
         self.assertEqual(self.pipe.sync(), [])
         self.assertEqual((self.pipe.get(new)['status'], self.pipe.get(new)['platform']), ('IN_REVIEW', 'SITE'))
-        report = self.pipe.ops.report(self.day)
-        self.assertFalse(report['publishing_enabled'])
+        self.assertFalse(self.pipe.ops.report(self.day)['publishing_enabled'])
         with self.assertRaises(ValueError):
             self.pipe.ops.approve(task['id'], task['digest'], 'AGENT', 'SAMPLE')
         self.pipe.ops.approve(task['id'], task['digest'], 'GEV', 'SAMPLE approval reference')
@@ -257,7 +332,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(sorted(x['kind'] for x in self.pipe.cleanup()['removed']), ['UNUSED_VARIANT', 'UNUSED_VARIANT'])
         self.assertEqual(len(self.files('prepared')), 2)
 
-    # ---- interruption and failure
+    # ---- interruption and failure of processing
     def test_interrupted_processing_is_taken_over_and_its_leftovers_go(self):
         work = self.one()
         self.pipe.claim(work, 'agent-1')
@@ -290,48 +365,108 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(self.files('originals')), 1)
 
     # ---- clean-up
-    def test_nothing_of_unfinished_work_is_removed(self):
+    def test_clean_up_removes_nothing_of_unfinished_work_and_never_touches_the_portal(self):
         work = self.prepared()['id']
         self.submit([work])
-        before = (self.files('originals'), self.files('prepared'), sorted(f.name for f in self.portal_photos.iterdir()))
-        result = self.pipe.cleanup(self.portal_photos)
+        before = (self.files('originals'), self.files('prepared'), self.names(self.portal_photos), self.names(self.outbox))
+        result = self.pipe.cleanup()
         self.assertEqual((result['removed'], result['originals_deleted']), ([], 0))
-        self.assertEqual((self.files('originals'), self.files('prepared'), sorted(f.name for f in self.portal_photos.iterdir())), before)
+        self.assertEqual((self.files('originals'), self.files('prepared'), self.names(self.portal_photos), self.names(self.outbox)), before)
 
-    def test_after_the_recorded_publication_one_original_the_final_variant_and_the_record_stay(self):
+    def test_after_the_recorded_publication_the_original_the_final_variant_and_the_record_stay(self):
         work = self.prepared()['id']
-        task = self.submit([work], platform='YANDEX_BUSINESS')
-        self.pipe.ops.approve(task['id'], task['digest'], 'GEV', 'SAMPLE approval reference')
-        self.pipe.ops.finish_approved(task['id'], task['digest'], 'SAMPLE result source', 'SAMPLE result')
-        self.pipe.sync()
+        task = self.publish([work])
         digest = self.pipe.get(work)['sha256']
-        result = self.pipe.cleanup(self.portal_photos)
-        self.assertEqual(sorted(x['kind'] for x in result['removed']), ['PORTAL_SECOND_COPY', 'UNUSED_VARIANT'])
+        portal_before = self.names(self.portal_photos)
+        self.assertEqual([x['kind'] for x in self.pipe.cleanup()['removed']], ['UNUSED_VARIANT'])
         (original,) = self.files('originals')
-        self.assertEqual(sha256(self.media_root / original), digest, 'the one original is the inbox copy, intact')
-        self.assertEqual([f.name for f in self.portal_photos.iterdir() if 'preview' not in f.name], [], "the portal's second copy is gone")
-        self.assertEqual(len([f for f in self.portal_photos.iterdir() if 'preview' in f.name]), 1, "the portal's preview stays")
+        self.assertEqual(sha256(self.media_root / original), digest)
         self.assertEqual(list(self.pipe.get(work)['variants']), ['FULL'])
         self.pipe.media.verify(task['draft']['assets'][0]['id'], task['draft']['assets'][0]['sha256'])
         self.assertEqual(len(self.files('prepared')), 1)
-        self.assertEqual(self.rows('SELECT count(*) FROM ops_approvals'), [(1,)])
-        self.assertEqual(self.rows("SELECT count(*) FROM ops_observations WHERE summary='SAMPLE result'"), [(1,)])
-        self.assertEqual(self.pipe.cleanup(self.portal_photos)['removed'], [], 'a second run finds nothing more')
-        self.assertTrue(self.portal.photo('armen', photo(plate=PLATE), 'WORK')['duplicate'], 'the portal still knows the picture')
+        self.assertEqual((self.rows('SELECT count(*) FROM ops_approvals'), self.rows("SELECT count(*) FROM ops_observations WHERE summary='SAMPLE result'")), ([(1,)], [(1,)]))
+        self.assertEqual(self.pipe.cleanup()['removed'], [], 'a second run finds nothing more')
+        self.assertEqual(self.names(self.portal_photos), portal_before, 'the portal keeps its own copy: this code cannot write there')
         self.assertEqual(self.take_in()['imported'], 0)
 
-    def test_the_portal_copy_stays_when_the_inbox_original_is_not_provably_there(self):
+
+class BackupAndRollback(Base):
+    """The way back, tried: what is kept, what goes, what a second run and a restore do."""
+
+    def test_backup_is_a_whole_checked_copy_and_restoring_it_gives_the_state_before(self):
+        before = media_rollback.snapshot(self.db)
+        made = media_rollback.backup(self.db, self.base / 'before.sqlite')
+        self.assertEqual((made['integrity'], made['tables']), ('ok', before))
+        with self.assertRaises(OSError):
+            media_rollback.backup(self.db, self.base / 'before.sqlite')   # never over an existing copy
+        work = self.prepared()['id']
+        self.submit([work])
+        self.assertNotEqual(media_rollback.snapshot(self.db), before)
+        self.assertEqual(media_rollback.snapshot(self.base / 'before.sqlite'), before, 'the copy did not move with the source')
+        restored = self.base / 'restored.sqlite'
+        shutil.copyfile(self.base / 'before.sqlite', restored)
+        self.assertEqual(media_rollback.snapshot(restored), before)
+        self.assertEqual(hashlib.sha256(restored.read_bytes()).hexdigest(), made['sha256'])
+
+    def test_rollback_keeps_the_history_and_leaves_the_other_tables_as_they_were(self):
+        untouched = ('ops_tasks', 'ops_observations', 'ops_approvals', 'ops_events', 'orders', 'events')
+        before = media_rollback.snapshot(self.db)
+        raws = [photo(plate=PLATE), photo(colour=(20, 30, 40))]
+        for raw in raws:
+            self.upload(raw)
+        self.take_in()
+        first = self.pipe.queue()[0]['id']
+        self.pipe.claim(first, 'agent')
+        self.pipe.prepare(first, 'agent', [{'kind': 'PLATE', 'box': PLATE}])
+        history = self.rows('SELECT work_id,kind FROM media_work_events ORDER BY id')
+        result = media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json')
+        self.assertEqual((result['done'], len(result['originals_removed']), result['originals_kept_only_copy'], result['variants_removed']), (True, 2, [], 2))
+        archive = json.loads((self.base / 'history.json').read_text(encoding='utf-8'))
+        self.assertEqual([(e['work_id'], e['kind']) for e in archive['media_work_events']], history, 'every accepted work and what happened to it is in the archive')
+        self.assertEqual((len(archive['media_work']), len(archive['media_work_sources']), len(archive['ops_originals']), len(archive['ops_assets'])), (2, 2, 2, 2))
+        after = media_rollback.snapshot(self.db)
+        self.assertEqual(sorted(after), sorted(set(before) - set(media_rollback.TABLES)), 'the four pipeline tables are gone, no other table appeared or went')
+        self.assertEqual({t: after[t] for t in untouched}, {t: before[t] for t in untouched})
+        self.assertEqual((after['ops_originals'], after['ops_assets']), (before['ops_originals'], before['ops_assets']))
+        self.assertEqual((self.files('originals'), self.files('prepared'), self.files('tmp')), ([], [], []))
+        for raw in raws:   # the photos are whole where they came from
+            self.assertIn(hashlib.sha256(raw).hexdigest(), {sha256(f) for f in self.outbox.glob('*.jpg')})
+        # a second run finds nothing and does not write over the archive
+        self.assertEqual(media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json')['done'], False)
+        # and the pipeline can be put in again: the same photos come back once each
+        again = MediaPipeline(self.db, self.media_root)
+        self.assertEqual(again.intake(self.outbox)['imported'], 2)
+        self.assertEqual(again.intake(self.outbox)['known'], 2)
+
+    def test_rollback_never_removes_an_original_that_is_the_only_copy(self):
+        raw = photo(plate=PLATE)
+        ident = self.upload(raw)
+        self.take_in()
+        for f in self.outbox.iterdir():   # the portal no longer holds it in the outbox
+            f.chmod(0o600)
+            f.unlink()
+        result = media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json')
+        self.assertEqual((result['originals_removed'], result['originals_kept_only_copy']), ([], [hashlib.sha256(raw).hexdigest()]))
+        (original,) = self.files('originals')
+        self.assertEqual((self.media_root / original).read_bytes(), raw)
+        self.assertEqual(self.rows('SELECT count(*) FROM ops_originals'), [(1,)], 'its inbox row stays with it')
+        self.assertIn(ident, json.dumps(json.loads((self.base / 'history.json').read_text(encoding='utf-8'))['media_work_sources']))
+
+    def test_rollback_keeps_published_work_whole_and_waits_for_gev_on_an_open_draft(self):
         work = self.prepared()['id']
         task = self.submit([work])
+        with self.assertRaises(ValueError):
+            media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json')
+        self.assertFalse((self.base / 'history.json').exists())
+        self.assertEqual(len(self.pipe.queue()), 1, 'nothing was changed by the refused run')
         self.pipe.ops.approve(task['id'], task['digest'], 'GEV', 'SAMPLE approval reference')
         self.pipe.ops.finish_approved(task['id'], task['digest'], 'SAMPLE result source', 'SAMPLE result')
         self.pipe.sync()
-        original = self.media_root / self.files('originals')[0]
-        original.chmod(0o600)
-        original.write_bytes(b'damaged')
-        kinds = [x['kind'] for x in self.pipe.cleanup(self.portal_photos)['removed']]
-        self.assertNotIn('PORTAL_SECOND_COPY', kinds)
-        self.assertEqual(len([f for f in self.portal_photos.iterdir() if 'preview' not in f.name]), 1)
+        result = media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json')
+        self.assertEqual((result['kept_published'], result['originals_removed']), ([work], []))
+        self.assertEqual(len(self.files('originals')), 1)
+        self.pipe.media.verify(task['draft']['assets'][0]['id'], task['draft']['assets'][0]['sha256'])
+        self.assertEqual((self.rows('SELECT count(*) FROM ops_approvals'), self.rows("SELECT status FROM ops_tasks WHERE job='MEDIA_INBOX'")), ([(1,)], [('DONE',)]))
 
 
 if __name__ == '__main__':

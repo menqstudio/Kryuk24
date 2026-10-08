@@ -1,6 +1,6 @@
 """Private Armen input portal. Separate credentials/data; no operator approvals."""
 from http.cookies import SimpleCookie,CookieError
-import argparse,base64,hashlib,hmac,io,json,os,re,secrets,sqlite3,threading,time,uuid,warnings
+import argparse,base64,hashlib,hmac,io,json,os,re,secrets,shutil,sqlite3,threading,time,uuid,warnings
 from contextlib import contextmanager
 from datetime import datetime,timedelta,timezone
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
@@ -8,6 +8,11 @@ from pathlib import Path
 from PIL import Image,ImageOps
 
 PREFIX='/operator/work/armen/'
+# Accounts. 'armen' is the owner: only his rows are his accounting. 'gev' reads Armen's rows and writes nothing.
+# 'test' is for trying the portal: it uploads and answers like Armen, sees only its own rows, and its rows are never
+# Armen's: they are in no state Armen or the reviewer sees, and they never leave the portal (no outbox, no media intake).
+ACCOUNTS=('armen','gev','test')
+WRITERS=('armen','test')
 COOKIE='__Secure-kryuk_armen'
 SESSION_TTL=8*60*60
 
@@ -91,8 +96,9 @@ def authenticate(header,users):
  return None
 
 class Store:
- def __init__(self,db,root):
+ def __init__(self,db,root,outbox=None):
   self.db_path=str(db);self.root=Path(root).resolve();self.root.mkdir(parents=True,exist_ok=True,mode=0o700)
+  self.outbox=Path(outbox).resolve() if outbox else None;self.handing=threading.Lock()
   self.decoding=threading.Lock()  # one photo is decoded at a time: a 40 MP picture takes about 160 MiB while it is open
   with self.db() as c:c.executescript('''
 CREATE TABLE IF NOT EXISTS armen_answers(id TEXT PRIMARY KEY, actor TEXT, day TEXT, question TEXT, answer TEXT, created TEXT);
@@ -155,7 +161,41 @@ CREATE TABLE IF NOT EXISTS armen_excluded(kind TEXT,id TEXT,reason TEXT,marked_b
     with target.open('xb') as f:f.write(data)
     os.chmod(target,0o600)
    c.execute('INSERT INTO armen_photos VALUES(?,?,?,?,?,?,?,?)',(ident,actor,dg,fmt,original,preview,purpose,now()))
-   return {'saved':True,'id':ident,'duplicate':False,'publishing_enabled':False}
+   result={'saved':True,'id':ident,'duplicate':False,'publishing_enabled':False}
+  # After the photo is saved: hand it over. A failure here does not undo the upload; the next hand-over catches up.
+  if actor=='armen':
+   try:self.hand_over()
+   except (OSError,sqlite3.Error):pass
+  return result
+ def hand_over(self):
+  """The only way a photo leaves the portal. For each of Armen's own photos (account 'armen', not marked as a test):
+  a hard link to the original and a small metadata file in the outbox folder. Nothing else is put there: no answer,
+  no preview, no row of the test account, no database. A photo that is no longer Armen's (marked later) is taken
+  back out. Safe to run again at any time; an interrupted run is completed by the next one."""
+  if not self.outbox:return {'handed_over':0,'taken_back':0,'outbox':None}
+  with self.handing:
+   self.outbox.mkdir(parents=True,exist_ok=True,mode=0o750)
+   with self.db() as c:
+    rows=[dict(r) for r in c.execute("SELECT id,actor,digest,format,original,purpose,created FROM armen_photos WHERE actor='armen' AND id NOT IN (SELECT id FROM armen_excluded WHERE kind='photo') ORDER BY rowid")]
+   wanted={r['id'] for r in rows};done=0;back=0
+   for entry in sorted(self.outbox.iterdir()):
+    ident=entry.name.split('.')[0]
+    if re.fullmatch('[a-f0-9]{32}',ident) and ident not in wanted and entry.is_file() and not entry.is_symlink():
+     entry.unlink();back+=entry.suffix=='.json'   # the portal's own copy in the photo folder is untouched
+   for r in rows:
+    meta=self.outbox/(r['id']+'.json')
+    if meta.exists():continue
+    source=self.root/r['original'];link=self.outbox/r['original']
+    if not link.exists():
+     try:os.link(source,link)            # one file on the disk under two names
+     except OSError:shutil.copyfile(source,link)   # another file system: a copy
+    os.chmod(link,0o640)
+    try:os.chown(link,-1,self.outbox.stat().st_gid)   # readable by the outbox folder's group, by nobody else
+    except (OSError,AttributeError):pass
+    tmp=self.outbox/(r['id']+'.json.tmp')
+    tmp.write_text(encode({'id':r['id'],'sha256':r['digest'],'format':r['format'],'file':r['original'],'actor':r['actor'],'uploaded':r['created'],'purpose':r['purpose']}),encoding='utf-8')
+    os.chmod(tmp,0o640);os.replace(tmp,meta);done+=1   # the metadata file appears last and whole: without it the intake ignores the photo
+   return {'handed_over':done,'taken_back':back,'outbox':len(wanted)}
  def exclude(self,kind,ident,reason,marked_by):
   """Mark one answer or photo as not Armen's own (a test by somebody else under his account). The row and the file
   stay; from then on it is in no state, no count and no preview, and the media intake does not take it in."""
@@ -166,13 +206,17 @@ CREATE TABLE IF NOT EXISTS armen_excluded(kind TEXT,id TEXT,reason TEXT,marked_b
    c.execute('BEGIN IMMEDIATE')
    if not c.execute('SELECT 1 FROM '+('armen_answers' if kind=='answer' else 'armen_photos')+' WHERE id=?',(ident,)).fetchone():raise LookupError('not found')
    c.execute('INSERT OR IGNORE INTO armen_excluded VALUES(?,?,?,?,?)',(kind,ident,reason.strip(),marked_by.strip(),now()))
-   return dict(c.execute('SELECT * FROM armen_excluded WHERE kind=? AND id=?',(kind,ident)).fetchone())
+   mark=dict(c.execute('SELECT * FROM armen_excluded WHERE kind=? AND id=?',(kind,ident)).fetchone())
+  if kind=='photo':
+   try:self.hand_over()   # a photo marked after it was handed over is taken back out of the outbox
+   except (OSError,sqlite3.Error):pass
+  return mark
  def state(self,actor,owner=False):
   today=day()
   with self.db() as c:
-   args=() if owner else (actor,)
-   # Rows marked as somebody's test are left out for everybody, the reviewer too.
-   where=" WHERE id NOT IN (SELECT id FROM armen_excluded WHERE kind='%s')"+('' if owner else ' AND actor=?')
+   # The reviewer sees Armen's rows and no others; every account sees only its own. Rows marked as a test: nobody.
+   args=('armen',) if owner else (actor,)
+   where=" WHERE id NOT IN (SELECT id FROM armen_excluded WHERE kind='%s') AND actor=?"
    # In the order they were saved (rowid), not by clock text: two answers may carry the same time, and the id is random.
    answers=[dict(r) for r in c.execute('SELECT * FROM armen_answers'+where%'answer'+' ORDER BY rowid',args)]
    photos=[dict(r) for r in c.execute('SELECT id,actor,purpose,created FROM armen_photos'+where%'photo'+' ORDER BY rowid DESC LIMIT 100',args)]
@@ -180,19 +224,20 @@ CREATE TABLE IF NOT EXISTS armen_excluded(kind TEXT,id TEXT,reason TEXT,marked_b
   latest={}
   for r in answers:
    if r['day']==today:latest[r['actor']+':'+r['question']]=r
-  return {'day':today,'questions':QUESTIONS,'answers':list(latest.values()),'photos':photos,
-          'trust':'ARMEN_REPORTED','publishing_enabled':False,'orders_created':False}
+  test=actor=='test' and not owner
+  return {'day':today,'questions':QUESTIONS,'answers':list(latest.values()),'photos':photos,'test_account':test,
+          'trust':'TEST_NOT_COUNTED' if test else 'ARMEN_REPORTED','publishing_enabled':False,'orders_created':False}
  def preview(self,actor,ident,owner=False):
   if not re.fullmatch('[a-f0-9]{32}',ident):raise LookupError('unavailable')
   with self.db() as c:row=c.execute("SELECT * FROM armen_photos WHERE id=? AND id NOT IN (SELECT id FROM armen_excluded WHERE kind='photo')",(ident,)).fetchone()
-  if not row or (row['actor']!=actor and not owner):raise LookupError('unavailable')
+  if not row or (row['actor']!=actor and not (owner and row['actor']=='armen')):raise LookupError('unavailable')
   p=self.root/row['preview']
   if p.is_symlink():raise LookupError('unavailable')
   return p.read_bytes()
 
 def server(store,users,origin,port=8790):
  if origin!='https://runtime.kryuk24.ru':raise ValueError('explicit runtime HTTPS origin required')
- if not users or set(users)-{'armen','gev'} or 'armen' not in users:raise ValueError('armen user required; optional gev reviewer')
+ if not users or set(users)-set(ACCOUNTS) or 'armen' not in users:raise ValueError('armen user required; optional gev reviewer and test account')
  for r in users.values():
   if set(r)!={'salt','hash'} or not re.fullmatch('[a-f0-9]{32}',r['salt']) or not re.fullmatch('[a-f0-9]{64}',r['hash']):raise ValueError('invalid credential record')
  sessions=Sessions();attempts=[];lock=threading.Lock();uploads=threading.BoundedSemaphore(2);logins=threading.BoundedSemaphore(2)
@@ -264,7 +309,7 @@ def server(store,users,origin,port=8790):
    if self.headers.get('Origin')!=origin or not same(self.headers.get('X-CSRF-Token',''),self.session[1]):return self.reply(403,{'error':'reload page'})
    if self.path==PREFIX+'api/logout':
     sessions.revoke(self.headers.get('Cookie',''));return self.reply(200,{'logged_out':True},cookie=self.cookie('',0))
-   if actor!='armen':return self.reply(403,{'error':'read only'})
+   if actor not in WRITERS:return self.reply(403,{'error':'read only'})
    try:
     if self.headers.get('Transfer-Encoding'):raise ValueError('chunked upload not supported')
     size=int(self.headers.get('Content-Length','0'));ctype=self.headers.get('Content-Type','').split(';')[0]
@@ -289,6 +334,7 @@ def server(store,users,origin,port=8790):
  return ThreadingHTTPServer(('127.0.0.1',port),H)
 
 if __name__=='__main__':
- p=argparse.ArgumentParser();p.add_argument('--db',required=True);p.add_argument('--photos',required=True);p.add_argument('--credentials',required=True);p.add_argument('--port',type=int,default=8790);a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('--db',required=True);p.add_argument('--photos',required=True);p.add_argument('--credentials',required=True);p.add_argument('--port',type=int,default=8790)
+ p.add_argument('--outbox',help='folder the media intake reads; without it no photo leaves the portal');a=p.parse_args()
  os.umask(0o077)
- server(Store(a.db,a.photos),json.loads(Path(a.credentials).read_text(encoding='utf-8')),'https://runtime.kryuk24.ru',a.port).serve_forever()
+ server(Store(a.db,a.photos,a.outbox),json.loads(Path(a.credentials).read_text(encoding='utf-8')),'https://runtime.kryuk24.ru',a.port).serve_forever()

@@ -289,4 +289,61 @@ print(len(saved),round(peak()))
   # A new answer to the same question is Armen's own and is the one shown.
   self.store.answer('armen',uuid.uuid4().hex,dict(question='inquiries',answer='NO',day=day()))
   self.assertEqual([a['answer'] for a in self.store.state('armen')['answers']],['NO'])
+ def test_the_test_account_writes_but_its_rows_are_never_armens(self):
+  # Kept apart by the system, not by a mark made afterwards: the account 'test' answers and uploads like Armen,
+  # sees only its own rows, and none of them reaches Armen's state, the reviewer's state or the outbox.
+  import tempfile as t
+  folder=t.TemporaryDirectory();store=Store(folder.name+'/db',folder.name+'/media',folder.name+'/outbox')
+  users={'armen':credential(self.password),'gev':credential(self.password),'test':credential(self.password)}
+  http=server(store,users,'https://runtime.kryuk24.ru',0);thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
+  def call(path,cookie=None,body=None,headers=None):
+   h={'Origin':'https://runtime.kryuk24.ru'};h.update(headers or {})
+   if cookie:h['Cookie']=cookie
+   req=urllib.request.Request('http://127.0.0.1:%d%s'%(http.server_port,PREFIX+path),data=body,headers=h)
+   try:
+    with urllib.request.urlopen(req) as r:return r.status,r.read(),r.headers
+   except urllib.error.HTTPError as e:
+    with e:return e.code,e.read(),e.headers
+  def enter(user):
+   s,_,hs=call('api/login',body=json.dumps({'username':user,'password':self.password}).encode(),headers={'Content-Type':'application/json'})
+   self.assertEqual(s,200);cookie=hs['Set-Cookie'].split(';')[0]
+   return cookie,re.search(b'name="csrf-token" content="([^"]+)"',call('',cookie)[1])[1].decode()
+  try:
+   cookie,csrf=enter('test')
+   s,raw,_=call('api/photo',cookie,self.png(),{'Content-Type':'image/png','X-CSRF-Token':csrf,'X-Photo-Purpose':'WORK'});self.assertEqual(s,201)
+   s,_,_=call('api/answer',cookie,json.dumps(dict(question='inquiries',answer='YES',day=day())).encode(),{'Content-Type':'application/json','X-CSRF-Token':csrf,'Idempotency-Key':uuid.uuid4().hex});self.assertEqual(s,200)
+   mine=json.loads(call('api/state',cookie)[1])
+   self.assertEqual((len(mine['photos']),len(mine['answers']),mine['test_account'],mine['trust']),(1,1,True,'TEST_NOT_COUNTED'))
+   self.assertEqual(call('preview/'+mine['photos'][0]['id'],cookie)[0],200)
+   for user in ('armen','gev'):
+    other,_=enter(user);seen=json.loads(call('api/state',other)[1])
+    self.assertEqual((seen['photos'],seen['answers'],seen['test_account']),([],[],False),user)
+    self.assertEqual(call('preview/'+mine['photos'][0]['id'],other)[0],404,user)
+   self.assertEqual(store.hand_over()['outbox'],0)
+   self.assertEqual([f.name for f in Path(folder.name+'/outbox').iterdir()],[],'nothing of the test account is handed over')
+   # Armen's own photo and answer are his, with the test rows beside them in the same database.
+   cookie,csrf=enter('armen')
+   s,_,_=call('api/photo',cookie,self.png(),{'Content-Type':'image/png','X-CSRF-Token':csrf,'X-Photo-Purpose':'WORK'});self.assertEqual(s,201)
+   state=json.loads(call('api/state',cookie)[1]);self.assertEqual((len(state['photos']),state['answers'],state['trust']),(1,[],'ARMEN_REPORTED'))
+   self.assertEqual(sorted(f.suffix for f in Path(folder.name+'/outbox').iterdir()),['.json','.png'])
+  finally:
+   http.shutdown();http.server_close();thread.join();folder.cleanup()
+ def test_the_outbox_holds_photos_and_their_facts_only_and_follows_marks(self):
+  import tempfile as t
+  folder=t.TemporaryDirectory();outbox=Path(folder.name+'/outbox');store=Store(folder.name+'/db',folder.name+'/media',outbox)
+  try:
+   raw=self.png();ident=store.photo('armen',raw,'EQUIPMENT')['id']
+   store.answer('armen',uuid.uuid4().hex,dict(question='inquiries',answer='YES',day=day()))
+   names=sorted(f.name for f in outbox.iterdir());self.assertEqual(names,[ident+'.json',ident+'.png'])
+   meta=json.loads((outbox/(ident+'.json')).read_text(encoding='utf-8'))
+   self.assertEqual(set(meta),{'id','sha256','format','file','actor','uploaded','purpose'})
+   self.assertEqual((meta['actor'],meta['purpose'],meta['file'],(outbox/meta['file']).read_bytes()==raw),('armen','EQUIPMENT',ident+'.png',True))
+   self.assertEqual(store.hand_over(),{'handed_over':0,'taken_back':0,'outbox':1},'a second run adds nothing')
+   # an interrupted hand-over: the link is there, the metadata file is not; the next run completes it
+   (outbox/(ident+'.json')).unlink();self.assertEqual(store.hand_over()['handed_over'],1)
+   # marked as a test afterwards: taken back out, the portal's own file stays
+   store.exclude('photo',ident,'SAMPLE','GEV');self.assertEqual(list(outbox.iterdir()),[])
+   self.assertTrue((Path(folder.name+'/media')/(ident+'.png')).is_file())
+   self.assertEqual(Store(folder.name+'/db2',folder.name+'/media2').hand_over()['outbox'],None,'without an outbox nothing leaves the portal')
+  finally:folder.cleanup()
 if __name__=='__main__':unittest.main()

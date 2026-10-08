@@ -3,7 +3,7 @@
 # on this computer and not in any log; Claude does not see it.
 # Before sending the terminal's output to anybody, look at it: it must hold no password.
 param([string]$Server = 'kryuk@155.212.223.79', [string]$Key = "$HOME\.ssh\kryuk24_vps_ed25519",
-      [ValidateSet('armen', 'gev')][string]$Account = 'armen')
+      [ValidateSet('armen', 'gev', 'test')][string]$Account = 'armen')
 $ErrorActionPreference = 'Stop'
 $script = Join-Path $PSScriptRoot 'provision.sh'
 & scp -q -i $Key -o BatchMode=yes $script "${Server}:/tmp/armen_provision.sh"

@@ -106,7 +106,8 @@ class Base(unittest.TestCase):
         return checks[cid]['status']
 
     def assert_no_fail(self, checks):
-        self.assertEqual([(c['id'], c['detail']) for c in checks.values() if c['status'] == 'FAIL'], [])
+        # A failing check is printed with its diagnosis ('why', when it has one): parent, the rule that fired, the times.
+        self.assertEqual([(c['id'], c['detail']) + ((c['why'],) if c.get('why') else ()) for c in checks.values() if c['status'] == 'FAIL'], [])
         # INCONCLUSIVE is allowed here, so a green run does not say that every clean-up was proven. Keep what was not.
         UNPROVEN.extend((self.id().split('.')[-1], c['id'], c['detail']) for c in checks.values()
                         if c['status'] == 'INCONCLUSIVE' and (c['detail'].startswith('a job pid is alive under a parent')
@@ -422,6 +423,21 @@ class FalsePass(Base):
         self.assertEqual(self.cleanup([], [child], peak=[5000])['b']['status'], 'FAIL', 'descendant of a job pid, started during the run')
         old = self.proc(5000, 4, name='svchost.exe', start='2026-10-01T00:00:00.0000000Z')
         self.assertEqual(self.cleanup([old], [old], peak=[5000])['b']['status'], 'PASS', 'a process older than the run is not from this job')
+
+    def test_a_leftover_says_why_it_is_one(self):
+        # Diagnosis for a FAIL nobody can look into afterwards (hosted runner, 08.10.2026: pid 972, powershell.exe, no parent in the log).
+        child = self.proc(5001, 5000, name='powershell.exe', start='2026-10-07T01:00:10.0000000Z')
+        b = self.cleanup([], [child], peak=[5000])['b']
+        (why,) = b['why']
+        self.assertEqual((b['status'], why['pid'], why['name'], why['created'], why['parent'], why['parent_alive'], why['parent_is_a_job_pid'], why['parent_is_the_harness'], why['pid_is_a_job_pid']),
+                         ('FAIL', 5001, 'powershell.exe', '2026-10-07T01:00:10.0000000Z', 5000, False, True, False, False))
+        self.assertIn('an ancestor is a job process', why['rule'])
+        own = self.proc(5000, os.getpid(), name='powershell.exe', start='2026-10-07T01:00:10.0000000Z')
+        ended = datetime(2026, 10, 7, 1, 0, 30, tzinfo=timezone.utc)
+        run_dict = self.cleanup([], [own], peak=[5000], ended=ended)['b']
+        self.assertEqual(run_dict['status'], 'FAIL')
+        self.assertIn('job pid without a recorded creation time', run_dict['why'][0]['rule'])
+        self.assertNotIn('why', self.cleanup([], [], peak=[5000])['b'], 'no leftover, no diagnosis')
 
     def test_a_job_pid_reused_after_the_job_ended_is_not_a_leftover(self):
         ended = datetime(2026, 10, 7, 1, 0, 40, 900000, tzinfo=timezone.utc)

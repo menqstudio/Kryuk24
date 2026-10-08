@@ -204,7 +204,8 @@ function renderPhotos() {
 
 async function load() {
   state = await api('api/state');
-  for (const a of state.answers) if (a.actor === 'armen') saved[a.question] = a.answer;
+  const whose = readOnly ? 'armen' : actor;  // the reviewer looks at Armen's answers; everybody else at their own
+  for (const a of state.answers) if (a.actor === whose) saved[a.question] = a.answer;
   recall();
   renderQuestions(); renderPhotos(); renderPending();
 }
@@ -212,6 +213,10 @@ if (readOnly) {
   $('greeting').textContent = 'Фото и ответы Армена';
   $('upload').hidden = true; $('save').hidden = true;
   $('question-hint').textContent = 'Ответы Армена. Только просмотр.';
+}
+if (actor === 'test') {
+  $('greeting').textContent = 'Тестовый вход';
+  $('question-hint').textContent = 'Тест: ответы и фото этого входа не учитываются и никуда не передаются.';
 }
 for (const id of ['gallery', 'camera']) $(id).onchange = e => addPhotos(e.target);
 $('send').onclick = sendPhotos;

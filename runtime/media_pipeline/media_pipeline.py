@@ -1,5 +1,7 @@
 """Media pipeline: portal uploads -> shared media inbox -> agent work queue -> masked variants -> Gev's review.
 
+Of the portal it reads one folder, the outbox, where the portal itself puts Armen's own photos and their facts.
+It has no access to the portal's database, answers, previews or test rows, and needs none.
 Built on what the runtime already has and changes none of it:
   ops_media.MediaStore   the shared inbox: one original for one sha256, prepared assets beside it
   ops_work.Operations    the day's MEDIA_INBOX task, its draft, Gev's approval and the recorded result
@@ -15,7 +17,6 @@ import json
 import os
 import re
 import shutil
-import sqlite3
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -119,44 +120,59 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
     def used(self):
         return sum(f.stat().st_size for f in self.root.rglob('*') if f.is_file() and not f.is_symlink()) if self.root.exists() else 0
 
-    # ---- 1. intake: the portal's photos become originals of the shared inbox and work of the queue
-    def intake_portal(self, portal_db, portal_photos):
-        """Read the portal's list (read-only) and take in what is new. Run it again as often as wanted:
-        a photo already taken in, or the same bytes under another portal id, makes no second original and
-        no second work."""
-        photos = Path(portal_photos)
-        source = sqlite3.connect('file:' + Path(portal_db).as_posix() + '?mode=ro', uri=True, timeout=15)
-        source.row_factory = sqlite3.Row
-        try:
-            rows = source.execute('SELECT id,actor,digest,format,original,purpose,created FROM armen_photos ORDER BY rowid').fetchall()
-            # Photos the portal marks as somebody's test (armen_excluded) are not Armen's and never enter the inbox.
-            marked = source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='armen_excluded'").fetchone()
-            excluded = {r['id'] for r in source.execute("SELECT id FROM armen_excluded WHERE kind='photo'")} if marked else set()
-        finally:
-            source.close()
-        result = {'seen': len(rows), 'imported': 0, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'excluded': 0}
-        for p in rows:
-            if p['id'] in excluded:
-                result['excluded'] += 1
+    # ---- 1. intake: what the portal handed over becomes originals of the shared inbox and work of the queue
+    def intake(self, outbox):
+        """Take in what is new in the portal's outbox. The outbox is all this code ever reads of the portal: for each
+        photo one file and one small metadata file (id, sha256, format, file, actor, uploaded, purpose). It never
+        opens the portal's database, its photo folder, an answer or a preview. Run it as often as wanted: a photo
+        already taken in, or the same bytes under another id, makes no second original and no second work. A run
+        cut off at any point is completed by the next one."""
+        outbox = Path(outbox)
+        result = {'seen': 0, 'imported': 0, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'withdrawn': 0, 'repaired': 0}
+        present = set()
+        for meta in sorted(outbox.glob('*.json')):
+            result['seen'] += 1
+            try:
+                p = json.loads(meta.read_text(encoding='utf-8'))
+                if set(p) != {'id', 'sha256', 'format', 'file', 'actor', 'uploaded', 'purpose'} or any(type(v) is not str for v in p.values()):
+                    raise ValueError
+                if meta.name != p['id'] + '.json' or not re.fullmatch(r'[a-f0-9]{32}', p['id']) or not re.fullmatch(r'[a-f0-9]{64}', p['sha256']) \
+                        or p['file'] != '%s.%s' % (p['id'], {'JPEG': 'jpg', 'PNG': 'png', 'WEBP': 'webp'}.get(p['format'])) or p['actor'] != 'armen' \
+                        or p['purpose'] not in ('WORK', 'EQUIPMENT', 'OTHER') or datetime.fromisoformat(p['uploaded']).tzinfo is None:
+                    raise ValueError
+            except (ValueError, OSError):
+                result['mismatched'] += 1
                 continue
+            present.add(p['id'])
             with self.runtime.db() as c:
                 if c.execute('SELECT 1 FROM media_work_sources WHERE source=? AND source_id=?', (SOURCE, p['id'])).fetchone():
                     result['known'] += 1
                     continue
-            if not re.fullmatch(r'[a-f0-9]{32}\.(jpg|png|webp)', p['original'] or ''):
-                result['mismatched'] += 1
-                continue
-            path = photos / p['original']
-            if path.is_symlink() or not path.is_file() or sha256(path) != p['digest']:
+            path = outbox / p['file']
+            if path.is_symlink() or not path.is_file() or sha256(path) != p['sha256']:
                 result['mismatched'] += 1
                 continue
             with self.runtime.db() as c:
-                known = c.execute('SELECT id FROM media_work WHERE digest=?', (p['digest'],)).fetchone()
+                known = c.execute('SELECT id FROM media_work WHERE digest=?', (p['sha256'],)).fetchone()
             if not known and self.used() + path.stat().st_size > self.limit:
                 result['refused_storage'] += 1
                 continue
-            provenance = '%s photo=%s actor=%s uploaded=%s purpose=%s' % (SOURCE, p['id'], p['actor'], p['created'], p['purpose'])
-            original = self.media.original(path, provenance, PERMISSION)  # one original for one sha256
+            provenance = '%s photo=%s actor=%s uploaded=%s purpose=%s' % (SOURCE, p['id'], p['actor'], p['uploaded'], p['purpose'])
+            try:
+                original = self.media.original(path, provenance, PERMISSION)  # one original for one sha256; a copy, the outbox file is not touched
+            except ValueError:
+                # The inbox already holds a file under this sha256 that is not these bytes. When no inbox row names it,
+                # it is what a run cut off in the middle of the copy left behind: it was never an original, and the whole
+                # photo is still in the outbox, so it is replaced. A file an inbox row names is never touched here.
+                target = self.root / 'originals' / ('%s.%s' % (p['sha256'], p['file'].rsplit('.', 1)[1]))
+                with self.runtime.db() as c:
+                    named = c.execute('SELECT 1 FROM ops_originals WHERE digest=?', (p['sha256'],)).fetchone()
+                if named or target.is_symlink() or not target.is_file():
+                    result['mismatched'] += 1
+                    continue
+                remove(target)
+                original = self.media.original(path, provenance, PERMISSION)
+                result['repaired'] += 1
             with self.runtime.db() as c:
                 c.execute('BEGIN IMMEDIATE')
                 if c.execute('SELECT 1 FROM media_work_sources WHERE source=? AND source_id=?', (SOURCE, p['id'])).fetchone():
@@ -170,11 +186,21 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
                 else:
                     work = 'MEDIA-' + uuid.uuid4().hex
                     c.execute('INSERT INTO media_work VALUES(?,?,?,?,?,?,?,?,0,NULL,NULL,0,NULL,NULL,?)',
-                              (work, original['id'], p['digest'], p['format'], p['actor'], p['created'], p['purpose'], 'NEW', now()))
+                              (work, original['id'], p['sha256'], p['format'], p['actor'], p['uploaded'], p['purpose'], 'NEW', now()))
                     self.event(c, work, 'TAKEN_IN', {'source': SOURCE, 'source_id': p['id'], 'actor': p['actor'], 'purpose': p['purpose']})
                     result['imported'] += 1
                 c.execute('INSERT INTO media_work_sources VALUES(?,?,?,?,?,?,?,?)',
-                          (SOURCE, p['id'], p['original'], p['actor'], p['created'], p['purpose'], work, now()))
+                          (SOURCE, p['id'], p['file'], p['actor'], p['uploaded'], p['purpose'], work, now()))
+        # A photo the portal took back (marked as a test after it was handed over) leaves the queue; what Gev already
+        # has before him, and anything published, is his to decide and is not touched here.
+        with self.runtime.db() as c:
+            c.execute('BEGIN IMMEDIATE')
+            for r in c.execute("SELECT * FROM media_work WHERE status IN ('NEW','CLAIMED','PREPARED')").fetchall():
+                sources = [x['source_id'] for x in c.execute('SELECT source_id FROM media_work_sources WHERE work_id=?', (r['id'],))]
+                if sources and not any(x in present for x in sources):
+                    c.execute("UPDATE media_work SET status='WITHDRAWN',worker=NULL,lease_until=NULL,revision=revision+1 WHERE id=?", (r['id'],))
+                    self.event(c, r['id'], 'WITHDRAWN_BY_THE_PORTAL', {'sources': sources})
+                    result['withdrawn'] += 1
         return result
 
     # ---- 2. the queue an internal agent sees: fixed fields, no path, no free text
@@ -352,12 +378,12 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
             ids.update(a['id'] for a in json.loads(t['draft']).get('assets', []))
         return ids
 
-    def cleanup(self, portal_photos=None):
+    def cleanup(self):
         """Remove what is no longer needed and nothing else. Kept always: every original of the inbox, every
         asset a draft names, every asset of unfinished work. Removed: temporary folders of work nobody holds,
         prepared files of this pipeline that no work and no draft names, and, for work whose publication is
-        recorded, the unused variants and the portal's second copy of the original (only when the inbox copy
-        is there and both match the recorded sha256)."""
+        recorded or which the portal took back, the variants no draft names. It writes nothing outside the
+        runtime's media folder: the portal's own files are the portal's."""
         removed = []
         with self.runtime.db() as c:
             c.execute('BEGIN IMMEDIATE')
@@ -365,7 +391,7 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
             keep = self.referenced(c)
             active = {r['id'] for r in works if self.leased(r)}
             for r in works:
-                if r['status'] != 'PUBLISHED':
+                if r['status'] not in ('PUBLISHED', 'WITHDRAWN'):
                     continue
                 for v in c.execute('SELECT variant,asset_id FROM media_work_assets WHERE work_id=?', (r['id'],)).fetchall():
                     if v['asset_id'] not in keep:
@@ -387,19 +413,6 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
                     relative = 'prepared/%s/%s' % (r['original_id'], f.name)
                     if f.is_file() and not f.is_symlink() and relative not in paths:
                         removed.append({'kind': 'INTERRUPTED_LEFTOVER', 'file': relative, 'bytes': remove(f)})
-            if portal_photos is not None:
-                for r in works:
-                    if r['status'] != 'PUBLISHED':
-                        continue
-                    try:
-                        self.original_path(c, r)
-                    except (ValueError, TypeError):
-                        continue  # the inbox copy is not provably there: the portal's copy stays
-                    for s in c.execute('SELECT source_file FROM media_work_sources WHERE work_id=? AND source=?', (r['id'], SOURCE)).fetchall():
-                        copy = Path(portal_photos) / s['source_file']
-                        if re.fullmatch(r'[a-f0-9]{32}\.(jpg|png|webp)', s['source_file']) and copy.is_file() and not copy.is_symlink() and sha256(copy) == r['digest']:
-                            removed.append({'kind': 'PORTAL_SECOND_COPY', 'file': s['source_file'], 'bytes': remove(copy)})
-                            self.event(c, r['id'], 'PORTAL_SECOND_COPY_REMOVED', {'file': s['source_file']})
         tmp = self.root / 'tmp'
         if tmp.is_dir():
             for folder in sorted(tmp.iterdir()):
@@ -409,7 +422,7 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
                     removed.append({'kind': 'TEMPORARY', 'file': 'tmp/' + folder.name, 'bytes': size})
         return {'removed': removed, 'bytes': sum(x['bytes'] for x in removed), 'originals_deleted': 0}
 
-    def storage(self, portal_photos=None):
+    def storage(self):
         """Sizes by kind, against the limit. WARN from 80 %, FULL at the limit: intake then takes in nothing new."""
         def size(folder):
             folder = Path(folder)
@@ -418,9 +431,7 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
         parts = {name: size(self.root / name) for name in ('originals', 'prepared', 'tmp')}
         used = self.used()
         with self.runtime.db() as c:
-            counts = {s: c.execute('SELECT count(*) FROM media_work WHERE status=?', (s,)).fetchone()[0] for s in OPEN + ('PUBLISHED',)}
+            counts = {s: c.execute('SELECT count(*) FROM media_work WHERE status=?', (s,)).fetchone()[0] for s in OPEN + ('PUBLISHED', 'WITHDRAWN')}
         result = {'media_root': parts, 'used_bytes': used, 'limit_bytes': self.limit,
                   'status': 'FULL' if used >= self.limit else 'WARN' if used >= self.limit * 0.8 else 'OK', 'work': counts}
-        if portal_photos is not None:
-            result['portal_photos'] = size(portal_photos)
         return result

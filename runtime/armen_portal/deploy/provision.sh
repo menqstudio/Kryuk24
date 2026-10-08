@@ -10,7 +10,7 @@ ACCOUNT=${1:-armen}
 stop() { echo "STOP: $1"; exit 1; }
 [ "$(id -u)" = 0 ] || stop "run with sudo"
 [ -x "$CODE/.venv/bin/python" ] || stop "step 1 of the install has not run"
-case "$ACCOUNT" in armen|gev) ;; *) stop "account must be armen or gev";; esac
+case "$ACCOUNT" in armen|gev|test) ;; *) stop "account must be armen, gev or test";; esac
 echo "Password for the account: $ACCOUNT. Nothing you type is shown. 8 characters or more, the same twice."
 (cd "$CODE" && "$CODE/.venv/bin/python" -B provision.py --credentials "$FILE" --user "$ACCOUNT" 2>/dev/null) || stop "no password was stored: it was shorter than 8 characters or the two entries differed. Start again."
 chown root:kryuk-armen "$FILE"

@@ -18,7 +18,7 @@ def main(argv=None):
     p.add_argument('--media-root', required=True)
     p.add_argument('--limit-bytes', type=int, default=DEFAULT_LIMIT)
     sub = p.add_subparsers(dest='command', required=True)
-    a = sub.add_parser('intake'); a.add_argument('--portal-db', required=True); a.add_argument('--portal-photos', required=True)
+    a = sub.add_parser('intake'); a.add_argument('--outbox', required=True, help="the portal's outbox folder: the only thing of the portal this reads")
     a = sub.add_parser('queue'); a.add_argument('--status')
     a = sub.add_parser('claim'); a.add_argument('--work', required=True); a.add_argument('--worker', required=True); a.add_argument('--seconds', type=int, default=900)
     a = sub.add_parser('fetch'); a.add_argument('--work', required=True); a.add_argument('--worker', required=True); a.add_argument('--out', required=True)
@@ -30,12 +30,12 @@ def main(argv=None):
     for name in ('worker', 'platform', 'account', 'body', 'reason'):
         a.add_argument('--' + name, required=True)
     sub.add_parser('sync')
-    a = sub.add_parser('cleanup'); a.add_argument('--portal-photos')
-    a = sub.add_parser('storage'); a.add_argument('--portal-photos')
+    sub.add_parser('cleanup')
+    sub.add_parser('storage')
     args = p.parse_args(argv)
     pipe = MediaPipeline(args.db, args.media_root, limit=args.limit_bytes)
     if args.command == 'intake':
-        result = pipe.intake_portal(args.portal_db, args.portal_photos)
+        result = pipe.intake(args.outbox)
     elif args.command == 'queue':
         result = pipe.queue(args.status)
     elif args.command == 'claim':
@@ -60,9 +60,9 @@ def main(argv=None):
     elif args.command == 'sync':
         result = pipe.sync()
     elif args.command == 'cleanup':
-        result = pipe.cleanup(args.portal_photos)
+        result = pipe.cleanup()
     else:
-        result = pipe.storage(args.portal_photos)
+        result = pipe.storage()
     json.dump(result, sys.stdout, ensure_ascii=False, indent=1, sort_keys=True)
     sys.stdout.write('\n')
 
