@@ -214,6 +214,8 @@ line="$(grep "^${@: -1} " "$KRYUK_STANDIN/processes")"
 case "$2" in unit=) echo "${line#* }";; *) echo "a stand-in process";; esac
 """,
     'sleep': '#!/usr/bin/env bash\nexit 0\n',
+    # flock -n 9: refused while the file "locked" exists (another run holds the lock)
+    'flock': '#!/usr/bin/env bash\nif [ -e "$KRYUK_STANDIN/locked" ]; then exit 1; fi\nexit 0\n',
 }
 ORIGINALS = {'ops_media.py': 'original', 'ops_work.py': 'original'}
 NEW = {'ops_media.py': 'new', 'ops_work.py': 'new'}
@@ -243,7 +245,7 @@ class RealModeWithStandIns(Install):
     def normal(self):           # every answer as on an ordinary day; what systemd has loaded is left as it is
         self.answer(active='kryuk-capture.service\n', user='kryuk-run\n', uid='0\n', owner='root:root 644\n', running='', stale='',
                     processes='101 kryuk-capture.service\n102 kryuk-bro-api.service\n', install_fails='')
-        for name in ('silent-with-new', 'silent-always', 'dies-with-new', 'restart-fails', 'reload-fails', 'try-start', 'kill-script', 'kill-in-restart', 'next-kryuk-backup.timer'):
+        for name in ('silent-with-new', 'silent-always', 'dies-with-new', 'restart-fails', 'reload-fails', 'try-start', 'kill-script', 'kill-in-restart', 'locked', 'next-kryuk-backup.timer'):
             (self.standin / name).unlink(missing_ok=True)
 
     def answer(self, **files):
@@ -340,9 +342,40 @@ class RealModeWithStandIns(Install):
         self.assertEqual((folder / HOLD).read_text(encoding='utf-8'), theirs)
         self.assertEqual(self.held()[0], ['kryuk-api-read.service'], 'its own three files are gone, the foreign one stays')
 
+    def test_a_file_that_differs_from_the_script_s_own_only_by_an_empty_line_at_the_end_is_not_its_own(self):
+        """GPT's review of 971c7c2: the comparison went through $(...), which drops the newlines at the end."""
+        self.answer(kill_script='')                 # a killed run leaves the script's own four files
+        self.assertNotEqual(self.run_script()[0], 0)
+        self.normal()
+        self.assertEqual((self.state(), self.held()), (NEW, self.HELD))
+        for unit in ('kryuk-backup.service', 'kryuk-capture.service'):
+            f = self.hold / (unit + '.d') / HOLD
+            own = f.read_bytes()
+            for theirs in (own + b'\n', own + b'\n\n\n', own.rstrip(b'\n'), b'\n' + own):
+                f.write_bytes(theirs)
+                for command in ('rollback', 'release', 'install'):
+                    before = len(self.verbs())
+                    code, out = self.run_script(*([] if command == 'install' else [command]))
+                    self.assertEqual((code, 'was not written by this script' in out, 'Nothing was changed' in out), (1, True, True), (command, theirs, out))
+                    self.assertEqual((f.read_bytes(), self.state(), len(self.kept()), self.verbs()[before:]), (theirs, NEW, 2, []), (command, theirs))
+                code, out = self.run_script('status')
+                self.assertIn('was not written by this script', out)
+            f.write_bytes(own)
+        code, out = self.run_script('rollback')      # with its own files, byte for byte, the way back works
+        self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+
+    def test_two_runs_do_not_overlap(self):
+        self.answer(locked='')
+        for command in ('install', 'rollback', 'release'):
+            code, out = self.run_script(*([] if command == 'install' else [command]))
+            self.assertEqual((code, 'another run of this script is working' in out), (1, True), out)
+            self.assertEqual((self.state(), self.kept(), self.verbs(), self.held()), (ORIGINALS, [], [], self.FREE), command)
+        code, out = self.run_script('status')        # looking is always allowed
+        self.assertEqual(code, 0, out)
+
     def held(self):             # the hold as it is on the disk, as the stand-in systemd has it loaded, and the marker
         return (sorted(f.parent.name[:-2] for f in self.hold.glob('*.d/' + HOLD)), sorted(f.name for f in (self.standin / 'loaded.d').iterdir()),
-                sorted(f.name for f in self.run.iterdir()))
+                sorted(f.name for f in self.run.iterdir() if not f.name.endswith('.lock')))
 
     FREE = ([], [], [])
     HELD = (GUARDED, GUARDED, [])       # all four drop-ins on the disk and loaded; the marker of the run is gone
@@ -605,7 +638,7 @@ class RealModeWithStandIns(Install):
         self.assertEqual(self.log('crash ')[-1], 'crash kryuk-capture.service: restarted by systemd', 'and again after the hold is gone')
 
     def test_the_marker_exists_only_while_the_script_itself_restarts_the_service(self):
-        count = 'ls "$KRYUK_RUN_DIR" | wc -l | sed "s/^/marker files at %s: /" >> "$S/log"\n'
+        count = 'ls "$KRYUK_RUN_DIR" | grep -v "[.]lock$" | wc -l | sed "s/^/marker files at %s: /" >> "$S/log"\n'
         for name, anchor, moment in (('runuser', 'outside\n', 'the self-test'), ('curl', 'outside\n', 'a health check'),
                                      ('systemctl', 'restart) [ -e "$S/restart-fails" ] && exit 1\n', 'the restart')):
             self.assertEqual(STANDINS[name].count(anchor), 1)

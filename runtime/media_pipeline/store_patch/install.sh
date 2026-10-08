@@ -22,6 +22,9 @@
 # What it never touches: any database, any media file, any credential, Nginx, the portal.
 # The hold is for systemd. A person who starts ops_cli.py or bro_worker.py by hand during the install is not
 # stopped by it (the script looks for such a process twice): nobody runs them during the maintenance window.
+# Two runs of this script cannot overlap (a lock under /run). Another root process that edits the same four
+# drop-in files at the same moment is not locked out: during the maintenance window this script is the only
+# thing that touches them.
 #
 # Why the hold. A process that has loaded the original files writes into the store without the lock. If one
 # started after the check and was still running beside the restarted service, the two could meet in the store.
@@ -51,6 +54,7 @@ SUFFIX=.before-store-lock
 HOLD_DIR="${KRYUK_HOLD_DIR:-/etc/systemd/system}"   # on the disk: the hold must outlive a restart of the server
 HOLD_NAME=90-kryuk-store-lock-install.conf
 MARKER="${KRYUK_RUN_DIR:-/run}/kryuk-store-lock-install.running"   # in memory: gone after a restart of the server
+LOCK="${KRYUK_RUN_DIR:-/run}/kryuk-store-lock-install.lock"        # one run of this script at a time (/run is root's)
 TIMER_MARGIN=600   # seconds: not started when a timer of a held unit fires sooner than this
 HELD=0   # 1 while this run holds the one-shot units
 KEEP=0   # 1 while the files and the service are in a state this run has not confirmed
@@ -117,7 +121,9 @@ hold_text() { # exactly what this script writes for one unit; this is also how i
   fi
 }
 own_hold() {  # the file is there and is, byte for byte, what this script writes for that unit
-  [ -f "$(hold_file "$1")" ] && [ ! -L "$(hold_file "$1")" ] && [ "$(cat "$(hold_file "$1")" 2>/dev/null)" = "$(hold_text "$1")" ]
+  # cmp, not a comparison of two $(...): command substitution drops every newline at the end, so a file with one
+  # more empty line would have passed as ours (GPT's review of 971c7c2)
+  [ -f "$(hold_file "$1")" ] && [ ! -L "$(hold_file "$1")" ] && hold_text "$1" | cmp -s - "$(hold_file "$1")"
 }
 foreign_hold() {  # 0, and a line for each, when something of our file name exists that this script did not write
   local u found=1
@@ -289,6 +295,15 @@ real_checks() {       # the server's side of the preconditions; not in a rehears
   timers_not_near
 }
 
+one_run_only() {      # two runs of this script must not overlap: each would look, then write, between the other's steps
+  if [ "$DRY" = 1 ]; then return 0; fi
+  command -v flock >/dev/null || stop "flock is not on this server"
+  command -v cmp >/dev/null || stop "cmp is not on this server"
+  : >> "$LOCK" || stop "the lock $LOCK could not be opened. Nothing was changed"
+  exec 9>>"$LOCK"
+  flock -n 9 || stop "another run of this script is working (it holds $LOCK). Nothing was changed"
+}
+
 trap finish EXIT
 trap 'exit 130' INT TERM HUP
 if [ "$DRY" = 1 ] && [ "$DEST" = /opt/kryuk24 ]; then stop "a rehearsal is not run on the real code folder"; fi
@@ -316,6 +331,7 @@ status)
 
 release)
   if [ "$DRY" = 1 ]; then stop "a rehearsal holds nothing"; fi
+  one_run_only
   for t in curl systemctl pgrep ps date stat; do command -v "$t" >/dev/null || stop "$t is not on this server"; done
   if foreign_hold; then stop "a drop-in of the same name is not this script's. Nothing was changed"; fi
   left_hold || stop "there is no hold of this script to take away. Nothing was changed"
@@ -324,6 +340,7 @@ release)
   exit 0;;   # finish() takes the hold away and says so
 
 rollback)
+  one_run_only
   for f in $FILES; do
     [ -f "$DEST/$f$SUFFIX" ] || stop "no kept copy $DEST/$f$SUFFIX: nothing was changed"
     [ "$(sha "$DEST/$f$SUFFIX")" = "$(old_sha "$f")" ] || stop "the kept copy of $f is not the original: nothing was changed"
@@ -369,6 +386,7 @@ for f in $FILES; do
 done
 [ -f "$HERE/selftest.py" ] || stop "selftest.py is not beside this script"
 both=""; for f in $FILES; do both="$both $(state "$f")"; done
+one_run_only
 if [ "$DRY" != 1 ]; then
   if foreign_hold; then stop "a drop-in of the same name is not this script's. Nothing was changed"; fi
   if left_hold; then stop "an earlier run did not finish: its hold is still there (installed files:$both ). Nothing was changed. Way out: sudo bash $0 rollback"; fi
