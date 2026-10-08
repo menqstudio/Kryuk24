@@ -4,8 +4,15 @@
     python runtime/wip/dashboard_colours/make_patch.py --check    exit 1 when the written file is not what the source gives
 
 Source: runtime/server/ops_views.py, the record of the file installed on the server (Gev's design, protected).
-Only colours change: the azure / cyan palette becomes KRYUK24's navy / orange from design/tokens (Gev's yes,
-07.10.2026 22:58 UTC). Layout, sizes, radii, texts, icons, logos, behaviour and every line of Python stay as they are.
+Stage 1, colours: the azure / cyan palette becomes KRYUK24's navy / orange from design/tokens (Gev's yes,
+07.10.2026 22:58 UTC). Stage 2, UX (Gev's yes, 08.10.2026 00:07 UTC): the KRYUK24 logo in the header instead of the
+MenQ one; when something waits for Gev, the summary card says so and carries the one button that opens it; every tile
+shows its state as an icon and a word; today's tiles are ordered by what needs attention first. Routes, forms,
+scripts, data and every server-side rule stay as they are. Stage 3, daily use (08.10.2026, UX review): switches on
+the logo row; the summary card drops the sentence that repeated the pills and its button names the task it opens; the
+"waits for you" list only when two or more wait; the queue button is primary when there is no queue; PENDING reads
+"in the queue"; tiles needing attention get a coloured edge and done tiles recede; 44px close button and ledger link;
+on the phone the tiles become one-line rows and the clocks shrink.
 Every replacement is an exact string that must occur the stated number of times, so a changed source stops the
 script instead of producing a half-coloured file.
 """
@@ -75,6 +82,96 @@ R = [
 FOREIGN = ("#0284c7", "#22d3ee", "#0ea5e9", "#38bdf8", "#06b6d4", "#0369a1", "rgba(34,211,238", "rgba(6,182,212", "rgba(14,165,233", "rgba(2,132,199", "--blue-", "--cyan-")
 
 
+LOGO_WEBP = Path(__file__).resolve().parent / "kryuk-logo-dark.webp"
+ORDER = "ORDER={'READY_REVIEW':0,'BLOCKED':1,'CLAIMED':2,'PENDING':3,'APPROVED':4,'DONE':5}\n"
+
+
+def stage2(out):
+    import base64
+    import re
+    logo = "data:image/webp;base64," + base64.b64encode(LOGO_WEBP.read_bytes()).decode()
+    # the MenQ wordmark constant goes; KRYUK24's official lockup (rendered from brand/) takes its place
+    out, n = re.subn(r"(?m)^LOGO='data:image/webp;base64,[^']*'\n", "LOGO='" + logo + "'\n" + ORDER, out)
+    if n != 1:
+        raise SystemExit("the LOGO constant was not found exactly once")
+    out, n = re.subn(r"\.proj\{[^}]*\}\n", "", out)
+    if n != 1:
+        raise SystemExit("the .proj rule was not found exactly once")
+    R2 = [
+        ("<title>MenQ · KRYUK24 — աշխատանքների հերթ</title>", "<title>КРЮК24 — աշխատանքների հերթ</title>", 1),
+        ("""<img class="menq" src="'+LOGO+'" alt="MenQ" width="112" height="36"><span class="proj">'+icon('hook',16)+'КРЮК24</span>""",
+         """<img class="klogo" src="'+LOGO+'" alt="КРЮК24 · эвакуатор" width="130" height="44">""", 1),
+        # the summary card: when something waits for Gev, one button opens it
+        ("  out.append('</div></div>')\n",
+         "  first=[t for t in today if t['status']=='READY_REVIEW']\n"
+         "  out.append('</div>'+('<button type=\"button\" class=\"next\" data-open=\"m-'+e(first[0]['id'])+'\">'+icon('review',18)+L('Բացել սպասվողը','Открыть ждущее')+'</button>' if interactive and first else '')+'</div>')\n", 1),
+        # tiles: state as icon + word, time apart; today's tiles by priority
+        ("""'<span class="nm">'+P(short)+'</span><span class="st">'+P(label)+time+'</span>')""",
+         """'<span class="nm">'+P(short)+'</span><span class="pill sm '+kind+'">'+icon(kind,13)+P(label)+'</span>'+('<span class="st">'+e(stamp.astimezone(YEREVAN).strftime('%H:%M'))+'</span>' if stamp else ''))""", 1),
+        ("''.join(_tile(t,True) for t in today)", "''.join(_tile(t,True) for t in sorted(today,key=lambda t:ORDER.get(t['status'],9)))", 1),
+        ("''.join(_tile(t,False) for t in today)", "''.join(_tile(t,False) for t in sorted(today,key=lambda t:ORDER.get(t['status'],9)))", 1),
+        # styles for the new pieces
+        (".menq{height:36px;width:auto;display:block;border:0;border-radius:0;max-width:none}",
+         ".klogo{height:44px;width:auto;display:block;border:0;border-radius:0;max-width:none}", 1),
+        (".pill{display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-pill);padding:4px 12px;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap}",
+         ".pill{display:inline-flex;align-items:center;gap:6px;border-radius:var(--r-pill);padding:4px 12px;font-size:13px;font-weight:600;letter-spacing:.02em;white-space:nowrap}"
+         ".pill.sm{padding:2px 9px;font-size:12px;gap:4px;margin-top:2px}"
+         "button.next{margin-top:14px}"
+         "@media (max-width:620px){button.next{width:100%}}", 1),
+    ]
+    for old, new, n in R2:
+        if out.count(old) != n:
+            raise SystemExit("stage 2: expected %d× %r, found %d" % (n, old[:80], out.count(old)))
+        out = out.replace(old, new)
+    return out
+
+
+R3 = [
+    # header: language and theme switches sit on the logo row; the second row keeps greeting and clocks
+    ("""alt="КРЮК24 · эвакуатор" width="130" height="44"></div><div class="brand">""",
+     """alt="КРЮК24 · эвакуатор" width="130" height="44">'+switch+'</div><div class="brand">""", 1),
+    ("""<div class="side">'+switch+'<div class="clocks">'""", """<div class="side"><div class="clocks">'""", 1),
+    (".klogo{height:44px;width:auto;display:block;border:0;border-radius:0;max-width:none}",
+     ".klogo{height:44px;width:auto;display:block;border:0;border-radius:0;max-width:none;margin-right:auto}", 1),
+    # summary card: the pills carry the counts; the sentence stays only to say that nothing waits for Gev
+    ("""<div><h1>'+P(head)+'</h1><p>'+P(sub)+'</p><div class="sum">""",
+     """<div><h1>'+P(head)+'</h1>'+('' if review or blocked else '<p>'+L('Քեզնից ոչինչ չի սպասվում։','От тебя ничего не ждут.')+'</p>')+'<div class="sum">""", 1),
+    # the one button names what it opens
+    ("""icon('review',18)+L('Բացել սպասվողը','Открыть ждущее')+'</button>'""",
+     """icon('review',18)+L('Բացել՝ '+_look(first[0])[4][0],'Открыть: '+_look(first[0])[4][1])+'</button>'""", 1),
+    # the "waits for you" list only when more than one item waits (one item is already the button above)
+    ("  if waiting:out.append('<h2>'", "  if len(waiting)>1:out.append('<h2>'", 1),
+    # empty state: creating the queue is the primary action when there is no queue
+    ("""'<div class="bar"><button id="plan" class="second">'""", """'<div class="bar"><button id="plan"'+(' class="second"' if total else '')+'>'""", 1),
+    # "waiting" (in the queue) is not "waiting for you"
+    ("'PENDING':(('Սպասում է','Ждет'),'wait')", "'PENDING':(('Հերթում է','В очереди'),'wait')", 1),
+    # tiles: what needs attention gets a coloured edge, what is done recedes; borders at 3:1 in both themes
+    (".tile .st{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}",
+     ".tile .st{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}"
+     ".tile:has(.pill.review){border-color:var(--review)}.tile:has(.pill.block){border-color:var(--block)}"
+     ".tile:has(.pill.ok){background:transparent;box-shadow:none}.tile:has(.pill.ok) .nm{color:var(--text2);font-weight:500}", 1),
+    ("border-color:var(--reviewfill);box-shadow:0 0 0 4px var(--reviewbg),var(--shadow)}",
+     "border-color:var(--review);box-shadow:0 0 0 4px var(--reviewbg),var(--shadow)}", 1),
+    # tap targets: close button 44px, the ledger link 44px tall
+    (".x{background:transparent;color:var(--muted);border:0;padding:8px;border-radius:var(--r-pill);display:grid;place-items:center;height:auto}",
+     ".x{background:transparent;color:var(--muted);border:0;padding:0;width:44px;height:44px;border-radius:var(--r-pill);display:grid;place-items:center}", 1),
+    (".bar{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:16px;align-items:center;border-top:1px solid var(--line);margin-top:18px;padding-top:18px}",
+     ".bar{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:16px;align-items:center;border-top:1px solid var(--line);margin-top:18px;padding-top:18px}.bar a{display:inline-flex;align-items:center;min-height:44px}", 1),
+    # phone: smaller clocks, tiles as one-line rows (icon · name · state · time)
+    (".clocks{flex:1}.clock{flex:1;min-width:0}", ".clocks{flex:1}.clock{flex:1;min-width:0;padding:6px 12px}.clock strong{font-size:20px}", 1),
+    (".grid{grid-template-columns:repeat(2,1fr)}.facts",
+     ".grid{grid-template-columns:1fr;gap:8px}.tile{flex-direction:row;text-align:left;padding:10px 14px;gap:12px;border-radius:14px}.tile .ico{width:36px;height:36px;border-radius:10px}.tile .nm{flex:1;min-width:0}.tile .pill.sm{margin-top:0}.tile .st{min-width:40px;text-align:right}.tile.wide{padding:14px 16px}.facts", 1),
+]
+
+
+def stage3(out):
+    for old, new, n in R3:
+        if out.count(old) != n:
+            raise SystemExit("stage 3: expected %d× %r, found %d" % (n, old[:80], out.count(old)))
+        out = out.replace(old, new)
+    return out
+
+
 def build():
     src = SRC.read_text(encoding="utf-8")
     if not hashlib.sha256(src.encode("utf-8")).hexdigest().startswith(SRC_SHA):
@@ -84,6 +181,8 @@ def build():
         if out.count(old) != n:
             raise SystemExit("expected %d× %r, found %d" % (n, old[:80], out.count(old)))
         out = out.replace(old, new)
+    out = stage2(out)
+    out = stage3(out)
     left = [f for f in FOREIGN if f in out]
     if left:
         raise SystemExit("azure / cyan left in the result: " + ", ".join(left))

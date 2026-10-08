@@ -6,15 +6,19 @@
 
 ### What changes
 
-Only colours in `ops_views.py`: the azure / cyan palette becomes KRYUK24's navy / orange from `design/tokens/`. Layout, sizes, corners, texts, icons, images (the MenQ logo and Bro's avatar at the top stay as they are), behaviour and every line of Python are unchanged. Buttons become orange with navy text, as everywhere in KRYUK24.
+Made by `make_patch.py` from the installed file (`runtime/server/ops_views.py`, sha256 `f5f6e9d8…`) by exact replacements, in three stages; a different source stops it. `runtime/server/` itself is not edited.
 
-`make_patch.py` makes the file from the installed one (`runtime/server/ops_views.py`, sha256 `f5f6e9d8…`) by exact replacements; a different source stops it. `runtime/server/` itself is not edited: it stays the record of the server.
+1. **Colours** (Gev's yes, 07.10.2026 22:58 UTC): azure / cyan become KRYUK24 navy / orange from `design/tokens/`; buttons orange with navy text.
+2. **UX** (Gev's yes, 08.10.2026 00:07 UTC): the official KRYUK24 lockup in the header instead of the MenQ logo (`kryuk-logo-dark.webp`, rendered from `brand/02_lockups/lockup_horizontal_transparent_dark.svg` by `make_logo.py`, nothing redrawn); a summary-card button that opens what waits for Gev; every tile shows its state as an icon and a word; today's tiles ordered by what needs attention.
+3. **Daily use** (independent design review by a second model, checked here): switches on the logo row; no sentence repeating the pills; the button names what it opens; no triple listing of one waiting task; queue-creation is primary only when no queue exists; "In the queue" instead of a second "Waiting"; tiles that need action are outlined, done tiles recede; 44 px tap targets; one-line task rows on phones.
+
+Routes, forms, scripts, data and every server-side rule stay as they are. Bro's avatar stays.
 
 ### Checked
 
 - `python runtime/wip/dashboard_colours/make_patch.py --check` → up to date; no azure or cyan value is left.
-- The server's own tests (102) pass with the new file in place of the old one (copy of `runtime/server/`, 07.10.2026).
-- Rendered from a throwaway test database in Chromium: axe (WCAG 2 A/AA) 0 violations in light, dark and at 390 px. The current page has 1 contrast failure in light and 2 at 390 px.
+- The server's own tests (102) pass with the new file in place of the old one.
+- `render_sample.py` page in Chromium: axe (WCAG 2 A/AA) 0 violations in light, dark and at 390 px; the summary button opens the waiting task's window; tiles come in the order waiting → blocked → in queue → done.
 
 ### Install (Gev)
 
@@ -29,7 +33,7 @@ The script checks both files by sha256, keeps the original as `/opt/kryuk24/ops_
 
 ## Հայերեն
 
-**Ինչ է փոխվում.** `ops_views.py`-ում միայն գույները. ազուր և cyan գույները դառնում են КРЮК24-ի navy և նարնջագույն։ Դասավորությունը, չափերը, տեքստերը, իկոնները, նկարները (վերևի MenQ լոգոն և Bro-ի ավատարը) և Python կոդը նույնն են մնում։ Կոճակները նարնջագույն են՝ navy տեքստով։
+**Ինչ է փոխվում.** Երեք փուլ. (1) գույները՝ КРЮК24-ի navy և նարնջագույն, (2) վերևում КРЮК24-ի պաշտոնական լոգոն, «Բացել» կոճակ քեզ սպասող գործի համար, ամեն սալիկի վիճակը՝ իկոն և բառ, գործերը՝ ըստ կարևորության, (3) ամենօրյա օգտագործման մանրուքներ՝ հեռախոսում մեկ տողով գործեր, 44px կոճակներ, կրկնությունների հեռացում։ Route-ները, ձևերը, տվյալները և սերվերի կանոնները նույնն են։
 
 **Ստուգված է.** Սերվերի 102 թեստն անցնում են նոր ֆայլով։ axe-ը 0 սխալ է տալիս light-ում, dark-ում և 390px-ում (ներկայիս էջում light-ում 1 սխալ կա, 390px-ում՝ 2)։
 

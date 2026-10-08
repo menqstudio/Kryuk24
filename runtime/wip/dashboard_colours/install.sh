@@ -9,7 +9,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 DEST=/opt/kryuk24/ops_views.py
 SAVED=/opt/kryuk24/ops_views.py.before-kryuk-colours
 OLD_SHA=f5f6e9d8a8d87ae3dadb7a9ccc2a990040e455a5d06394c9d0a810c0a5cf8752
-NEW_SHA=9f5044af56554aa7ace6d895a54a1668939730b14c64a3501108264706068882
+NEW_SHA=5be91b5d153bfdcab4b09a37d7c3e0bea9c240c997b31890e4a3babd0143bce2
 
 say() { printf '%s\n' "$*"; }
 health() { curl -fsS --max-time 5 http://127.0.0.1:8788/health >/dev/null && say "health: OK" || { say "health: FAILED"; return 1; }; }
