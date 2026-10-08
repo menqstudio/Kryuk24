@@ -53,7 +53,9 @@ def now():return datetime.now(timezone.utc).isoformat()
 def day():return datetime.now(MOSCOW).date().isoformat()
 def encode(x):return json.dumps(x,ensure_ascii=False,sort_keys=True,separators=(',',':'))
 def credential(password):
- if not isinstance(password,str) or not 16<=len(password)<=1024:raise ValueError('password length 16..1024 required')
+ # 8 since 08.10.2026, by Gev's decision (it was 16): Armen types it on a phone. The Nginx per-address limit on the
+ # login address and the failed-login cap of this process are what stand against guessing.
+ if not isinstance(password,str) or not 8<=len(password)<=1024:raise ValueError('password length 8..1024 required')
  salt=secrets.token_bytes(16)
  return {'salt':salt.hex(),'hash':hashlib.pbkdf2_hmac('sha256',password.encode(),salt,600000).hex()}
 def verify(user,password,users):

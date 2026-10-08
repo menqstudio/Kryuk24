@@ -246,4 +246,15 @@ print(len(saved),round(peak()))
    self.assertEqual(saved,2,'both pictures were saved')
    self.assertLess(peak,512,'%s %s: peak %d MiB; the service is allowed 768'%(fmt,mode,peak))
    print('\n  two 40 MP %s %s at once: peak %d MiB'%(fmt,mode,peak),file=sys.stderr)
+ def test_password_of_eight_characters_is_the_shortest_accepted(self):
+  # Gev's decision of 08.10.2026: 8, not 16. Seven are refused when the password is set; eight are stored and log in.
+  with self.assertRaises(ValueError):credential('SAMPLE7')
+  short='SAMPLE-8';tmp=tempfile.TemporaryDirectory()
+  http=server(Store(tmp.name+'/db',tmp.name+'/media'),{'armen':credential(short)},'https://runtime.kryuk24.ru',0)
+  thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
+  try:
+   req=urllib.request.Request('http://127.0.0.1:%d%sapi/login'%(http.server_port,PREFIX),data=json.dumps({'username':'armen','password':short}).encode(),
+    headers={'Content-Type':'application/json','Origin':'https://runtime.kryuk24.ru'})
+   with urllib.request.urlopen(req) as r:self.assertEqual(r.status,200)
+  finally:http.shutdown();http.server_close();thread.join();tmp.cleanup()
 if __name__=='__main__':unittest.main()

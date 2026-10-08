@@ -6,7 +6,7 @@ p=argparse.ArgumentParser();p.add_argument('--credentials',required=True);p.add_
 os.umask(0o077);target=Path(a.credentials)
 if target.is_symlink():raise SystemExit('symlink not allowed')
 users=json.loads(target.read_text()) if target.exists() else {}
-password=getpass.getpass('New password (16+ characters): ')
+password=getpass.getpass('New password (8+ characters): ')
 if password!=getpass.getpass('Repeat password: '):raise SystemExit('Passwords differ')
 users[a.user]=credential(password)
 tmp=target.with_name(target.name+'.new')
