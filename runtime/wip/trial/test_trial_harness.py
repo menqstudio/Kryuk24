@@ -4,6 +4,7 @@ It shows that the harness collects its evidence and reaches PASS / FAIL / INCONC
 where a careless harness would report a false PASS. It shows nothing about the real Claude Code: no Claude process is
 started, no subscription is used, no Chrome is driven. The fake page server runs on two free local ports.
 """
+import ast
 import hashlib
 import json
 import os
@@ -38,6 +39,23 @@ def free_port():
     with socket.socket() as s:
         s.bind(('127.0.0.1', 0))
         return s.getsockname()[1]
+
+
+UNPROVEN = []          # clean-up checks that ended INCONCLUSIVE because of a possibly reused pid: (test, check, detail)
+
+
+def tearDownModule():
+    """Say aloud what assert_no_fail let through: the run may be green with a clean-up that was not proven."""
+    line = 'clean-up checks left INCONCLUSIVE by a job pid that could not be identified: %d' % len(UNPROVEN)
+    print('\n' + line, file=sys.stderr)
+    for test, check, detail in UNPROVEN:
+        print('  %s, %s: %s' % (test, check, detail), file=sys.stderr)
+        if os.environ.get('GITHUB_ACTIONS'):
+            print('::warning title=Clean-up not proven (%s, %s)::%s' % (test, check, detail.replace('%', '%25').replace('\n', ' ')))
+    summary = os.environ.get('GITHUB_STEP_SUMMARY')
+    if summary:
+        with open(summary, 'a', encoding='utf-8') as out:
+            out.write('**Trial harness self-test:** %s\n\n' % line + ''.join('- `%s`, `%s`: %s\n' % row for row in UNPROVEN))
 
 
 class Base(unittest.TestCase):
@@ -89,6 +107,10 @@ class Base(unittest.TestCase):
 
     def assert_no_fail(self, checks):
         self.assertEqual([(c['id'], c['detail']) for c in checks.values() if c['status'] == 'FAIL'], [])
+        # INCONCLUSIVE is allowed here, so a green run does not say that every clean-up was proven. Keep what was not.
+        UNPROVEN.extend((self.id().split('.')[-1], c['id'], c['detail']) for c in checks.values()
+                        if c['status'] == 'INCONCLUSIVE' and (c['detail'].startswith('a job pid is alive under a parent')
+                                                              or c['title'] == 'Job reports no survivor'))
 
     def assert_pass(self, checks, ids):
         for cid in ids:
@@ -338,10 +360,16 @@ class FalsePass(Base):
             self.assertIsNone(f(bad)[0], bad)
 
     # ---- 5. Chrome cleanup by pid + creation time; partial loss is not a PASS
-    def cleanup(self, before, after, peak=(), survivors=0, exits=None):
+    def cleanup(self, before, after, peak=(), survivors=0, exits=None, ended=None, created=None, unidentified=None):
         me = {'ProcessId': os.getpid(), 'ParentProcessId': 1, 'Name': 'python.exe', 'Start': '2026-01-01T00:00:00.0000000Z'}
         run = {'proc_before': [me] + before, 'proc_after': [me] + after, 'job': {'peak_pids': list(peak), 'survivors': survivors},
                'started': datetime(2026, 10, 7, 1, 0, 0, tzinfo=timezone.utc).isoformat()}
+        if ended is not None:
+            run['job_ended'] = ended.isoformat()
+        if created is not None:
+            run['job']['peak_created'] = created
+        if unidentified is not None:
+            run['job']['unidentified'] = unidentified
         if exits is not None:
             run['chrome_exits'] = {'watched': [], 'exited': exits}
         return {c['id'][-1]: c for c in self.trial().cleanup_checks('X', run)}
@@ -394,6 +422,59 @@ class FalsePass(Base):
         self.assertEqual(self.cleanup([], [child], peak=[5000])['b']['status'], 'FAIL', 'descendant of a job pid, started during the run')
         old = self.proc(5000, 4, name='svchost.exe', start='2026-10-01T00:00:00.0000000Z')
         self.assertEqual(self.cleanup([old], [old], peak=[5000])['b']['status'], 'PASS', 'a process older than the run is not from this job')
+
+    def test_a_job_pid_reused_after_the_job_ended_is_not_a_leftover(self):
+        ended = datetime(2026, 10, 7, 1, 0, 40, 900000, tzinfo=timezone.utc)
+        lister = self.proc(5000, os.getpid(), name='powershell.exe', start='2026-10-07T01:00:41.9500000Z')   # takes the list, got a job pid
+        self.assertEqual(self.cleanup([], [lister], peak=[5000], ended=ended)['b']['status'], 'PASS', 'created after the job ended')
+        self.assertEqual(self.cleanup([], [lister], peak=[5000])['b']['status'], 'FAIL', 'an attempt without the end time keeps the old rule')
+        alive = self.proc(5000, os.getpid(), name='node.exe', start='2026-10-07T01:00:40.1000000Z')
+        self.assertEqual(self.cleanup([], [alive], peak=[5000], ended=ended)['b']['status'], 'FAIL', 'created before the job ended, started by the harness, still alive')
+        inner = self.proc(5001, 5000, name='node.exe', start='2026-10-07T01:00:30.0000000Z')
+        self.assertEqual(self.cleanup([], [inner], peak=[5000, 5001], ended=ended)['b']['status'], 'FAIL', 'a job process whose parent was in the job')
+        stranger = self.proc(5000, 900, name='rundll32.exe', start='2026-10-07T01:00:30.0000000Z')          # created during the run by something else
+        got = self.cleanup([], [stranger], peak=[5000], ended=ended)['b']
+        self.assertEqual(got['status'], 'INCONCLUSIVE', 'a job pid under a parent from outside the job is not proof either way')
+        self.assertIn("(5000, 'rundll32.exe', '2026-10-07T01:00:30.0000000Z', 900)", got['detail'])
+        self.assertEqual(self.cleanup([], [stranger, inner], peak=[5000, 5001], ended=ended)['b']['status'], 'FAIL', 'a sure leftover beside a doubtful one')
+        self.assertEqual(self.cleanup([], [stranger], peak=[5000])['b']['status'], 'FAIL',
+                         'an attempt stored without the end of its job keeps the old rule, whatever the parent is')
+        escaped = self.proc(5001, 5000, name='node.exe', start='2026-10-07T01:00:20.0000000Z')              # its parent is gone, the pid 5000 is reused
+        child = self.proc(5002, 5001, name='cmd.exe', start='2026-10-07T01:00:45.0000000Z')                 # started by the escaped one after the end
+        got = self.cleanup([], [lister, escaped, child], peak=[5000, 5001], ended=ended)['b']
+        self.assertEqual(got['status'], 'FAIL')
+        self.assertEqual([row[0] for row in ast.literal_eval(got['detail'])], [5001, 5002], 'the escaped process and what it started, not the lister')
+
+    def test_a_job_process_is_known_by_pid_and_creation_time(self):
+        ended = datetime(2026, 10, 7, 1, 0, 40, 900000, tzinfo=timezone.utc)
+        born = {'5000': ['2026-10-07T01:00:10.123456+00:00']}                                               # what win_job recorded for the pid
+        same = self.proc(5000, 900, name='node.exe', start='2026-10-07T01:00:10.1234560Z')                  # parent from outside: no matter
+        self.assertEqual(self.cleanup([], [same], peak=[5000], ended=ended, created=born)['b']['status'], 'FAIL', 'the very process the job had')
+        other = self.proc(5000, os.getpid(), name='rundll32.exe', start='2026-10-07T01:00:30.0000000Z')     # created during the run, parent the harness
+        self.assertEqual(self.cleanup([], [other], peak=[5000], ended=ended, created=born)['b']['status'], 'PASS', 'another process under the reused pid')
+        child = self.proc(5002, 5000, name='cmd.exe', start='2026-10-07T01:00:35.0000000Z')                 # started by the stranger, not by the job
+        self.assertEqual(self.cleanup([], [other, child], peak=[5000], ended=ended, created=born)['b']['status'], 'PASS', 'and what the stranger started')
+        kid = self.proc(5003, 5000, name='cmd.exe', start='2026-10-07T01:00:12.0000000Z')                   # started by the job process
+        got = self.cleanup([], [same, kid], peak=[5000], ended=ended, created=born)['b']
+        self.assertEqual((got['status'], [row[0] for row in ast.literal_eval(got['detail'])]), ('FAIL', [5000, 5003]))
+        unknown = self.proc(5001, 900, name='node.exe', start='2026-10-07T01:00:30.0000000Z')               # in the job, but no time recorded for it
+        self.assertEqual(self.cleanup([], [unknown], peak=[5000, 5001], ended=ended, created=born)['b']['status'], 'INCONCLUSIVE', 'falls back to the parent rule')
+
+    def test_an_unreadable_creation_time_is_never_no_leftover(self):
+        ended = datetime(2026, 10, 7, 1, 0, 40, 900000, tzinfo=timezone.utc)
+        born = {'5000': ['2026-10-07T01:00:10.123456+00:00']}
+        # `.a`: win_job could not read the creation time of a live job pid and says so in `unidentified`
+        self.assertEqual(self.cleanup([], [], survivors=1, unidentified=[5000])['a']['status'], 'INCONCLUSIVE', 'not proven either way')
+        self.assertEqual(self.cleanup([], [], survivors=2, unidentified=[5000])['a']['status'], 'FAIL', 'one sure survivor beside it')
+        self.assertEqual(self.cleanup([], [], survivors=1, unidentified=[])['a']['status'], 'FAIL')
+        self.assertEqual(self.cleanup([], [], survivors=1)['a']['status'], 'FAIL', 'an attempt stored without the field keeps the old rule')
+        self.assertEqual(self.cleanup([], [], survivors=0, unidentified=[])['a']['status'], 'PASS')
+        # `.b`: the process list has a live process under a job pid and no creation time for it
+        for parent, expected in ((900, 'INCONCLUSIVE'), (os.getpid(), 'FAIL'), (5001, 'FAIL')):
+            blind = self.proc(5000, parent, name='node.exe', start=None)
+            for created in (born, None):
+                got = self.cleanup([], [blind], peak=[5000, 5001], ended=ended, created=created)['b']['status']
+                self.assertEqual(got, expected, 'parent %s, time recorded by win_job: %s' % (parent, bool(created)))
 
     # ---- v5, rule 1: a success needs one matching result AND one matching PostToolUse event
     NAME = 'mcp__claude-in-chrome__list_connected_browsers'

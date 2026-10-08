@@ -1,0 +1,2 @@
+/* Armenian glyphs for owner-facing screens (Golos Text and Roboto Condensed have none). Noto Sans Armenian, SIL OFL 1.1 (LICENSE-NotoSansArmenian.txt). */
+@font-face { font-family: "Noto Sans Armenian"; src: url("NotoSansArmenian-Variable.woff2") format("woff2"); font-weight: 100 900; font-style: normal; font-display: swap; unicode-range: U+0530-058F, U+FB13-FB17; }

@@ -22,7 +22,7 @@ Each picture carries one idea in large labels, so that it reads on a phone. The 
 
 - **GitHub**
   - What lives there: code, documents: the canonical ones, with decisions and the roadmap
-  - Today: in place: public repository (since 08.10.2026, Gev's decision), checks on every change
+  - Today: in place: public repository (opened by Gev on 07.10.2026 21:57 UTC), checks on every change
 - **VPS**
   - What lives there: the runtime: queue and database, API readers, mailbox, approvals, executor of API and mail actions, monitoring
   - Today: STAGING, sending is off; what is installed is in the next picture
@@ -125,7 +125,7 @@ A source that is not read is UNKNOWN, never "no problem". A click is not a call,
 6. The owner approves one thing today: the daily report draft, by its digest. That is not an approval of any action. No executor of actions exists.
 7. The mailbox connector does not exist (no app, no credential). Browser reading by an unattended model does not exist (proxy package waits for GPT).
 8. Credentials clean-up on Windows is **not closed**: Yandex and Avito secrets are still in the Windows user environment and the local `.mcp.json` hands them to four third-party MCP programs.
-9. The project is published in the repository `menqstudio/Kryuk24` by a clean initial import (07.10.2026); the repository is public since 08.10.2026 by Gev's decision. The earlier history is not in the repository: it is in a verified git bundle, with a copy on an external disk. `main` is not protected by GitHub and secret scanning is off: both are available to a public repository and are not set up yet (see `docs/SECURITY.md`).
+9. The project is published in the repository `menqstudio/Kryuk24` by a clean initial import (07.10.2026); the repository is public: Gev opened it on 07.10.2026 21:57 UTC. The earlier history is not in the repository: it is in a verified git bundle, with a copy on an external disk. `main` is not protected by GitHub and secret scanning is off: both are available to a public repository and are not set up yet (see `docs/SECURITY.md`).
 10. Nearest deadlines: Avito listings expire 11.10 and 15.10 (hold, nothing paid); address confirmation for the Yandex card by 13.10; hosting balance lasts until about 15.11.2026 (calculated).
 
 ## Where things are
@@ -140,6 +140,7 @@ A source that is not read is UNKNOWN, never "no problem". A click is not a call,
 - **`tools/`**: Site checks (`tools/tests/`), brand and media generators, API setup scripts (`tools/api_setup/`)
 - **`research/`**: Owner's prices and answers, Yandex rules, Direct launch package
 - **`brand/`, `offers/`, `reports/`, `photo/01_real_polished/`**: Brand sources, texts for the owner, reports, the processed photo set that may be published
+- **`design/`**: Design system: tokens, rules, components, Bro screens ([`design/README.md`](design/README.md))
 - **`docs/`**: The six documents below, `LESSONS.md`, `history/`, `inventory/`, `cleanup/`, `media-index.md`
 - **`_drive_staging/`**: Git-ignored. Media and archives that go to Drive, not to GitHub, kept locally until Gev names the Drive. Index: `docs/media-index.md`
 - **`_private/`**: Not in git. Private notes (the VPS address is there). Not read by AI sessions
@@ -210,7 +211,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 
 - **GitHub**
   - Ինչ ա ապրում էնտեղ: կոդ, փաստաթղթեր. հիմնականները՝ որոշումներով ու քարտեզով
-  - Այսօր: կա. բաց (public) repo՝ 08.10.2026-ից, Գևի որոշմամբ, ստուգումներ ամեն փոփոխության վրա
+  - Այսօր: կա. բաց (public) repo՝ Գևը բացել ա 07.10.2026 21:57 UTC-ին, ստուգումներ ամեն փոփոխության վրա
 - **VPS**
   - Ինչ ա ապրում էնտեղ: runtime-ը. հերթ ու բազա, API reader-ներ, փոստ, հաստատումներ, API ու փոստի գործողությունների executor, monitoring
   - Այսօր: STAGING, ուղարկելը անջատված ա. ինչն ա դրված՝ հաջորդ նկարում
@@ -313,7 +314,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 6. Այսօր տերը հաստատում ա մի բան՝ օրվա հաշվետվության սևագիրը, digest-ով։ Դա ոչ մի գործողության թույլտվություն չի։ Գործողությունների executor չկա։
 7. Փոստի connector չկա (ոչ հավելված, ոչ credential)։ Առանց հսկողության մոդելով զննարկիչ կարդալը չկա (proxy-ի փաթեթը սպասում ա GPT-ին)։
 8. Windows-ում credential-ների մաքրումը **փակված չի**. Yandex-ի ու Avito-ի գաղտնիքները դեռ Windows-ի user environment-ում են, ու տեղային `.mcp.json`-ը դրանք տալիս ա չորս կողմնակի MCP ծրագրի։
-9. Նախագիծը հրապարակված ա `menqstudio/Kryuk24` repo-ում՝ մաքուր սկզբնական import-ով (07.10.2026). repo-ն 08.10.2026-ից բաց (public) ա՝ Գևի որոշմամբ։ Հին պատմությունը repo-ում չկա. ստուգված git bundle-ում ա, պատճենը՝ արտաքին սկավառակի վրա։ `main`-ը GitHub-ով պաշտպանված չի, secret scanning-ն էլ անջատված ա. բաց repo-ի համար երկուսն էլ հասանելի են, դեռ դրված չեն (տես `docs/SECURITY.md`)։
+9. Նախագիծը հրապարակված ա `menqstudio/Kryuk24` repo-ում՝ մաքուր սկզբնական import-ով (07.10.2026). repo-ն բաց (public) ա. Գևը բացել ա 07.10.2026 21:57 UTC-ին։ Հին պատմությունը repo-ում չկա. ստուգված git bundle-ում ա, պատճենը՝ արտաքին սկավառակի վրա։ `main`-ը GitHub-ով պաշտպանված չի, secret scanning-ն էլ անջատված ա. բաց repo-ի համար երկուսն էլ հասանելի են, դեռ դրված չեն (տես `docs/SECURITY.md`)։
 10. Մոտակա ժամկետները. Avito-ի հայտարարությունները փակվում են 11.10-ին ու 15.10-ին (HOLD, ոչինչ չի վճարվել). Yandex-ի քարտի հասցեի հաստատումը՝ մինչև 13.10. հոստինգի մնացորդը հերիքում ա մոտ մինչև 15.11.2026 (հաշվարկ)։
 
 ## Որտեղ ինչն ա
@@ -328,6 +329,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 - **`tools/`**: Կայքի ստուգումները (`tools/tests/`), բրենդի ու մեդիայի գեներատորները, API-ի setup սկրիպտները (`tools/api_setup/`)
 - **`research/`**: Տիրոջ գներն ու պատասխանները, Yandex-ի կանոնները, Direct-ի գործարկման փաթեթը
 - **`brand/`, `offers/`, `reports/`, `photo/01_real_polished/`**: Բրենդի աղբյուրները, տեքստեր տիրոջ համար, հաշվետվություններ, մշակված նկարների սեթը, որ կարելի ա հրապարակել
+- **`design/`**: Դիզայն սիստեմ. token-ներ, կանոններ, կոմպոնենտներ, Bro-ի էկրաններ ([`design/README.md`](design/README.md))
 - **`docs/`**: Ներքևի վեց փաստաթուղթը, `LESSONS.md`, `history/`, `inventory/`, `cleanup/`, `media-index.md`
 - **`_drive_staging/`**: Git-ում չի։ Մեդիան ու արխիվները, որ գնում են Drive, ոչ GitHub. տեղում են, մինչև Գևը ասի՝ որ Drive-ը։ Ցուցակը՝ `docs/media-index.md`
 - **`_private/`**: Git-ում չի։ Անձնական նշումներ (VPS-ի հասցեն էնտեղ ա)։ AI նիստերը չեն կարդում

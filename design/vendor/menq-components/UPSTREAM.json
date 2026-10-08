@@ -1,0 +1,31 @@
+{
+  "repository": "menqstudio/MenQ-Standard",
+  "commit": "8d1b0ab1b16230770f72b6c8daae0b9f66133880",
+  "note": "Byte-for-byte copy of the MenQ component library (core + Bro extension). Never edit these files; KRYUK24 look comes from design/tokens/kryuk.tokens.css and design/components/kryuk.css, loaded after them. To update: copy the files from a newer commit, refresh this record, run design/scripts/validate_design.py.",
+  "files": {
+    "bundle.js": {
+      "path": "platforms/design/brand-expression/components/bundle.js",
+      "sha256": "8cc79b40016d38fc7a2b5aec0195ffa6e6bf76b2fc70cd1e88f9fa2222fa166e"
+    },
+    "bundle.css": {
+      "path": "platforms/design/brand-expression/components/bundle.css",
+      "sha256": "9173d037658a97b0ba159068d1eee807e1f218d78b6a9e3ed65533f4ad2dc55a"
+    },
+    "index.d.ts": {
+      "path": "platforms/design/brand-expression/components/index.d.ts",
+      "sha256": "29e0ed7b9a832e188add7d34a4d6a4775117c5095a179d64f91e4a9338863e7b"
+    },
+    "bro.bundle.js": {
+      "path": "platforms/design/product-extensions/bro/components/bro.bundle.js",
+      "sha256": "27420d1f72f8693b482c4cb23191915823a8b6b2bf6c0a4c2578adef6daf54f2"
+    },
+    "bro.css": {
+      "path": "platforms/design/product-extensions/bro/components/bro.css",
+      "sha256": "a14d6bd8c1dde015566086e7a6907673780e07e70d13c947a85f876285c0fe3d"
+    },
+    "bro.d.ts": {
+      "path": "platforms/design/product-extensions/bro/components/bro.d.ts",
+      "sha256": "2af96a6c10b46c53ede5afae79b5bda48c26d9894113d6d442a3eabf1bd9d591"
+    }
+  }
+}
