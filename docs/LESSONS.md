@@ -30,6 +30,10 @@
   **Why:** "the connector is listed" was taken for "the connector has access".
   **Do instead:** before saying an API or connector works, make one read call (or its auth-status call) and report that result. Listed, connected and authorised are three different states.
 
+- **What happened (07.10, 22:00 UTC):** `CURRENT_STATE.md` said "private repository"; the GitHub API showed `visibility: public` (Gev had opened it for CI).
+  **Why:** the state line was written from the setup report and not re-read from GitHub after the change.
+  **Do instead:** before stating a repository's visibility, read it (`gh api repos/<owner>/<repo> --jq .visibility`) in the same step.
+
 ## Passwords and access
 
 - **What happened (06.10):** used `curl -u` with the operator password to test a login; a later attempt was refused.
@@ -145,6 +149,15 @@
   **Do instead:** do not ask Armen about money in forms or polls (Gev's instruction).
 - **What happened (07.10):** proposed changing Armen's WhatsApp profile and statuses.
   **Do instead:** his WhatsApp is his personal number too; changes there need his knowledge, not only Gev's go-ahead.
+
+## Keeping KRYUK24 separate
+
+- **What happened (07.10, 21:53 UTC):** while starting the design system Gev wrote "do not mix MenQ in, this is fully separate".
+  **Why:** KRYUK24 is Armen's business; the MenQ library is a tool, not its identity.
+  **Do instead:** in KRYUK24 work, use MenQ code only as a pinned copy under `design/vendor/`; no MenQ colour, logo, name or text on any KRYUK24 screen; nothing about KRYUK24 into MenQ repositories or MenQ memory. `design/scripts/validate_design.py` checks the visible part.
+- **What happened (07.10, 22:18 UTC):** the first `KryukMark` re-set the logo letters in CSS; next to the official file the «ЭВАКУАТОР» spacing differed. Gev: «the logo cannot change, it stays as it is».
+  **Why:** the logo was rebuilt from its rules instead of copied from the approved file; the brand generator's letter-spacing depends on the size it was measured at.
+  **Do instead:** in code, the logo is a copy of the approved file in `brand/02_lockups/` (`design/scripts/build_lockup.py`, checked in CI); compare any new logo use with the file by pixels before showing it.
 
 ## What Gev reads
 
