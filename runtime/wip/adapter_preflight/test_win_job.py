@@ -6,6 +6,7 @@ import sys
 import tempfile
 import time
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -110,6 +111,12 @@ class JobTests(unittest.TestCase):
         self.assertEqual(len(pids), 3, 'three levels must have started')
         self.assertEqual(self.wait_dead(pids), [])
         self.assertGreaterEqual(len(r['peak_pids']), 4, 'stub + three levels were inside the job')
+        self.assertGreaterEqual(len(r['peak_created']), 4, 'a creation time was taken for them')
+        self.assertTrue(set(map(int, r['peak_created'])) <= set(r['peak_pids']))
+        for times in r['peak_created'].values():
+            for when in times:
+                age = (datetime.now(timezone.utc) - datetime.fromisoformat(when)).total_seconds()
+                self.assertTrue(0 <= age < 60, 'created during this test: %s' % when)
 
     def test_detached_and_new_group_children_are_ended(self):
         flags = CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS
@@ -150,6 +157,49 @@ class JobTests(unittest.TestCase):
             self.assertTrue(win_job.pid_alive(outsider.pid))
         finally:
             outsider.kill(); outsider.wait()
+
+    def test_unreadable_creation_time_is_unknown_never_gone(self):
+        # Simulation: the process is real and alive; the reading of its creation time is replaced by "could not be read".
+        live = subprocess.Popen([PY, '-c', 'import time; time.sleep(60)'])
+        try:
+            with mock.patch.object(win_job, '_created', return_value=None):
+                self.assertEqual(win_job.pid_state(live.pid, {1}), 'unknown')
+                self.assertTrue(win_job.pid_alive(live.pid, {1}), 'never "not alive"')
+                self.assertEqual(win_job.pid_state(live.pid), 'alive', 'without recorded times the pid alone decides, as before')
+                survivors, how, unidentified = win_job._cleanup(win_job.Job(), None, {live.pid}, wait=0.3, born={live.pid: {1}})
+            self.assertEqual((survivors, unidentified), (1, [live.pid]), 'counted as a survivor and named as unidentified')
+            self.assertEqual(win_job.pid_state(live.pid, {1}), 'gone', 'time readable and different: another process under the pid')
+            survivors, how, unidentified = win_job._cleanup(win_job.Job(), None, {live.pid}, wait=0.3, born={live.pid: {1}})
+            self.assertEqual((survivors, unidentified), (0, []))
+        finally:
+            live.kill(); live.wait()
+        self.assertEqual(win_job.pid_state(live.pid, {1}), 'gone')
+
+    def test_refused_open_is_unknown_and_a_pid_nobody_has_is_gone(self):
+        # Real calls. The System process (pid 4) always exists; without elevation Windows refuses to open it (error 5).
+        self.assertNotEqual(win_job.pid_state(4), 'gone', 'a process that is there is never "gone"')
+        self.assertTrue(win_job.pid_alive(4))
+        self.assertEqual(win_job.pid_state(0x7FFFFFFC), 'gone', 'no process has this pid: Windows says "invalid parameter"')
+        # Simulation: the open is refused with the given error, whatever the pid is.
+        for error, expected in ((5, 'unknown'), (8, 'unknown'), (0, 'unknown'), (win_job.ERROR_INVALID_PARAMETER, 'gone')):
+            with mock.patch.object(win_job.k32, 'OpenProcess', return_value=None), mock.patch.object(win_job.ctypes, 'get_last_error', return_value=error):
+                self.assertEqual(win_job.pid_state(os.getpid()), expected, 'error %d' % error)
+                self.assertEqual(win_job.pid_state(os.getpid(), {1}), expected, 'error %d, with recorded times' % error)
+        with mock.patch.object(win_job.k32, 'OpenProcess', return_value=None), mock.patch.object(win_job.ctypes, 'get_last_error', return_value=5):
+            survivors, how, unidentified = win_job._cleanup(win_job.Job(), None, {os.getpid()}, wait=0.3)
+        self.assertEqual((survivors, unidentified), (1, [os.getpid()]))
+
+    def test_exit_code_that_cannot_be_read_is_unknown(self):
+        # Simulation: the process is real and alive, the handle is real; only the reading of the exit code is made to fail.
+        with mock.patch.object(win_job.k32, 'GetExitCodeProcess', return_value=0):
+            self.assertEqual(win_job.pid_state(os.getpid()), 'unknown')
+            self.assertEqual(win_job.pid_state(os.getpid(), {1}), 'unknown')
+            self.assertTrue(win_job.pid_alive(os.getpid()))
+        self.assertEqual(win_job.pid_state(os.getpid()), 'alive')
+
+    def test_result_names_unidentified_pids(self):
+        r = win_job.run_in_job([PY, '-c', 'pass'], timeout=30, env=ENV)
+        self.assertEqual((r['survivors'], r['unidentified']), (0, []))
 
     def test_relative_executable_is_refused(self):
         with self.assertRaises(ValueError):
