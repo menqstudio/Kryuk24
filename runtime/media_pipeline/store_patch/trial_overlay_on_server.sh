@@ -63,6 +63,13 @@ done
 for u in kryuk-operations.service kryuk-backup.service kryuk-api-read.service; do
   case "$(systemctl show -p ActiveState --value "$u")" in inactive|failed) ;; *) say "STOP: $u is running; a reload is not done beside it. Nothing was done"; exit 1;; esac
 done
+# nothing of the names this trial is about to use may exist: it would be overwritten and then removed
+for x in "$ETC/$O" "$ETC/$O.d" "$ETC/$G" "$ETC/$G.d" "$OM" "$GM"; do
+  if [ -e "$x" ] || [ -L "$x" ]; then say "STOP: $x already exists. Nothing was done"; exit 1; fi
+done
+for u in "$O" "$G"; do
+  if [ "$(systemctl show -p LoadState --value "$u")" != not-found ]; then say "STOP: systemd already knows a unit $u. Nothing was done"; exit 1; fi
+done
 before="$(facts)"
 say "before: $before"
 trap clean EXIT

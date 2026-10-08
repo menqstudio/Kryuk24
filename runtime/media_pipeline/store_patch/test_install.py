@@ -236,7 +236,9 @@ class RealModeWithStandIns(Install):
             (self.standin / name).write_text(text, encoding='utf-8', newline='\n')
             os.chmod(self.standin / name, 0o755)
         self.normal()
-        self.answer(log='', started=time.strftime('%a %Y-%m-%d %H:%M:%S UTC', time.gmtime(time.time() + 1)))
+        # as on the server: the installed files are old, and the service was started after them and long before now
+        self.age_files(7200)
+        self.answer(log='', started=time.strftime('%a %Y-%m-%d %H:%M:%S UTC', time.gmtime(time.time() - 3600)))
 
     def normal(self):           # every answer as on an ordinary day; what systemd has loaded is left as it is
         self.answer(active='kryuk-capture.service\n', user='kryuk-run\n', uid='0\n', owner='root:root 644\n', running='', stale='',
@@ -284,6 +286,59 @@ class RealModeWithStandIns(Install):
 
     def restarts(self):
         return [line for line in self.log('systemctl restart')]
+
+    def age_files(self, seconds=60):    # the two installed files were last changed well before now
+        for name in OLD:
+            os.utime(self.code / name, (time.time() - seconds, time.time() - seconds))
+
+    def test_a_drop_in_of_the_same_name_that_the_script_did_not_write_is_never_overwritten_or_removed(self):
+        """GPT's review of 96b6a9b: hold() wrote to a fixed path without looking what was there."""
+        theirs = '[Unit]\n# put here by somebody else, for another reason\nConditionPathExists=/etc/hostname\n'
+        folder = self.hold / 'kryuk-backup.service.d'
+
+        def put():
+            folder.mkdir(exist_ok=True)
+            (folder / HOLD).write_text(theirs, encoding='utf-8', newline='\n')
+
+        def untouched(words):
+            self.assertEqual((folder / HOLD).read_text(encoding='utf-8'), theirs, words)
+            self.assertEqual((self.held()[0], self.held()[2]), (['kryuk-backup.service'], []), words + ': nothing of the script was written beside it')
+        put()
+        code, out = self.run_script()                # a fresh install
+        self.assertEqual((code, 'was not written by this script' in out, 'Nothing was changed' in out), (1, True, True), out)
+        self.assertEqual((self.state(), self.kept(), self.verbs()), (ORIGINALS, [], []), out)
+        untouched('install')
+        (folder / HOLD).unlink()
+        folder.rmdir()
+        self.assertEqual(self.run_script()[0], 0)
+        put()
+        for command in ('rollback', 'release'):
+            before = len(self.verbs())
+            code, out = self.run_script(command)
+            self.assertEqual((code, 'was not written by this script' in out, self.state(), len(self.kept())), (1, True, NEW, 2), out)
+            self.assertEqual(self.verbs()[before:], [], command + ' told systemd nothing')
+            untouched(command)
+        code, out = self.run_script('status')
+        self.assertEqual((code, 'was not written by this script' in out, 'kryuk-backup.service: inactive, not held' in out), (0, True, True), out)
+        untouched('status')
+        (folder / HOLD).unlink()
+        folder.rmdir()
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, self.state(), self.held()), (0, ORIGINALS, self.FREE), out)
+
+    def test_a_run_that_fails_to_release_leaves_a_foreign_file_alone(self):
+        """A file of the same name appears while the script runs (it was not there at the check): release must not remove it."""
+        theirs = '[Unit]\n# appeared in the middle\n'
+        folder = self.hold / 'kryuk-api-read.service.d'
+        (self.standin / 'runuser').write_text(STANDINS['runuser'].replace('outside\n', 'outside\nprintf \'%s\' "$THEIRS" > "$KRYUK_HOLD_DIR/kryuk-api-read.service.d/90-kryuk-store-lock-install.conf"\n', 1), encoding='utf-8', newline='\n')
+        os.environ['THEIRS'] = theirs
+        try:
+            code, out = self.run_script()
+        finally:
+            del os.environ['THEIRS']
+        self.assertEqual((code, 'not removed:' in out, 'could not be taken away completely' in out), (2, True, True), out)
+        self.assertEqual((folder / HOLD).read_text(encoding='utf-8'), theirs)
+        self.assertEqual(self.held()[0], ['kryuk-api-read.service'], 'its own three files are gone, the foreign one stays')
 
     def held(self):             # the hold as it is on the disk, as the stand-in systemd has it loaded, and the marker
         return (sorted(f.parent.name[:-2] for f in self.hold.glob('*.d/' + HOLD)), sorted(f.name for f in (self.standin / 'loaded.d').iterdir()),
@@ -444,6 +499,7 @@ class RealModeWithStandIns(Install):
     def test_release_is_refused_while_the_service_runs_other_files_than_the_disk_holds_or_does_not_answer(self):
         self.answer(silent_with_new='', install_fails='ops_work.py.before-store-lock')
         self.assertEqual(self.run_script()[0], 2)           # both new on the disk, the service runs them and does not answer
+        self.age_files()
         code, out = self.run_script('release')
         self.assertEqual((code, 'runs the files on the disk but does not answer' in out, self.held()), (2, True, self.HELD), out)
         self.normal()                                       # it answers again, but a file was changed after it started
@@ -459,12 +515,23 @@ class RealModeWithStandIns(Install):
             self.assertEqual((code, words in out, self.held()), (2, True, self.HELD), out)
 
     def test_release_takes_a_left_hold_away_when_the_state_is_a_pair_the_service_runs_and_it_answers(self):
-        self.assertEqual(self.run_script()[0], 0)
-        for unit in GUARDED:                        # a hold left by a killed run
-            (self.hold / (unit + '.d')).mkdir()
-            (self.hold / (unit + '.d') / HOLD).write_text('[Unit]\nConditionPathExists=' + ('' if unit == 'kryuk-capture.service' else '!') + (self.hold / (unit + '.d') / HOLD).as_posix() + '\n', newline='\n')
-        self.systemctl('daemon-reload')
+        self.answer(kill_script='')                 # a run killed after both new files were in place leaves its own hold
+        self.assertNotEqual(self.run_script()[0], 0)
+        self.normal()
+        self.assertEqual((self.state(), self.held()), (NEW, self.HELD))
         self.assertEqual(self.outside_start(), ['start kryuk-operations.service' + SKIPPED])
+        code, out = self.run_script('release')      # the service still runs what it loaded before the files changed
+        self.assertEqual((code, 'was started before ops_media.py was last changed' in out, self.held()), (2, True, self.HELD), out)
+        marker = self.run / 'kryuk-store-lock-install.running'
+        marker.write_text('')                       # a person restarts it the way the script does
+        self.systemctl('restart', 'kryuk-capture.service')
+        marker.unlink()
+        now = time.time()
+        for name in OLD:                            # GPT's review of 96b6a9b: the same second does not tell the order
+            os.utime(self.code / name, (now, now))
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'or in the same second' in out, self.held()), (2, True, self.HELD), out)
+        self.age_files()
         code, out = self.run_script('release')
         self.assertEqual((code, 'confirmed: a pair (new)' in out, 'released (can start again)' in out, self.held()), (0, True, True, self.FREE), out)
         self.assertEqual(sorted(p.name for p in self.hold.iterdir()), [], 'the empty folders are gone too')

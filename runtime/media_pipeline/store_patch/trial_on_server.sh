@@ -58,6 +58,13 @@ for u in kryuk-capture kryuk-operations kryuk-backup kryuk-api-read kryuk-bro-ap
   if [ "$(systemctl show -p NeedDaemonReload --value "$u.service")" = yes ]; then say "STOP: the unit file of $u was changed and not loaded; a reload here would load it. Nothing was done"; exit 1; fi
 done
 if [ "$(ss -ltn 2>/dev/null | grep -c ":$PORT ")" != 0 ]; then say "STOP: port $PORT is in use. Nothing was done"; exit 1; fi
+# nothing of the names this trial is about to use may exist: it would be overwritten and then removed
+for x in "/run/systemd/system/$HT" "/run/systemd/system/$HT.d" "/etc/systemd/system/$HT" "/run/kryuk-holdtrial-$TAG.marker"; do
+  if [ -e "$x" ] || [ -L "$x" ]; then say "STOP: $x already exists. Nothing was done"; exit 1; fi
+done
+for u in "$HT" "$CT.service"; do
+  if [ "$(systemctl show -p LoadState --value "$u")" != not-found ]; then say "STOP: systemd already knows a unit $u. Nothing was done"; exit 1; fi
+done
 RUNAS="$(systemctl show -p User --value kryuk-capture.service)"
 before="$(real_facts)"
 say "the real files and the real service before: $before"

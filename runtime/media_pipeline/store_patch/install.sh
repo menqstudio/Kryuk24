@@ -109,17 +109,44 @@ selftest() {   # the new files with this server's Python, as the service's own u
 # ---- the hold on the one-shot units
 hold_file() { printf '%s' "$HOLD_DIR/$1.d/$HOLD_NAME"; }
 hold_loaded() { case "$(systemctl show -p DropInPaths --value "$1" 2>/dev/null)" in *"$1.d/$HOLD_NAME"*) return 0;; *) return 1;; esac; }
+hold_text() { # exactly what this script writes for one unit; this is also how it recognises a file as its own
+  if [ "$1" = "$SERVICE" ]; then
+    printf '# Put by store_patch/install.sh for the minutes of an install. While this file exists the service is not restarted\n# by systemd and starts only in the seconds that script restarts it (a marker under /run).\n# It is taken away by: sudo bash install.sh release (which first checks that the state is safe).\n[Unit]\nConditionPathExists=%s\n[Service]\nRestart=no\n' "$MARKER"
+  else
+    printf '# Put by store_patch/install.sh for the minutes of an install. While this file exists the unit does not start.\n# It is taken away by: sudo bash install.sh release (which first checks that the state is safe).\n[Unit]\nConditionPathExists=!%s\n' "$(hold_file "$1")"
+  fi
+}
+own_hold() {  # the file is there and is, byte for byte, what this script writes for that unit
+  [ -f "$(hold_file "$1")" ] && [ ! -L "$(hold_file "$1")" ] && [ "$(cat "$(hold_file "$1")" 2>/dev/null)" = "$(hold_text "$1")" ]
+}
+foreign_hold() {  # 0, and a line for each, when something of our file name exists that this script did not write
+  local u found=1
+  for u in $ONESHOTS $SERVICE; do
+    if { [ -e "$(hold_file "$u")" ] || [ -L "$(hold_file "$u")" ]; } && ! own_hold "$u"; then
+      say "$(hold_file "$u") exists and was not written by this script: it is not overwritten and not removed"
+      found=0
+    fi
+  done
+  return "$found"
+}
+left_hold() {     # 0 when a drop-in of this script is on the disk for any unit
+  local u
+  for u in $ONESHOTS $SERVICE; do
+    if own_hold "$u"; then return 0; fi
+  done
+  return 1
+}
 hold() {      # no one-shot unit can start from here on; 1 when that could not be confirmed
   if [ "$DRY" = 1 ]; then say "hold: not done (rehearsal)"; return 0; fi
   local u
+  if foreign_hold; then return 1; fi   # before anything of ours exists: finish() must have nothing to clean
   HELD=1
   rm -f "$MARKER" || return 1
-  for u in $ONESHOTS; do
+  for u in $ONESHOTS $SERVICE; do
     mkdir -p "$HOLD_DIR/$u.d" || return 1
-    printf '# Put by store_patch/install.sh for the minutes of an install. While this file exists the unit does not start.\n# It is taken away by: sudo bash install.sh release (which first checks that the state is safe).\n[Unit]\nConditionPathExists=!%s\n' "$(hold_file "$u")" > "$(hold_file "$u")" || return 1
+    hold_text "$u" > "$(hold_file "$u")" || return 1
+    own_hold "$u" || { say "the hold of $u is not what was written"; return 1; }
   done
-  mkdir -p "$HOLD_DIR/$SERVICE.d" || return 1
-  printf '# Put by store_patch/install.sh for the minutes of an install. While this file exists the service is not restarted\n# by systemd and starts only in the seconds that script restarts it (a marker under /run).\n# It is taken away by: sudo bash install.sh release (which first checks that the state is safe).\n[Unit]\nConditionPathExists=%s\n[Service]\nRestart=no\n' "$MARKER" > "$(hold_file "$SERVICE")" || return 1
   systemctl daemon-reload || { say "systemctl daemon-reload failed"; return 1; }
   for u in $ONESHOTS $SERVICE; do
     hold_loaded "$u" || { say "the hold is not loaded for $u"; return 1; }
@@ -127,10 +154,12 @@ hold() {      # no one-shot unit can start from here on; 1 when that could not b
   say "held (cannot start until this script has finished): $ONESHOTS"
   say "guarded (not restarted by systemd; started only by this script): $SERVICE"
 }
-release() {   # the one-shot units can start again; 1 when that could not be confirmed
+release() {   # the units can start again; 1 when that could not be confirmed. Removes only files this script wrote
   if [ "$DRY" = 1 ]; then return 0; fi
   local u bad=0
   for u in $ONESHOTS $SERVICE; do
+    if [ ! -e "$(hold_file "$u")" ] && [ ! -L "$(hold_file "$u")" ]; then rmdir "$HOLD_DIR/$u.d" 2>/dev/null || true; continue; fi
+    if ! own_hold "$u"; then say "not removed: $(hold_file "$u") was not written by this script"; bad=1; continue; fi
     rm -f "$(hold_file "$u")" || bad=1
     rmdir "$HOLD_DIR/$u.d" 2>/dev/null || true
     if [ -e "$(hold_file "$u")" ]; then bad=1; fi
@@ -226,7 +255,7 @@ confirmed() { # 0 only when the service runs the pair that is on the disk and an
     if [ -z "$at" ]; then say "not confirmed: the start time of $SERVICE could not be read"; return 1; fi
     for f in $FILES; do
       m="$(stat -c %Y "$DEST/$f" 2>/dev/null)" || m=""
-      if [ -z "$m" ] || [ "$at" -lt "$m" ]; then say "not confirmed: $SERVICE was started before $f was last changed: it does not run the files on the disk"; return 1; fi
+      if [ -z "$m" ] || [ "$at" -le "$m" ]; then say "not confirmed: $SERVICE was started before $f was last changed, or in the same second (start $at, file $m): it cannot be shown that it runs the files on the disk"; return 1; fi
     done
     health || { say "not confirmed: $SERVICE runs the files on the disk but does not answer"; return 1; }
     say "confirmed: a pair ($a), $SERVICE started after both files and answers"
@@ -275,18 +304,21 @@ status)
   done
   if [ "$DRY" != 1 ]; then
     for u in $ONESHOTS; do
-      if [ -e "$(hold_file "$u")" ] || hold_loaded "$u"; then h=HELD; else h="not held"; fi
+      if own_hold "$u" || hold_loaded "$u"; then h=HELD; else h="not held"; fi
       say "$u: $(systemctl show -p ActiveState --value "$u" 2>/dev/null), $h"
     done
-    if [ -e "$(hold_file "$SERVICE")" ] || hold_loaded "$SERVICE"; then h="GUARDED (cannot start)"; else h="not guarded"; fi
+    if own_hold "$SERVICE" || hold_loaded "$SERVICE"; then h="GUARDED (cannot start)"; else h="not guarded"; fi
     say "$SERVICE: $(systemctl is-active "$SERVICE" || true), $h"
     if [ -e "$MARKER" ]; then say "marker of a run: LEFT ($MARKER): a run was killed while it restarted the service"; fi
+    foreign_hold || true
   fi
   exit 0;;
 
 release)
   if [ "$DRY" = 1 ]; then stop "a rehearsal holds nothing"; fi
   for t in curl systemctl pgrep ps date stat; do command -v "$t" >/dev/null || stop "$t is not on this server"; done
+  if foreign_hold; then stop "a drop-in of the same name is not this script's. Nothing was changed"; fi
+  left_hold || stop "there is no hold of this script to take away. Nothing was changed"
   confirmed || { say "STOP: the hold stays. Way out: sudo bash $0 rollback (it puts the originals back, starts the service with them and lets go)."; exit 2; }
   HELD=1
   exit 0;;   # finish() takes the hold away and says so
@@ -298,7 +330,8 @@ rollback)
     case "$(state "$f")" in original|new) ;; *) stop "the installed $f is neither the original nor the new file: nothing was changed";; esac
   done
   if [ "$DRY" != 1 ]; then real_checks; fi
-  prior=0; if [ "$DRY" != 1 ] && [ -e "$(hold_file "$SERVICE")" ]; then prior=1; fi   # an earlier run left the service guarded
+  if [ "$DRY" != 1 ] && foreign_hold; then stop "a drop-in of the same name is not this script's. Nothing was changed"; fi
+  prior=0; if [ "$DRY" != 1 ] && own_hold "$SERVICE"; then prior=1; fi   # an earlier run left the service guarded
   hold || stop "the one-shot units could not be held. Nothing was changed"
   if [ "$DRY" != 1 ]; then
     oneshots_idle || stop "a one-shot unit is running. Nothing was changed"
@@ -336,12 +369,11 @@ for f in $FILES; do
 done
 [ -f "$HERE/selftest.py" ] || stop "selftest.py is not beside this script"
 both=""; for f in $FILES; do both="$both $(state "$f")"; done
-if [ "$both" = " new new" ]; then
-  for u in $ONESHOTS $SERVICE; do
-    if [ -e "$(hold_file "$u")" ]; then stop "both new files are in place, but an earlier run did not finish: the hold is still there ($u). Nothing was changed. Way out: sudo bash $0 rollback"; fi
-  done
-  say "ALREADY INSTALLED"; exit 0
+if [ "$DRY" != 1 ]; then
+  if foreign_hold; then stop "a drop-in of the same name is not this script's. Nothing was changed"; fi
+  if left_hold; then stop "an earlier run did not finish: its hold is still there (installed files:$both ). Nothing was changed. Way out: sudo bash $0 rollback"; fi
 fi
+if [ "$both" = " new new" ]; then say "ALREADY INSTALLED"; exit 0; fi
 [ "$both" = " original original" ] || stop "the installed files are not both the originals this change was made from ($both ). Nothing was changed. If one is new and one original, run: rollback"
 for f in $FILES; do
   if [ -e "$DEST/$f$SUFFIX" ]; then stop "$DEST/$f$SUFFIX already exists: nothing was changed"; fi
