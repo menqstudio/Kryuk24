@@ -28,9 +28,14 @@ img{max-width:100%}
  background-size:auto,auto,48px 48px,48px 48px}
 .top .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-3) var(--space-4);padding-top:var(--space-3)}
 .bar0{flex-basis:100%;display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);min-height:44px;padding-bottom:var(--space-3);border-bottom:1px solid color-mix(in srgb,var(--grey-0) 8%,transparent)}
-.brand{min-width:0}
+.brand{display:flex;align-items:center;gap:var(--space-3);min-width:0}
+.brand>div{min-width:0}
+/* Bro's picture with its tag, as on the operator page */
+.bro{position:relative;flex:none;display:block}
+.avatar{display:block;width:56px;height:56px;max-width:none;border-radius:var(--radius-pill);object-fit:cover;padding:2px;background:var(--orange-500)}
+.bro i{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);font-style:normal;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--navy-900);background:var(--orange-500);border-radius:var(--radius-pill);padding:1px 7px;white-space:nowrap;overflow-wrap:normal;line-height:1.4}
 .brand b{display:block;font-family:var(--font-display);font-size:24px;line-height:1.15;font-weight:700;letter-spacing:-.01em}
-.brand span{display:block;font-size:13px;color:var(--grey-400);letter-spacing:.02em}
+.brand div>span{display:block;font-size:13px;color:var(--grey-400);letter-spacing:.02em}
 .clock{flex:none;min-width:104px;padding:var(--space-1) var(--space-3);border:1px solid color-mix(in srgb,var(--grey-0) 12%,transparent);border-radius:var(--radius-xl);background:color-mix(in srgb,var(--grey-0) 6%,transparent)}
 .clock small{display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-400)}
 .clock strong{display:block;font-size:24px;line-height:1.15;font-weight:700;font-variant-numeric:tabular-nums}
@@ -115,6 +120,6 @@ progress{display:block;width:100%;height:8px;margin-top:var(--space-2);accent-co
 .login label{margin-top:var(--space-3)}
 .login button{margin-top:var(--space-4)}
 
-@media (max-width:379px){.ring{width:72px;height:72px}.ring b{font-size:18px}.hero{padding:var(--space-3);gap:var(--space-2) var(--space-3)}.brand b{font-size:21px}.clock{min-width:92px}.clock strong{font-size:21px}}
+@media (max-width:379px){.avatar{width:48px;height:48px}.brand{gap:var(--space-2)}.ring{width:72px;height:72px}.ring b{font-size:18px}.hero{padding:var(--space-3);gap:var(--space-2) var(--space-3)}.brand b{font-size:21px}.clock{min-width:92px}.clock strong{font-size:21px}}
 @media (min-width:600px){.wrap{padding:0 var(--space-4)}main.wrap{padding-bottom:var(--space-10)}.top .wrap{padding-top:var(--space-5)}.hero{padding:var(--space-5)}.hero h1{font-size:24px}.ring{width:112px;height:112px}.ring b{font-size:26px}.card{padding:var(--space-5)}.klogo{height:44px}.primary{width:auto;min-width:16rem}#savebar.waiting{margin:var(--space-2) calc(-1 * var(--space-5)) calc(-1 * var(--space-5));padding-left:var(--space-5);padding-right:var(--space-5)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}

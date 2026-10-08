@@ -48,7 +48,7 @@ MAX_LOGIN_BODY=16384
 # system's own file (design/tokens/kryuk.tokens.css, copied byte for byte and checked in CI); the logo files are the
 # official lockup; the fonts are the site's. Fonts and logo may be kept by the browser for a day.
 PUBLIC={'login.js':'text/javascript; charset=utf-8','theme.js':'text/javascript; charset=utf-8','style.css':'text/css; charset=utf-8',
- 'tokens.css':'text/css; charset=utf-8','fonts.css':'text/css; charset=utf-8','logo-light.webp':'image/webp','logo-dark.webp':'image/webp',
+ 'tokens.css':'text/css; charset=utf-8','fonts.css':'text/css; charset=utf-8','logo-light.webp':'image/webp','logo-dark.webp':'image/webp','bro.webp':'image/webp',
  'font-golos-cyrillic.woff2':'font/woff2','font-golos-latin.woff2':'font/woff2','font-robotocond-700-cyrillic.woff2':'font/woff2','font-robotocond-700-latin.woff2':'font/woff2'}
 MAX_IMAGE=20*1024*1024
 MAX_TOTAL=1024*1024*1024
