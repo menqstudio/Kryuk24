@@ -1,6 +1,7 @@
 import base64,io,json,re,subprocess,sys,tempfile,threading,unittest,urllib.request,urllib.error,uuid
 from pathlib import Path
 from PIL import Image
+import portal
 from portal import Store,server,credential,day,PREFIX,Sessions,SESSION_TTL,COOKIE
 from unittest.mock import patch
 
@@ -144,6 +145,38 @@ class Tests(unittest.TestCase):
    self.assertEqual(post(password[:-1]),401)
   finally:
    http.shutdown();http.server_close();thread.join();tmp.cleanup()
+ def test_longest_allowed_emoji_password_logs_in_escaped_or_not(self):
+  # 1024 characters outside the basic plane: 4 bytes each as UTF-8, 12 bytes each when JSON escapes them (two \uXXXX).
+  password='\U0001F600'*1024;name='armen';tmp=tempfile.TemporaryDirectory()
+  http=server(Store(tmp.name+'/db',tmp.name+'/media'),{name:credential(password)},'https://runtime.kryuk24.ru',0)
+  thread=threading.Thread(target=http.serve_forever,daemon=True);thread.start()
+  try:
+   def post(body):
+    req=urllib.request.Request('http://127.0.0.1:%d%sapi/login'%(http.server_port,PREFIX),data=body,
+                               headers={'Content-Type':'application/json','Origin':'https://runtime.kryuk24.ru'})
+    try:
+     with urllib.request.urlopen(req) as r:return r.status
+    except urllib.error.HTTPError as e:
+     with e:return e.code
+   d={'username':name,'password':password}
+   plain=json.dumps(d,ensure_ascii=False).encode('utf-8');escaped=json.dumps(d,ensure_ascii=True).encode('ascii')
+   self.assertEqual((len(plain)>4096,len(escaped)>12288),(True,True),'the escaped form is the long one')
+   self.assertEqual(post(plain),200);self.assertEqual(post(escaped),200,'the same name and password, escaped: %d bytes'%len(escaped))
+   wrong=json.dumps({'username':name,'password':password[:-1]+'\U0001F601'},ensure_ascii=True).encode('ascii')
+   self.assertEqual(post(wrong),401)
+   # The largest body the rules allow: 64 and 1024 such characters, every one escaped.
+   largest=json.dumps({'username':'\U0001F600'*64,'password':password},ensure_ascii=True).encode('ascii')
+   self.assertLessEqual(len(largest),portal.MAX_LOGIN_BODY);self.assertEqual(post(largest),401,'read and checked, not refused for its size')
+   self.assertEqual(post(escaped+b' '*(portal.MAX_LOGIN_BODY+1-len(escaped))),400,'one byte over the limit')
+  finally:
+   http.shutdown();http.server_close();thread.join();tmp.cleanup()
+ def test_state_reads_the_day_once_so_midnight_cannot_split_an_answer(self):
+  d=dict(question='inquiries',answer='YES',day=day());self.store.answer('armen',uuid.uuid4().hex,d)
+  # Simulation of midnight inside one request: the first reading of the day is today, every later one is tomorrow.
+  with patch('portal.day',side_effect=[d['day']]+['2999-01-01']*20) as clock:
+   state=self.store.state('armen')
+  self.assertEqual(clock.call_count,1)
+  self.assertEqual((state['day'],[a['day'] for a in state['answers']]),(d['day'],[d['day']]),'one day for the heading and for the answers under it')
  def test_malformed_csrf_header_is_refused_not_a_crash(self):
   for bad in ('é','é'*40,''):
    status,raw,_=self.answer({'X-CSRF-Token':bad})

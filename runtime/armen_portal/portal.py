@@ -38,6 +38,7 @@ class Sessions:
   except (KeyError,ValueError,CookieError):return
   with self.lock:self.records.pop(key,None)
 
+MAX_LOGIN_BODY=16384
 MAX_IMAGE=20*1024*1024
 MAX_TOTAL=1024*1024*1024
 QUESTIONS=[
@@ -147,16 +148,18 @@ CREATE TABLE IF NOT EXISTS armen_commands(actor TEXT,key TEXT,digest TEXT,result
    c.execute('INSERT INTO armen_photos VALUES(?,?,?,?,?,?,?,?)',(ident,actor,dg,fmt,original,preview,purpose,now()))
    return {'saved':True,'id':ident,'duplicate':False,'publishing_enabled':False}
  def state(self,actor,owner=False):
+  today=day()
   with self.db() as c:
    args=() if owner else (actor,)
    where='' if owner else ' WHERE actor=?'
    # In the order they were saved (rowid), not by clock text: two answers may carry the same time, and the id is random.
    answers=[dict(r) for r in c.execute('SELECT * FROM armen_answers'+where+' ORDER BY rowid',args)]
    photos=[dict(r) for r in c.execute('SELECT id,actor,purpose,created FROM armen_photos'+where+' ORDER BY rowid DESC LIMIT 100',args)]
+  # The day is read once for the whole answer: read twice, midnight between the two gave a new day with yesterday's answers.
   latest={}
   for r in answers:
-   if r['day']==day():latest[r['actor']+':'+r['question']]=r
-  return {'day':day(),'questions':QUESTIONS,'answers':list(latest.values()),'photos':photos,
+   if r['day']==today:latest[r['actor']+':'+r['question']]=r
+  return {'day':today,'questions':QUESTIONS,'answers':list(latest.values()),'photos':photos,
           'trust':'ARMEN_REPORTED','publishing_enabled':False,'orders_created':False}
  def preview(self,actor,ident,owner=False):
   if not re.fullmatch('[a-f0-9]{32}',ident):raise LookupError('unavailable')
@@ -191,9 +194,10 @@ def server(store,users,origin,port=8790):
    if self.headers.get('Origin')!=origin:return self.reply(403,{'error':'origin required'})
    if self.headers.get('Transfer-Encoding'):return self.reply(400,{'error':'invalid login'})
    try:
-    # 8192: a 1024-character password may take 6 bytes a character when JSON escapes it.
+    # A character outside the basic plane (an emoji) is 12 bytes when JSON escapes it as two \uXXXX: 1024 of them
+    # in the password and 64 in the name are 13056 bytes, plus the keys and punctuation.
     size=int(self.headers.get('Content-Length','0'))
-    if not 0<size<=8192 or self.headers.get('Content-Type','').split(';')[0]!='application/json':raise ValueError()
+    if not 0<size<=MAX_LOGIN_BODY or self.headers.get('Content-Type','').split(';')[0]!='application/json':raise ValueError()
     raw=self.rfile.read(size)
     if len(raw)!=size:raise ValueError()
     d=json.loads(raw)
