@@ -1,21 +1,60 @@
 /* Armen portal. Every colour, font, radius, space and shadow comes from tokens.css, the design system's own file
-   (design/tokens/kryuk.tokens.css). No colour value is written here: design/scripts/check_shared_design.py refuses one.
-   Phone first: 360 px wide and up, no sideways scroll. */
+   (design/tokens/kryuk.tokens.css). No colour value is written here: design/scripts/check_shared_design.py refuses one;
+   a tint is made from a token with color-mix.
+   Phone first: 360 px wide and up, no sideways scroll.
+   The page is laid out like the operator page (runtime/wip/dashboard_colours): a navy band with the logo, the
+   greeting and the clock, a summary card with a ring that overlaps the band, then small labels and cards. */
 *{box-sizing:border-box}
 html{color-scheme:light dark}
 html[data-theme=light]{color-scheme:light}
 html[data-theme=dark]{color-scheme:dark}
 body{margin:0;font-family:var(--font-sans);font-size:16px;line-height:1.45;color:var(--color-content-primary);background:var(--color-page-bg);-webkit-font-smoothing:antialiased;overflow-wrap:anywhere}
-main{max-width:var(--container-narrow);margin:0 auto;padding:var(--space-3) var(--space-3) var(--space-8)}
+.wrap{max-width:var(--container-narrow);margin:0 auto;padding:0 var(--space-3)}
+main.wrap{padding-bottom:var(--space-8)}
 h1,h2,h3{font-family:var(--font-display);font-weight:700;margin:0;line-height:1.2}
-h1{font-size:22px;margin:var(--space-3) 0 var(--space-2)}
+h1{font-size:22px}
 h2{font-size:18px;margin-bottom:var(--space-3)}
+/* a section label, as on the operator page: small capitals and a short line */
+h2.label{display:flex;align-items:center;gap:var(--space-2);margin:var(--space-5) 0 var(--space-2);font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--color-content-muted)}
+h2.label::after{content:"";flex:0 0 40px;height:1px;background:linear-gradient(90deg,var(--color-accent),transparent)}
 h3{font-size:16px;font-family:var(--font-sans);font-weight:600;margin-bottom:var(--space-2)}
 p{margin:0}
 img{max-width:100%}
 [hidden]{display:none!important}
 
-.top{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);min-height:44px}
+/* the band: navy in both themes, a faint grid and an orange light from the corner */
+.top{color:var(--grey-0);padding-bottom:var(--space-12);background-color:var(--navy-950);
+ background-image:radial-gradient(90% 140% at 100% 0%,color-mix(in srgb,var(--orange-500) 20%,transparent) 0%,transparent 55%),radial-gradient(70% 120% at 0% 100%,color-mix(in srgb,var(--orange-300) 10%,transparent) 0%,transparent 55%),linear-gradient(color-mix(in srgb,var(--grey-0) 5%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--grey-0) 5%,transparent) 1px,transparent 1px);
+ background-size:auto,auto,48px 48px,48px 48px}
+.top .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--space-3) var(--space-4);padding-top:var(--space-3)}
+.bar0{flex-basis:100%;display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);min-height:44px;padding-bottom:var(--space-3);border-bottom:1px solid color-mix(in srgb,var(--grey-0) 8%,transparent)}
+.brand{min-width:0}
+.brand b{display:block;font-family:var(--font-display);font-size:24px;line-height:1.15;font-weight:700;letter-spacing:-.01em}
+.brand span{display:block;font-size:13px;color:var(--grey-400);letter-spacing:.02em}
+.clock{flex:none;min-width:104px;padding:var(--space-1) var(--space-3);border:1px solid color-mix(in srgb,var(--grey-0) 12%,transparent);border-radius:var(--radius-xl);background:color-mix(in srgb,var(--grey-0) 6%,transparent)}
+.clock small{display:block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-400)}
+.clock strong{display:block;font-size:24px;line-height:1.15;font-weight:700;font-variant-numeric:tabular-nums}
+.top .quiet{color:var(--grey-200)}
+.top .quiet:focus-visible{outline-color:var(--orange-300)}
+
+/* the summary: a card that overlaps the band, with a ring that fills as the day's answers are saved */
+.hero{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:var(--space-2) var(--space-4);margin-top:calc(-1 * var(--space-8));padding:var(--space-4);background:var(--color-surface-primary);border:1px solid var(--color-border-subtle);border-radius:var(--radius-card);box-shadow:var(--shadow-lg)}
+.hero::before,.card::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--color-accent),transparent);opacity:.5}
+.ring{position:relative;width:88px;height:88px}
+.ring svg{display:block;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:10}
+.ring .bgc{stroke:var(--color-surface-secondary)}
+.ring .fg{stroke:var(--color-action-primary);stroke-linecap:round;transition:stroke-dashoffset var(--duration-slow) var(--ease-standard)}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.hero h1{font-size:20px;line-height:1.2}
+.hero p{margin-top:var(--space-1);color:var(--color-content-secondary);font-size:15px}
+.hero p:empty{display:none}
+.sum{display:flex;flex-wrap:wrap;gap:var(--space-1);margin-top:var(--space-2)}
+.pill{display:inline-flex;align-items:center;border-radius:var(--radius-pill);padding:var(--space-1) var(--space-3);font-size:13px;font-weight:600;white-space:nowrap}
+.pill.wait{background:var(--color-surface-secondary);color:var(--color-content-secondary)}
+.pill.done{background:color-mix(in srgb,var(--color-success) 16%,transparent);color:var(--color-success-text)}
+.pill.todo{background:color-mix(in srgb,var(--color-warning) 16%,transparent);color:var(--color-warning-text)}
+
 .klogo{height:36px;width:auto;display:block}
 .on-dark{display:none}
 html[data-theme=dark] .on-light{display:none}
@@ -23,7 +62,8 @@ html[data-theme=dark] .on-dark{display:block}
 @media (prefers-color-scheme:dark){html:not([data-theme=light]) .on-light{display:none}html:not([data-theme=light]) .on-dark{display:block}}
 .tools{display:flex;gap:var(--space-1)}
 
-.card{background:var(--color-surface-primary);border:1px solid var(--color-border-subtle);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:var(--space-4) var(--space-3);margin:var(--space-3) 0}
+.card{position:relative;background:var(--color-surface-primary);border:1px solid var(--color-border-subtle);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:var(--space-4) var(--space-3);margin:0 0 var(--space-3)}
+.card>.hint:first-child{margin-top:0}
 .hint,footer{color:var(--color-content-muted);font-size:14px}
 .hint{margin:var(--space-2) 0}
 footer{margin-top:var(--space-4)}
@@ -75,5 +115,6 @@ progress{display:block;width:100%;height:8px;margin-top:var(--space-2);accent-co
 .login label{margin-top:var(--space-3)}
 .login button{margin-top:var(--space-4)}
 
-@media (min-width:600px){main{padding:var(--space-5) var(--space-4) var(--space-10)}h1{font-size:26px}.card{padding:var(--space-5)}.klogo{height:44px}.primary{width:auto;min-width:16rem}#savebar.waiting{margin:var(--space-2) calc(-1 * var(--space-5)) calc(-1 * var(--space-5));padding-left:var(--space-5);padding-right:var(--space-5)}}
+@media (max-width:379px){.ring{width:72px;height:72px}.ring b{font-size:18px}.hero{padding:var(--space-3);gap:var(--space-2) var(--space-3)}.brand b{font-size:21px}.clock{min-width:92px}.clock strong{font-size:21px}}
+@media (min-width:600px){.wrap{padding:0 var(--space-4)}main.wrap{padding-bottom:var(--space-10)}.top .wrap{padding-top:var(--space-5)}.hero{padding:var(--space-5)}.hero h1{font-size:24px}.ring{width:112px;height:112px}.ring b{font-size:26px}.card{padding:var(--space-5)}.klogo{height:44px}.primary{width:auto;min-width:16rem}#savebar.waiting{margin:var(--space-2) calc(-1 * var(--space-5)) calc(-1 * var(--space-5));padding-left:var(--space-5);padding-right:var(--space-5)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}

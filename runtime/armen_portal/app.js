@@ -56,6 +56,7 @@ async function api(path, options = {}) {
 // ---- answers: pick first, save with one button
 function renderQuestions() {
   $('question-heading').textContent = 'Сегодня · ' + state.day;
+  renderSummary();
   const area = $('questions');
   area.replaceChildren();
   for (const q of state.questions) {
@@ -190,6 +191,33 @@ async function sendPhotos() {
   note($('upload-status'), bad ? 'Сохранено ' + done + ' из ' + queue.length + '. Не загружено: ' + bad + '. Они остались в списке, нажмите «Загрузить фото» еще раз.' : 'Сохранено: ' + done + ' из ' + queue.length, bad ? 'error' : 'ok');
   if (done) try { state.photos = (await api('api/state')).photos; renderPhotos(); } catch (e) { note($('status'), 'Список фото не обновился. Обновите страницу.', 'error'); }
 }
+// ---- the band and the summary card, in the layout of the operator page. Counts come from what the server holds.
+const RING = 263.89;   // the length of the ring's circle (r = 42)
+function moscow() { return new Date(Date.now() + 3 * 3600000); }   // read with getUTC*: Moscow has no summer time
+function tick() {
+  const t = moscow(), h = t.getUTCHours();
+  $('clock').textContent = String(h).padStart(2, '0') + ':' + String(t.getUTCMinutes()).padStart(2, '0');
+  const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+  $('subline').textContent = 'фото и ответы · ' + t.getUTCDate() + ' ' + months[t.getUTCMonth()];
+  if (actor === 'armen') $('greeting').textContent = (h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер') + ', Армен';
+}
+function renderSummary() {
+  const total = state.questions.length;
+  const done = state.questions.filter(q => saved[q.id] !== undefined).length;
+  const unsaved = Object.keys(chosen).length;
+  $('ring-count').textContent = done + '/' + total;
+  $('ring').setAttribute('stroke-dashoffset', String(total ? Math.round(RING * (1 - done / total) * 100) / 100 : RING));
+  const whose = readOnly ? 'Армен ответил' : 'Сегодня отвечено';
+  $('headline').textContent = total && done === total ? (readOnly ? 'Армен ответил на все' : 'На сегодня все отвечено') : whose + ' ' + done + ' из ' + total;
+  $('headline-sub').textContent = readOnly ? '' : unsaved ? 'Не сохранено: ' + unsaved + '. Нажмите «Сохранить ответы».' : done === total ? 'Спасибо. Больше ничего не нужно.' : 'Осталось ответить: ' + (total - done) + '.';
+  const answers = $('pill-answers');
+  answers.hidden = false;
+  answers.textContent = unsaved ? 'Не сохранено: ' + unsaved : done === total ? 'Ответы сохранены' : 'Ответов: ' + done + ' из ' + total;
+  answers.className = 'pill ' + (unsaved ? 'todo' : done === total ? 'done' : 'wait');
+  const photos = $('pill-photos');
+  photos.hidden = false;
+  photos.textContent = 'Последние фото: ' + state.photos.length;
+}
 function renderPhotos() {
   const photos = $('photos');
   photos.replaceChildren();
@@ -200,6 +228,7 @@ function renderPhotos() {
     photos.append(card);
   }
   if (!state.photos.length) { const none = document.createElement('p'); none.className = 'hint empty'; none.textContent = 'Пока нет фото.'; photos.append(none); }
+  renderSummary();
 }
 
 async function load() {
@@ -218,6 +247,7 @@ if (actor === 'test') {
   $('greeting').textContent = 'Тестовый вход';
   $('question-hint').textContent = 'Тест: ответы и фото этого входа не учитываются и никуда не передаются.';
 }
+tick(); setInterval(tick, 20000);
 for (const id of ['gallery', 'camera']) $(id).onchange = e => addPhotos(e.target);
 $('send').onclick = sendPhotos;
 $('save').onclick = saveAnswers;
