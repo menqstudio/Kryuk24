@@ -17,6 +17,7 @@ import unittest
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 import run_trial
 
@@ -438,6 +439,29 @@ class FalsePass(Base):
         self.assertEqual(run_dict['status'], 'FAIL')
         self.assertIn('job pid without a recorded creation time', run_dict['why'][0]['rule'])
         self.assertNotIn('why', self.cleanup([], [], peak=[5000])['b'], 'no leftover, no diagnosis')
+
+    def test_a_leftover_carries_the_whole_chain_and_the_attempt_is_kept_for_ci(self):
+        # Review of 08.10.2026: the direct parent is not enough, from_job may walk several ancestors; and a hosted runner
+        # keeps nothing unless it is written out.
+        root_job = self.proc(5000, 4, name='cmd.exe', start='2026-10-07T01:00:05.0000000Z')          # a job process, alive
+        middle = self.proc(6001, 5000, name='python.exe', start='2026-10-07T01:00:08.0000000Z')      # not a job pid itself
+        leaf = self.proc(6002, 6001, name='powershell.exe', start='2026-10-07T01:00:10.0000000Z')    # two steps below the job
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'TRIAL_DIAGNOSTICS_DIR': folder}):
+            b = self.cleanup([], [root_job, middle, leaf], peak=[5000])['b']
+            files = sorted(Path(folder).glob('*.json'))
+            self.assertEqual(len(files), 1)
+            kept = json.loads(files[0].read_text(encoding='utf-8'))
+        why = {w['pid']: w for w in b['why']}
+        self.assertEqual([(link['pid'], link['alive'], link['is_a_job_pid']) for link in why[6002]['parent_chain']], [(6001, True, False), (5000, True, True)],
+                         'the chain goes up to the job process that decided it')
+        self.assertEqual(why[6002]['parent_chain'][-1]['judged'], 'sure')
+        self.assertEqual((kept['check'], kept['status'], kept['job']['peak_pids'], kept['run_started'] is not None), ('X.b', 'FAIL', [5000], True))
+        self.assertEqual({p['ProcessId'] for p in kept['proc_after']} >= {5000, 6001, 6002}, True)
+        self.assertEqual(set(kept['proc_after'][0]), {'ProcessId', 'ParentProcessId', 'Name', 'Start', 'Kind'}, 'no command line, nothing but these fields')
+        self.assertEqual(kept['why'], b['why'])
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, {'TRIAL_DIAGNOSTICS_DIR': folder}):
+            self.cleanup([], [], peak=[5000])
+            self.assertEqual(list(Path(folder).glob('*')), [], 'nothing is written when the check does not fail')
 
     def test_a_job_pid_reused_after_the_job_ended_is_not_a_leftover(self):
         ended = datetime(2026, 10, 7, 1, 0, 40, 900000, tzinfo=timezone.utc)

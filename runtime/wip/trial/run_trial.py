@@ -108,6 +108,26 @@ def chk(cid, title, evidence, ok, detail='', mandatory=True):
             'status': 'PASS' if ok is True else ('FAIL' if ok is False else 'INCONCLUSIVE'), 'detail': str(detail)[:600]}
 
 
+def dump_diagnostics(folder, cid, run, check):
+    """Keep what a failed clean-up check was decided on, as one JSON file: the two process lists (pid, parent, name,
+    creation time and the reduced kind; command lines are never in them), the job's pids and the creation times
+    Windows confirmed, the start of the run, the end of the job, the harness pid, and the check with its diagnosis.
+    Written only when TRIAL_DIAGNOSTICS_DIR is set (CI uploads that folder when the step fails). Never changes a result."""
+    try:
+        target = Path(folder)
+        target.mkdir(parents=True, exist_ok=True)
+        fields = ('ProcessId', 'ParentProcessId', 'Name', 'Start', 'Kind')
+        keep = lambda rows: [{k: p.get(k) for k in fields} for p in rows if isinstance(p, dict)]
+        data = {'check': check.get('id'), 'status': check.get('status'), 'detail': check.get('detail'), 'why': check.get('why'),
+                'run_started': run.get('started'), 'job_ended': run.get('job_ended'), 'harness_pid': run.get('harness_pid'),
+                'job': {k: run['job'].get(k) for k in ('peak_pids', 'peak_created', 'survivors', 'unidentified')},
+                'proc_before': keep(run.get('proc_before') or []), 'proc_after': keep(run.get('proc_after') or [])}
+        name = '%s_%s_%d.json' % (cid, datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'), os.getpid())
+        (target / name).write_text(json.dumps(data, indent=1), encoding='utf-8')
+    except OSError:
+        pass
+
+
 def read_jsonl(path):
     path = Path(path)
     if not path.exists():
@@ -837,7 +857,23 @@ class Trial:
                 rule = 'job pid without a recorded creation time, attempt without the end of its job or without a harness pid: the old rule'
             else:
                 rule = 'job pid without a recorded creation time, created during the run, parent is in the job or is the harness'
-            return {'pid': p.get('ProcessId'), 'name': p.get('Name'), 'created': p.get('Start'), 'kind': p.get('Kind'), 'rule': rule,
+            # The walk from_job made, link by link, up to where it stopped: a parent that is not alive, or one younger
+            # than its child (a reused pid), ends it, and the decision there is "is that parent pid a job pid".
+            chain, cursor, seen = [], p, set()
+            while len(chain) < 25:
+                above = cursor.get('ParentProcessId')
+                elder = alive.get(above)
+                link = {'pid': above, 'alive': elder is not None, 'is_a_job_pid': above in peak, 'is_the_harness': above == (taken_by or os.getpid()),
+                        'creation_times_recorded_for_this_pid': recorded.get(str(above))}
+                if elder is not None:
+                    link.update(name=elder.get('Name'), created=elder.get('Start'), kind=elder.get('Kind'), judged=own(elder),
+                                younger_than_its_child=bool(elder.get('Start') and cursor.get('Start') and str(elder['Start']) > str(cursor['Start'])))
+                chain.append(link)
+                if elder is None or elder is cursor or link.get('younger_than_its_child') or own(elder) == 'sure' or above in seen:
+                    break
+                seen.add(above)
+                cursor = elder
+            return {'pid': p.get('ProcessId'), 'name': p.get('Name'), 'created': p.get('Start'), 'kind': p.get('Kind'), 'rule': rule, 'parent_chain': chain,
                     'pid_is_a_job_pid': p.get('ProcessId') in peak, 'creation_times_recorded_for_this_pid': times,
                     'parent': up, 'parent_name': mother.get('Name'), 'parent_created': mother.get('Start'), 'parent_alive': bool(mother),
                     'parent_is_a_job_pid': up in peak, 'parent_is_the_harness': up == (taken_by or os.getpid()),
@@ -849,6 +885,8 @@ class Trial:
                         % [(p.get('ProcessId'), p.get('Name'), p.get('Start'), p.get('ParentProcessId')) for p in doubtful]) if valid else 'process list not usable')
         if leftovers:
             job_tree['why'] = [why(p) for p in leftovers]
+            if os.environ.get('TRIAL_DIAGNOSTICS_DIR'):
+                dump_diagnostics(os.environ['TRIAL_DIAGNOSTICS_DIR'], cid, run, job_tree)
         before_ids = {ident(p) for p in before} if valid else set()
         new_claude = [p for p in after if ident(p) not in before_ids and str(p.get('Name', '')).lower().startswith(('claude', 'node'))] if valid else []
         chrome = [p for p in before if str(p.get('Name', '')).lower() == 'chrome.exe'] if valid else []

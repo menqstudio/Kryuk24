@@ -90,6 +90,9 @@ echo "sees the live runtime data folder: $(run sh -c "ls /var/lib/kryuk24 >/dev/
 
 echo "== 5. the temporary runtime: today's tasks, a snapshot and a backup BEFORE the pipeline"
 run "$PY" -B "$W/code/chain_client.py" plan "$W/runtime/runtime.sqlite" "$W/runtime/media"
+LAST=$(ls "$OUT"/*.jpg | tail -1); LASTSHA=$(sha256sum "$LAST" | cut -c1-64)
+echo "one of the two photos is put into the inbox first, the way another source would (review finding 1):"
+run "$PY" -B "$W/code/chain_client.py" before "$W/runtime/runtime.sqlite" "$W/runtime/media" "$LAST"
 back snapshot --db "$W/runtime/runtime.sqlite" > "$W/before.json"
 back backup --db "$W/runtime/runtime.sqlite" --to "$W/runtime/before-media.sqlite" | pick bytes integrity sha256
 echo "tables before: $("$PY" -c "import json,sys;print(len(json.load(open(sys.argv[1]))))" "$W/before.json")"
@@ -98,8 +101,21 @@ echo "== 6. intake: first cut off in the middle of a copy, then run, then run ag
 SHA=$(sha256sum "$FIRST" | cut -c1-64)
 run sh -c "mkdir -p '$W/runtime/media/originals' && head -c 1000 '$FIRST' > '$W/runtime/media/originals/$SHA.jpg'"
 echo "left by the cut-off run: $(stat -c '%s bytes' "$W/runtime/media/originals/$SHA.jpg") under the name of a $(stat -c %s "$FIRST")-byte photo"
+echo "an outbox that does not exist (review finding 4):"; cli intake --outbox "$W/no-such-folder" 2>&1 || true
 cli intake --outbox "$OUT" | flat
 cli intake --outbox "$OUT" | flat
+echo "the same folder asked again as a wrong path, with work in the queue: still refused, and the queue after it:"
+cli intake --outbox "$W/no-such-folder" 2>&1 || true
+cli queue | brief
+echo "a second operation while one runs (the lock is held for 4 s by another process; this one waits 1 s):"
+run "$PY" -B -c "import sys,time;sys.path.insert(0,'$W/code');from media_lock import PipelineLock
+with PipelineLock('$W/runtime/media'): time.sleep(4)" &
+sleep 1
+run "$PY" -B -c "import sys;sys.path.insert(0,'$W/code');from media_lock import PipelineLock
+try:
+    PipelineLock('$W/runtime/media', 1).__enter__(); print('ENTERED: the lock did not hold')
+except TimeoutError as e: print('refused:', e)"
+wait
 echo "originals in the inbox, each checked against its name:"
 for f in "$W"/runtime/media/originals/*.jpg; do n=$(basename "$f" .jpg); [ "$(sha256sum "$f" | cut -c1-64)" = "$n" ] && echo "  $n whole"; done
 cli queue | brief
@@ -110,7 +126,8 @@ cli prepare --work "$A" --worker agent-1 --masks "$W/runtime/masks.json" > /dev/
 cli queue | brief
 
 echo "== 7. rollback: the history is kept, the photos are whole in the outbox, the other tables are as before"
-back rollback --db "$W/runtime/runtime.sqlite" --media-root "$W/runtime/media" --outbox "$OUT" --archive "$W/runtime/history-1.json" | pick done history_rows originals_removed originals_kept_only_copy variants_removed kept_published
+back rollback --db "$W/runtime/runtime.sqlite" --media-root "$W/runtime/media" --outbox "$OUT" --archive "$W/runtime/history-1.json" | pick done history_rows originals_removed originals_kept_only_copy originals_kept_not_made_by_the_pipeline variants_removed kept_published
+echo "the original the inbox had before the pipeline is still there and whole: $([ "$(sha256sum "$W/runtime/media/originals/$LASTSHA.jpg" | cut -c1-64)" = "$LASTSHA" ] && echo yes || echo NO)"
 echo "archive: $(stat -c '%a %s bytes' "$W/runtime/history-1.json"); events in it: $("$PY" -c "import json,sys;print([e['kind'] for e in json.load(open(sys.argv[1]))['media_work_events']])" "$W/runtime/history-1.json")"
 back snapshot --db "$W/runtime/runtime.sqlite" > "$W/after.json"
 "$PY" "$W/code/chain_client.py" compare "$W/before.json" "$W/after.json"
@@ -125,7 +142,7 @@ back snapshot --db "$W/runtime/restored.sqlite" > "$W/restored.json"
 echo "== 9. put in again, then the only-copy case: one photo is no longer in the outbox when the rollback runs"
 cli intake --outbox "$OUT" | flat
 rm -f "$FIRST" "${FIRST%.jpg}.json"
-back rollback --db "$W/runtime/runtime.sqlite" --media-root "$W/runtime/media" --outbox "$OUT" --archive "$W/runtime/history-2.json" | pick done originals_removed originals_kept_only_copy
+back rollback --db "$W/runtime/runtime.sqlite" --media-root "$W/runtime/media" --outbox "$OUT" --archive "$W/runtime/history-2.json" | pick done originals_removed originals_kept_only_copy originals_kept_not_made_by_the_pipeline
 echo "the original that had no other copy is still in the inbox: $([ "$(sha256sum "$W/runtime/media/originals/$SHA.jpg" | cut -c1-64)" = "$SHA" ] && echo yes, whole || echo NO)"
 date -u +"%FT%TZ"
 echo "== rehearsal done"

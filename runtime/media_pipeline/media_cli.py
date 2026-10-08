@@ -70,6 +70,6 @@ def main(argv=None):
 if __name__ == '__main__':
     try:
         main()
-    except (ValueError, LookupError, PermissionError) as e:
+    except (ValueError, LookupError, PermissionError, TimeoutError) as e:
         print('REFUSED: %s: %s' % (type(e).__name__, e), file=sys.stderr)
         raise SystemExit(2)

@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 from PIL import Image, ImageDraw
 
@@ -103,7 +104,7 @@ class Tests(Base):
     def test_upload_becomes_one_original_and_one_work_with_its_facts(self):
         raw = photo(plate=PLATE)
         ident = self.upload(raw, purpose='EQUIPMENT')
-        self.assertEqual(self.take_in(), {'seen': 1, 'imported': 1, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'withdrawn': 0, 'repaired': 0})
+        self.assertEqual(self.take_in(), {'seen': 1, 'imported': 1, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'withdrawn': 0, 'repaired': 0, 'withdrawal_checked': True})
         (work,) = self.pipe.queue()
         self.assertEqual((work['status'], work['actor'], work['purpose'], work['format'], work['attempts']), ('NEW', 'armen', 'EQUIPMENT', 'JPEG', 0))
         self.assertEqual(work['sha256'], hashlib.sha256(raw).hexdigest())
@@ -125,7 +126,8 @@ class Tests(Base):
         shutil.copytree(self.outbox, alone)
         self.portal_db.unlink()
         shutil.rmtree(self.portal_photos)
-        self.assertEqual(sorted(f.suffix for f in alone.iterdir()), ['.jpg', '.json'], 'one photo and its facts: no answer, no preview, no test row, no database')
+        self.assertEqual(sorted(f.name.split('.', 1)[1] if f.name != 'INDEX.json' else f.name for f in alone.iterdir()), ['INDEX.json', 'jpg', 'json'],
+                         'one photo, its facts and the index: no answer, no preview, no test row, no database')
         self.assertEqual(self.pipe.intake(alone)['imported'], 1)
         self.assertEqual((self.media_root / self.files('originals')[0]).read_bytes(), raw)
         source = Path(__file__).with_name('media_pipeline.py').read_text(encoding='utf-8')
@@ -219,6 +221,65 @@ class Tests(Base):
         result = self.take_in()
         self.assertEqual((result['repaired'], result['mismatched'], result['imported']), (0, 1, 0))
         self.assertEqual(half.read_bytes(), b'damaged later')
+
+    def test_a_file_that_is_whole_or_registered_by_now_is_never_removed_by_the_repair(self):
+        # Review of 08.10.2026, finding 3: between "this is a half file nobody registered" and its removal another
+        # importer registered it, and the row was left without its file. The two orders in which that can happen:
+        raw = photo(plate=PLATE)
+        self.upload(raw)
+        target = self.media_root / 'originals' / (hashlib.sha256(raw).hexdigest() + '.jpg')
+        real = self.pipe.media.original
+        # (a) somebody completed the file in the meantime, nobody registered it yet: it is whole, so it stays and is used
+        target.parent.mkdir(parents=True)
+        target.write_bytes(raw)
+        with patch.object(self.pipe.media, 'original', side_effect=[ValueError('existing media file mismatch'), None]) as fake:
+            fake.side_effect = lambda *a: (_ for _ in ()).throw(ValueError('existing media file mismatch')) if fake.call_count == 1 else real(*a)
+            result = self.take_in()
+        self.assertEqual((result['imported'], result['repaired'], result['mismatched'], target.read_bytes() == raw), (1, 0, 0, True))
+        # (b) another importer registered it right after this one saw the mismatch: the row is found, the file is left alone
+        self.rows('DELETE FROM media_work_sources')
+        self.rows('DELETE FROM media_work')
+        with patch.object(self.pipe.media, 'original', side_effect=ValueError('existing media file mismatch')):
+            result = self.take_in()
+        self.assertEqual((result['repaired'], result['mismatched']), (0, 1))
+        self.assertEqual((target.read_bytes() == raw, self.rows('SELECT count(*) FROM ops_originals')), (True, [(1,)]), 'the row and its file are both there')
+
+    def test_one_operation_at_a_time_across_processes(self):
+        # Findings 2 and 3: a second intake, a clean-up, a sync or a rollback does not run beside another operation.
+        self.upload()
+        other = MediaPipeline(self.db, self.media_root, lock_wait=0.2)
+        with self.pipe.lock():
+            for name, call in (('intake', lambda: other.intake(self.outbox)), ('cleanup', other.cleanup), ('sync', other.sync),
+                               ('processing', lambda: other.prepare('MEDIA-' + '0' * 32, 'agent', [], True)),
+                               ('submit', lambda: other.submit(['MEDIA-' + '0' * 32], self.day, 'agent', 'SITE', 'KRYUK24', 'SAMPLE', 'SAMPLE')),
+                               ('rollback', lambda: media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json', lock_wait=0.2))):
+                with self.assertRaises(TimeoutError, msg=name):
+                    call()
+        self.assertEqual((self.pipe.queue(), (self.base / 'history.json').exists(), self.files('originals')), ([], False, []), 'the refused operations changed nothing')
+        self.assertEqual(other.intake(self.outbox)['imported'], 1, 'and the lock is free again afterwards')
+
+    def test_a_missing_wrong_or_empty_outbox_is_refused_or_ignored_and_withdraws_nothing(self):
+        # Finding 4: a folder that does not exist turned existing NEW work into WITHDRAWN.
+        work = self.one()
+        for bad in (self.base / 'no-such-folder', self.portal_db):   # absent; a file, not a folder
+            with self.assertRaises(ValueError):
+                self.pipe.intake(bad)
+        self.assertEqual(self.pipe.get(work)['status'], 'NEW')
+        empty = self.base / 'empty'
+        empty.mkdir()
+        result = self.pipe.intake(empty)
+        self.assertEqual((result['withdrawn'], result['withdrawal_checked'], self.pipe.get(work)['status']), (0, False, 'NEW'), 'an empty folder proves nothing')
+        for index in ('not json', json.dumps({'outbox': 'SOMETHING_ELSE', 'generated': datetime.now(timezone.utc).isoformat(), 'ids': []}), json.dumps({'outbox': 'ARMEN_PORTAL', 'ids': []})):
+            (empty / 'INDEX.json').write_text(index)
+            result = self.pipe.intake(empty)
+            self.assertEqual((result['withdrawal_checked'], self.pipe.get(work)['status']), (False, 'NEW'), index[:20])
+        # the real outbox with the photo's files gone but the portal's index still naming it: not a take-back
+        for f in self.outbox.iterdir():
+            if f.name != 'INDEX.json':
+                f.chmod(0o600)
+                f.unlink()
+        result = self.take_in()
+        self.assertEqual((result['withdrawn'], result['withdrawal_checked'], self.pipe.get(work)['status']), (0, True, 'NEW'))
 
     # ---- the agent's limited access
     def test_only_the_worker_holding_the_lease_reads_the_original(self):
@@ -315,7 +376,35 @@ class Tests(Base):
         self.pipe.ops.finish_approved(task['id'], task['digest'], 'SAMPLE result source', 'SAMPLE: placed by hand, link recorded')
         self.assertEqual(self.pipe.sync(), [{'id': new, 'status': 'PUBLISHED'}])
         kinds = [k for (k,) in self.rows('SELECT kind FROM media_work_events WHERE work_id=? ORDER BY id', (new,))]
-        self.assertEqual(kinds, ['TAKEN_IN', 'CLAIMED', 'PREPARED', 'SUBMITTED_FOR_REVIEW', 'APPROVED_BY_GEV', 'PUBLICATION_RECORDED'])
+        self.assertEqual(kinds, ['TAKEN_IN', 'CLAIMED', 'PREPARED', 'SUBMIT_STARTED', 'SUBMITTED_FOR_REVIEW', 'APPROVED_BY_GEV', 'PUBLICATION_RECORDED'])
+
+    def test_a_submit_cut_off_is_finished_or_undone_from_what_the_task_holds(self):
+        # Finding 6: the draft was already READY_REVIEW while the work still said PREPARED, and the rollback went ahead.
+        work = self.prepared()['id']
+        with patch.object(self.pipe, '_sync', side_effect=RuntimeError('the process died right after the draft was written')):
+            with self.assertRaises(RuntimeError):
+                self.submit([work])
+        task = self.rows("SELECT id,status FROM ops_tasks WHERE job='MEDIA_INBOX'")
+        self.assertEqual((self.pipe.get(work)['status'], task[0][1]), ('SUBMITTING', 'READY_REVIEW'))
+        with self.assertRaises(ValueError):
+            media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json')
+        # even with a work status that says nothing, the rollback reads the task itself and refuses
+        self.rows("UPDATE media_work SET status='PREPARED'")
+        with self.assertRaises(ValueError):
+            media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json')
+        self.assertFalse((self.base / 'history.json').exists())
+        self.rows("UPDATE media_work SET status='SUBMITTING'")
+        self.assertEqual(self.pipe.sync(), [{'id': work, 'status': 'IN_REVIEW'}], 'finished from what the task holds')
+        self.assertEqual(self.pipe.sync(), [])
+        # cut off, or refused, BEFORE the draft: the work goes back to PREPARED and can be submitted again
+        self.pipe.ops.revise(task[0][0], 'SAMPLE: sent back')
+        self.assertEqual(self.pipe.sync(), [{'id': work, 'status': 'PREPARED'}])
+        with patch.object(self.pipe.ops, 'draft', side_effect=ValueError('SAMPLE: the draft was refused')):
+            with self.assertRaises(ValueError):
+                self.submit([work])
+        self.assertEqual((self.pipe.get(work)['status'], self.pipe.get(work)['platform']), ('PREPARED', None))
+        kinds = [k for (k,) in self.rows('SELECT kind FROM media_work_events WHERE work_id=? ORDER BY id', (work,))]
+        self.assertEqual(kinds[-5:], ['SUBMIT_STARTED', 'SUBMITTED_FOR_REVIEW', 'SENT_BACK', 'SUBMIT_STARTED', 'SUBMIT_NOT_COMPLETED'])
 
     def test_sent_back_by_gev_returns_to_prepared_and_can_be_redone(self):
         work = self.prepared()['id']
@@ -437,6 +526,31 @@ class BackupAndRollback(Base):
         again = MediaPipeline(self.db, self.media_root)
         self.assertEqual(again.intake(self.outbox)['imported'], 2)
         self.assertEqual(again.intake(self.outbox)['known'], 2)
+
+    def test_rollback_never_removes_an_original_the_inbox_had_before_the_pipeline(self):
+        # Finding 1: the same picture came in from another source first; the rollback deleted that row and its file,
+        # and the row was not even in the archive.
+        raw = photo(plate=PLATE)
+        elsewhere = self.base / 'from-elsewhere.jpg'
+        elsewhere.write_bytes(raw)
+        first = self.pipe.media.original(elsewhere, 'OPERATOR: sent by WhatsApp on 01.10.2026', 'SAMPLE permission reference')
+        self.upload(raw)
+        self.assertEqual(self.take_in()['imported'], 1)
+        work = self.pipe.queue()[0]['id']
+        self.assertEqual(self.rows('SELECT original_id,owns_original FROM media_work'), [(first['id'], 0)], 'the work uses the original; it did not make it')
+        self.pipe.claim(work, 'agent')
+        self.pipe.prepare(work, 'agent', [{'kind': 'PLATE', 'box': PLATE}])
+        stranger = self.media_root / 'prepared' / first['id'] / 'in-progress-of-somebody-else.jpg'
+        stranger.write_bytes(b'not registered yet')
+        self.assertEqual(self.pipe.cleanup()['removed'], [], 'beside an original it did not make the clean-up sweeps no unnamed file')
+        result = media_rollback.rollback(self.db, self.media_root, self.outbox, self.base / 'history.json')
+        digest = hashlib.sha256(raw).hexdigest()
+        self.assertEqual((result['originals_removed'], result['originals_kept_not_made_by_the_pipeline'], result['variants_removed']), ([], [digest], 2))
+        self.assertEqual(self.rows('SELECT id,provenance FROM ops_originals'), [(first['id'], 'OPERATOR: sent by WhatsApp on 01.10.2026')])
+        self.assertEqual((self.media_root / first['path']).read_bytes(), raw)
+        self.assertTrue(stranger.exists())
+        archive = json.loads((self.base / 'history.json').read_text(encoding='utf-8'))
+        self.assertEqual([o['id'] for o in archive['ops_originals']], [first['id']], 'what the work used is in the archive too')
 
     def test_rollback_never_removes_an_original_that_is_the_only_copy(self):
         raw = photo(plate=PLATE)

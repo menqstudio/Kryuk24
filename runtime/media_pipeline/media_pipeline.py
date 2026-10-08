@@ -23,6 +23,7 @@ from pathlib import Path
 
 from PIL import Image, ImageFilter, ImageOps
 
+from media_lock import PipelineLock
 from ops_work import Operations
 from runtime import encode, now
 
@@ -35,7 +36,8 @@ VARIANTS = {'FULL': 1600, 'WEB': 747}
 # The platform a draft names, and the variant it gets.
 PLATFORMS = {'YANDEX_BUSINESS': 'FULL', 'AVITO': 'FULL', 'SITE': 'WEB'}
 MASK_KINDS = ('PLATE', 'FACE', 'PERSONAL')
-OPEN = ('NEW', 'CLAIMED', 'PREPARED', 'IN_REVIEW', 'APPROVED')
+OPEN = ('NEW', 'CLAIMED', 'PREPARED', 'SUBMITTING', 'IN_REVIEW', 'APPROVED')
+INDEX = 'INDEX.json'   # the portal's own list of what it hands over now: the only proof that a photo was taken back
 DEFAULT_LIMIT = 5 * 1024 ** 3
 
 
@@ -74,7 +76,8 @@ def cover(image, box):
 
 
 class MediaPipeline:
-    def __init__(self, db, media_root=None, limit=DEFAULT_LIMIT, clock=None):
+    def __init__(self, db, media_root=None, limit=DEFAULT_LIMIT, clock=None, lock_wait=30.0):
+        self.lock_wait = lock_wait
         self.ops = Operations(db, media_root)
         self.media = self.ops.media
         self.runtime = self.ops.runtime
@@ -85,12 +88,37 @@ class MediaPipeline:
             c.executescript('''
 CREATE TABLE IF NOT EXISTS media_work(id TEXT PRIMARY KEY, original_id TEXT UNIQUE NOT NULL, digest TEXT UNIQUE NOT NULL,
  format TEXT, actor TEXT, uploaded TEXT, purpose TEXT, status TEXT NOT NULL, revision INTEGER NOT NULL, worker TEXT,
- lease_until TEXT, attempts INTEGER NOT NULL, platform TEXT, task_id TEXT, created TEXT NOT NULL);
+ lease_until TEXT, attempts INTEGER NOT NULL, platform TEXT, task_id TEXT, created TEXT NOT NULL,
+ owns_original INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS media_work_sources(source TEXT, source_id TEXT, source_file TEXT, actor TEXT, uploaded TEXT,
  purpose TEXT, work_id TEXT NOT NULL, created TEXT NOT NULL, PRIMARY KEY(source, source_id));
 CREATE TABLE IF NOT EXISTS media_work_assets(work_id TEXT, variant TEXT, asset_id TEXT NOT NULL, PRIMARY KEY(work_id, variant));
 CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEXT, kind TEXT, data TEXT, created TEXT);
 ''')
+
+    # ---- one operation at a time, across processes (media_lock.py)
+    def lock(self):
+        return PipelineLock(self.root, self.lock_wait)
+
+    def intake(self, outbox):
+        with self.lock():
+            return self._intake(outbox)
+
+    def prepare(self, work, worker, masks, nothing_to_mask=False):
+        with self.lock():
+            return self._prepare(work, worker, masks, nothing_to_mask)
+
+    def submit(self, works, day, worker, platform, account, body, reason):
+        with self.lock():
+            return self._submit(works, day, worker, platform, account, body, reason)
+
+    def sync(self):
+        with self.lock():
+            return self._sync()
+
+    def cleanup(self):
+        with self.lock():
+            return self._cleanup()
 
     # ---- small helpers
     def event(self, c, work, kind, data):
@@ -121,16 +149,25 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
         return sum(f.stat().st_size for f in self.root.rglob('*') if f.is_file() and not f.is_symlink()) if self.root.exists() else 0
 
     # ---- 1. intake: what the portal handed over becomes originals of the shared inbox and work of the queue
-    def intake(self, outbox):
+    def _intake(self, outbox):
         """Take in what is new in the portal's outbox. The outbox is all this code ever reads of the portal: for each
         photo one file and one small metadata file (id, sha256, format, file, actor, uploaded, purpose). It never
         opens the portal's database, its photo folder, an answer or a preview. Run it as often as wanted: a photo
         already taken in, or the same bytes under another id, makes no second original and no second work. A run
         cut off at any point is completed by the next one."""
         outbox = Path(outbox)
-        result = {'seen': 0, 'imported': 0, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'withdrawn': 0, 'repaired': 0}
-        present = set()
-        for meta in sorted(outbox.glob('*.json')):
+        # A folder that is not there, cannot be read or is not a folder is refused before anything is looked at or
+        # changed: it says nothing about the photos, least of all that they were taken back.
+        try:
+            if outbox.is_symlink() or not outbox.is_dir():
+                raise ValueError('the outbox is not an existing folder; nothing was changed')
+            metas = sorted(m for m in outbox.glob('*.json') if m.name != INDEX)
+            handed = self.index(outbox)
+        except OSError as e:
+            raise ValueError('the outbox cannot be read (%s); nothing was changed' % type(e).__name__) from None
+        result = {'seen': 0, 'imported': 0, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'withdrawn': 0, 'repaired': 0,
+                  'withdrawal_checked': handed is not None}
+        for meta in metas:
             result['seen'] += 1
             try:
                 p = json.loads(meta.read_text(encoding='utf-8'))
@@ -143,7 +180,6 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
             except (ValueError, OSError):
                 result['mismatched'] += 1
                 continue
-            present.add(p['id'])
             with self.runtime.db() as c:
                 if c.execute('SELECT 1 FROM media_work_sources WHERE source=? AND source_id=?', (SOURCE, p['id'])).fetchone():
                     result['known'] += 1
@@ -164,15 +200,23 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
                 # The inbox already holds a file under this sha256 that is not these bytes. When no inbox row names it,
                 # it is what a run cut off in the middle of the copy left behind: it was never an original, and the whole
                 # photo is still in the outbox, so it is replaced. A file an inbox row names is never touched here.
+                # The check and the removal are one step: inside one write transaction of the runtime database (nobody,
+                # also outside this pipeline, can register an original meanwhile) and under the pipeline's lock (no
+                # second intake runs). And a file that is whole by now is not removed, whoever completed it.
                 target = self.root / 'originals' / ('%s.%s' % (p['sha256'], p['file'].rsplit('.', 1)[1]))
                 with self.runtime.db() as c:
+                    c.execute('BEGIN IMMEDIATE')
                     named = c.execute('SELECT 1 FROM ops_originals WHERE digest=?', (p['sha256'],)).fetchone()
-                if named or target.is_symlink() or not target.is_file():
-                    result['mismatched'] += 1
-                    continue
-                remove(target)
+                    if named or target.is_symlink() or not target.is_file():
+                        result['mismatched'] += 1
+                        continue
+                    if sha256(target) != p['sha256']:
+                        remove(target)
+                        result['repaired'] += 1
                 original = self.media.original(path, provenance, PERMISSION)
-                result['repaired'] += 1
+            # Whose original is it? Ours when the inbox row carries exactly the provenance written here: made now, or by a
+            # run of this intake that was cut off. An original the inbox had before, from any other source, is only used.
+            owns = 1 if original['provenance'] == provenance else 0
             with self.runtime.db() as c:
                 c.execute('BEGIN IMMEDIATE')
                 if c.execute('SELECT 1 FROM media_work_sources WHERE source=? AND source_id=?', (SOURCE, p['id'])).fetchone():
@@ -185,23 +229,41 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
                     self.event(c, work, 'DUPLICATE_SOURCE', {'source': SOURCE, 'source_id': p['id'], 'actor': p['actor']})
                 else:
                     work = 'MEDIA-' + uuid.uuid4().hex
-                    c.execute('INSERT INTO media_work VALUES(?,?,?,?,?,?,?,?,0,NULL,NULL,0,NULL,NULL,?)',
-                              (work, original['id'], p['sha256'], p['format'], p['actor'], p['uploaded'], p['purpose'], 'NEW', now()))
-                    self.event(c, work, 'TAKEN_IN', {'source': SOURCE, 'source_id': p['id'], 'actor': p['actor'], 'purpose': p['purpose']})
+                    c.execute('INSERT INTO media_work VALUES(?,?,?,?,?,?,?,?,0,NULL,NULL,0,NULL,NULL,?,?)',
+                              (work, original['id'], p['sha256'], p['format'], p['actor'], p['uploaded'], p['purpose'], 'NEW', now(), owns))
+                    self.event(c, work, 'TAKEN_IN', {'source': SOURCE, 'source_id': p['id'], 'actor': p['actor'], 'purpose': p['purpose'],
+                                                     'original_was_already_in_the_inbox': not owns})
                     result['imported'] += 1
                 c.execute('INSERT INTO media_work_sources VALUES(?,?,?,?,?,?,?,?)',
                           (SOURCE, p['id'], p['file'], p['actor'], p['uploaded'], p['purpose'], work, now()))
         # A photo the portal took back (marked as a test after it was handed over) leaves the queue; what Gev already
-        # has before him, and anything published, is his to decide and is not touched here.
+        # has before him, and anything published, is his to decide and is not touched here. The only proof of a
+        # take-back is the portal's own index of what it hands over now. A missing photo file, an empty folder or a
+        # folder without a valid index proves nothing, and then no work changes its state.
+        if handed is None:
+            return result
         with self.runtime.db() as c:
             c.execute('BEGIN IMMEDIATE')
             for r in c.execute("SELECT * FROM media_work WHERE status IN ('NEW','CLAIMED','PREPARED')").fetchall():
                 sources = [x['source_id'] for x in c.execute('SELECT source_id FROM media_work_sources WHERE work_id=?', (r['id'],))]
-                if sources and not any(x in present for x in sources):
+                if sources and not any(x in handed for x in sources):
                     c.execute("UPDATE media_work SET status='WITHDRAWN',worker=NULL,lease_until=NULL,revision=revision+1 WHERE id=?", (r['id'],))
                     self.event(c, r['id'], 'WITHDRAWN_BY_THE_PORTAL', {'sources': sources})
                     result['withdrawn'] += 1
         return result
+
+    @staticmethod
+    def index(outbox):
+        """The ids the portal says it hands over now, or None when the folder holds no valid index of the portal."""
+        try:
+            data = json.loads((outbox / INDEX).read_text(encoding='utf-8'))
+            if type(data) is not dict or data.get('outbox') != SOURCE or type(data.get('ids')) is not list \
+                    or any(type(i) is not str or not re.fullmatch(r'[a-f0-9]{32}', i) for i in data['ids']) \
+                    or datetime.fromisoformat(data.get('generated')).tzinfo is None:
+                return None
+            return set(data['ids'])
+        except (OSError, ValueError, TypeError):
+            return None
 
     # ---- 2. the queue an internal agent sees: fixed fields, no path, no free text
     def view(self, c, r):
@@ -265,7 +327,7 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
         return self.get(work)
 
     # ---- 3. processing: upright, declared regions covered, two sizes, no metadata
-    def prepare(self, work, worker, masks, nothing_to_mask=False):
+    def _prepare(self, work, worker, masks, nothing_to_mask=False):
         """masks: [{'kind': 'PLATE'|'FACE'|'PERSONAL', 'box': [left, top, right, bottom]}] in pixels of the upright
         picture (as a viewer sees it). The worker looked at the picture and declares the regions; without a
         region the worker must say outright that there is nothing to cover. Nothing is detected by this code."""
@@ -318,9 +380,12 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
         return self.get(work)
 
     # ---- 4. Gev's review: the day's MEDIA_INBOX task carries the draft, with the platform named
-    def submit(self, works, day, worker, platform, account, body, reason):
+    def _submit(self, works, day, worker, platform, account, body, reason):
         """Put prepared pictures before Gev as one draft for one named platform. Nothing is published here:
-        the draft waits in READY_REVIEW until Gev approves that exact digest in his dashboard."""
+        the draft waits in READY_REVIEW until Gev approves that exact digest in his dashboard.
+        The step has two halves in two stores (the works here, the draft in the task). So that a run cut off between
+        them cannot leave a draft before Gev with works that look free, the works are first marked SUBMITTING with
+        the task they go to; `sync` finishes or undoes that from what the task really holds."""
         if platform not in PLATFORMS:
             raise ValueError('a known platform must be named')
         if type(works) is not list or not works or len(set(works)) != len(works):
@@ -337,23 +402,35 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
         if not task:
             raise LookupError('the day has no MEDIA_INBOX task; plan the day first')
         task = task['id']
-        self.ops.claim(task, worker)
-        self.ops.draft(task, worker, {'action': 'PHOTO_BATCH', 'account': account, 'destination': platform, 'body': body, 'reason': reason, 'assets': assets})
         with self.runtime.db() as c:
             c.execute('BEGIN IMMEDIATE')
             for work in works:
-                c.execute("UPDATE media_work SET status='IN_REVIEW',platform=?,task_id=?,revision=revision+1 WHERE id=?", (platform, task, work))
-                self.event(c, work, 'SUBMITTED_FOR_REVIEW', {'task': task, 'platform': platform, 'variant': variant, 'publication_started': False})
+                if self.row(c, work)['status'] != 'PREPARED':
+                    raise ValueError('prepared work required: ' + work)
+                c.execute("UPDATE media_work SET status='SUBMITTING',platform=?,task_id=?,revision=revision+1 WHERE id=?", (platform, task, work))
+                self.event(c, work, 'SUBMIT_STARTED', {'task': task, 'platform': platform, 'variant': variant})
+        try:
+            self.ops.claim(task, worker)
+            self.ops.draft(task, worker, {'action': 'PHOTO_BATCH', 'account': account, 'destination': platform, 'body': body, 'reason': reason, 'assets': assets})
+        except Exception:
+            self._sync()   # refused by the task (not claimable, a bad draft): the works go back to PREPARED, or forward if the draft is there
+            raise
+        self._sync()       # the draft is in the task: the works become IN_REVIEW from what the task holds
         return self.ops.get(task)
 
-    def sync(self):
-        """Follow Gev's decision on the drafts: approved, sent back for a change, or the result recorded."""
+    def _sync(self):
+        """Follow what the task really holds: a submit that was cut off is finished or undone, and Gev's decision on a
+        draft is taken over (approved, sent back for a change, the result recorded). A work counts as before Gev only
+        when the task's draft names its own asset; the work's stored status alone decides nothing."""
         changed = []
         with self.runtime.db() as c:
             c.execute('BEGIN IMMEDIATE')
-            for r in c.execute("SELECT * FROM media_work WHERE status IN ('IN_REVIEW','APPROVED')").fetchall():
-                task = c.execute('SELECT status,digest FROM ops_tasks WHERE id=?', (r['task_id'],)).fetchone()
-                new = {'APPROVED': 'APPROVED', 'DONE': 'PUBLISHED', 'READY_REVIEW': 'IN_REVIEW'}.get(task['status'], 'PREPARED')
+            for r in c.execute("SELECT * FROM media_work WHERE status IN ('SUBMITTING','IN_REVIEW','APPROVED')").fetchall():
+                task = c.execute('SELECT status,digest,draft FROM ops_tasks WHERE id=?', (r['task_id'],)).fetchone()
+                mine = c.execute('SELECT asset_id FROM media_work_assets WHERE work_id=? AND variant=?', (r['id'], PLATFORMS.get(r['platform'], ''))).fetchone()
+                named = {a['id'] for a in json.loads(task['draft']).get('assets', [])} if task and task['draft'] else set()
+                linked = bool(mine) and mine['asset_id'] in named
+                new = {'APPROVED': 'APPROVED', 'DONE': 'PUBLISHED', 'READY_REVIEW': 'IN_REVIEW'}.get(task['status'], 'PREPARED') if linked else 'PREPARED'
                 if new == r['status']:
                     continue
                 data = {'task': r['task_id'], 'platform': r['platform']}
@@ -367,7 +444,11 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
                     c.execute("UPDATE media_work SET status='PREPARED',platform=NULL,task_id=NULL,revision=revision+1 WHERE id=?", (r['id'],))
                 else:
                     c.execute('UPDATE media_work SET status=?,revision=revision+1 WHERE id=?', (new, r['id']))
-                self.event(c, r['id'], {'PREPARED': 'SENT_BACK', 'APPROVED': 'APPROVED_BY_GEV', 'PUBLISHED': 'PUBLICATION_RECORDED'}[new], data)
+                kind = {'PREPARED': 'SUBMIT_NOT_COMPLETED' if r['status'] == 'SUBMITTING' else 'SENT_BACK', 'IN_REVIEW': 'SUBMITTED_FOR_REVIEW',
+                        'APPROVED': 'APPROVED_BY_GEV', 'PUBLISHED': 'PUBLICATION_RECORDED'}[new]
+                if new == 'IN_REVIEW':
+                    data.update(variant=PLATFORMS[r['platform']], publication_started=False)
+                self.event(c, r['id'], kind, data)
                 changed.append({'id': r['id'], 'status': new})
         return changed
 
@@ -378,7 +459,7 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
             ids.update(a['id'] for a in json.loads(t['draft']).get('assets', []))
         return ids
 
-    def cleanup(self):
+    def _cleanup(self):
         """Remove what is no longer needed and nothing else. Kept always: every original of the inbox, every
         asset a draft names, every asset of unfinished work. Removed: temporary folders of work nobody holds,
         prepared files of this pipeline that no work and no draft names, and, for work whose publication is
@@ -407,7 +488,9 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
             paths = {a['path'] for a in c.execute('SELECT path FROM ops_assets')}
             for r in works:
                 folder = self.root / 'prepared' / r['original_id']
-                if r['id'] in active or not folder.is_dir():
+                # Unnamed files are swept only beside an original this pipeline made: beside one the inbox had before,
+                # a file without a row may be somebody else's work in progress.
+                if r['id'] in active or not r['owns_original'] or not folder.is_dir():
                     continue
                 for f in sorted(folder.iterdir()):
                     relative = 'prepared/%s/%s' % (r['original_id'], f.name)

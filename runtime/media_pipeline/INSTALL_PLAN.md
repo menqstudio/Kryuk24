@@ -1,10 +1,25 @@
-# Media pipeline: install plan for the server, r2 / Մեդիայի հոսք. սերվերում դնելու պլան, r2
+# Media pipeline: install plan for the server, r3 / Մեդիայի հոսք. սերվերում դնելու պլան, r3
 
 **Status: a plan for review. Nothing in it has been done on the live runtime, and by Gev's word of 08.10.2026 nothing will be until GPT has reviewed the current head, the diff and the evidence.** Server facts were read on 08.10.2026 11:13 UTC with a read-only script. What was tried was tried in a temporary place on the server (11:37 UTC); each such line says so.
 
-r2 replaces r1 of the same day. What changed: the runtime no longer gets read access to the portal's database or photo folder; test data is kept apart by an account, not by marks; backup and rollback are code with tests and were tried.
+r3 adds the fixes of GPT's review of head `02c21fb` (the section right below) to r2; the rest of the plan is r2's, with the numbers of the new rehearsal. r2 replaced r1 of the same day. What changed in r2: the runtime no longer gets read access to the portal's database or photo folder; test data is kept apart by an account, not by marks; backup and rollback are code with tests and were tried.
 
 ## EN
+
+### 0. Review of head `02c21fb` (GPT, 08.10.2026): seven findings, each fixed with a test that fails on the reviewed code
+
+| # | Found | Fix | Test |
+| --- | --- | --- | --- |
+| 1 | The rollback deleted an original the inbox had before the pipeline (the same picture taken in from another source first), and that row was not in the archive | A work records whether the pipeline made its original (`owns_original`: the inbox row carries exactly the provenance this intake writes). The rollback never removes an original it did not make, nor its row; every original a work used is in the archive. The clean-up no longer sweeps unnamed files beside such an original | `test_rollback_never_removes_an_original_the_inbox_had_before_the_pipeline` |
+| 2 | The archive was read before the transaction: a second intake between the two lost its history while its tables were dropped | The rollback runs alone: under the pipeline's lock and inside one write transaction, from reading the history to dropping the tables. A failed run removes the archive it started | `test_one_operation_at_a_time_across_processes` |
+| 3 | The repair of a half-written file could remove an original another importer had just registered | One lock across processes for intake, processing, submit, sync, clean-up and rollback (`media_lock.py`: a lock of the operating system, released when a process dies). Inside it the check and the removal are one write transaction of the runtime database, and a file that is whole by now is never removed | `test_a_file_that_is_whole_or_registered_by_now_is_never_removed_by_the_repair`, the lock test |
+| 4 | A folder that does not exist was read as "the photos were taken back": NEW work became WITHDRAWN | A missing, unreadable or non-folder outbox is refused before anything is looked at. Withdrawal needs proof: the portal's own `INDEX.json` of what it hands over now. A missing photo file, an empty folder or a folder without a valid index changes no work | `test_a_missing_wrong_or_empty_outbox_is_refused_or_ignored_and_withdraws_nothing` |
+| 5 | A hand-over copy cut off at 1000 bytes got its facts published by the next run | No copy at all: a hard link or an error that is said (the portal logs it; at start it refuses an outbox it cannot link into). The facts are written only after the outbox file was read back and its sha256 is the recorded one; a file under the photo's name that is not the photo is replaced first; a damaged portal original gets no facts | `test_hand_over_is_a_hard_link_checked_before_its_facts_appear_and_never_a_silent_copy` |
+| 6 | A submit cut off after the draft left the work PREPARED, and the rollback went ahead | The works are marked `SUBMITTING` with their task before the draft is written; `sync` finishes or undoes that from what the task really holds. The rollback reads the tasks themselves: a draft in review or approved that names a variant of this pipeline blocks it, whatever the works' status says | `test_a_submit_cut_off_is_finished_or_undone_from_what_the_task_holds` |
+| 7 | Saving an answer as the test account answered `ARMEN_REPORTED` | The stored result of a test answer is `TEST_NOT_COUNTED`, so the repeat of the same request says so too | `test_the_test_accounts_answer_is_never_reported_as_armens_also_when_repeated` |
+
+Run against the reviewed code (`02c21fb`) the new tests fail: 10 of the pipeline's 28 and 4 of the portal's 28. On this head both suites pass, on Windows and on the server. The rehearsal was run again with this code (12:06 UTC): a wrong outbox path refused twice with the queue unchanged, a second operation refused while the lock was held, and the original the inbox had before the pipeline still there and whole after the rollback.
+
 
 ### 1. What the photo flow actually needs from the portal
 
@@ -21,8 +36,8 @@ r2 replaces r1 of the same day. What changed: the runtime no longer gets read ac
 
 ### 2. How it gets exactly that: the outbox
 
-- The portal itself puts each of Armen's own photos into one folder, the outbox: a hard link to the original (one file on the disk under two names) and a small metadata file with the seven facts above. The metadata file appears last and whole; without it the intake ignores the photo.
-- Only photos of the account `armen` that are not marked as a test are handed over. A photo marked later is taken back out, and the intake then withdraws its work from the queue if Gev has not got it before him yet.
+- The portal itself puts each of Armen's own photos into one folder, the outbox: a hard link to the original (one file on the disk under two names, never a copy) and a small metadata file with the seven facts above, written only after the outbox file was read back against its sha256. The metadata file appears last and whole; without it the intake ignores the photo. One more file, `INDEX.json`, is the portal's list of what it hands over now.
+- Only photos of the account `armen` that are not marked as a test are handed over. A photo marked later is taken back out and leaves the index, and the intake then withdraws its work from the queue if Gev has not got it before him yet. Only the index proves a take-back.
 - The pipeline reads the outbox and nothing else of the portal. Its code holds no SQL for the portal's tables at all (a test checks that), and the intake was run with the portal's database and photo folder deleted (a test).
 - Without the outbox setting no photo leaves the portal. **That is the state of the live portal today:** its unit has no `--outbox`.
 
@@ -83,10 +98,14 @@ Beyond the database: take `--outbox` out of the portal's unit and restart it, re
 | Case | Result | Where |
 | --- | --- | --- |
 | Intake run twice | second run: 2 known, 0 imported | rehearsal, test |
+| Two operations at once | the second is refused while the first holds the lock; nothing changed | rehearsal, test |
+| A wrong outbox path | refused, the queue unchanged | rehearsal, test |
 | The same bytes under another id | no second original, no second work | test |
 | Intake cut off after the copy, before the work row | next run makes the one work; one original | test |
 | Intake cut off in the middle of the copy (1000 of 5999287 bytes under the photo's name) | next run replaces the half file and reports `repaired: 1`; a file an inbox row names is never written over | rehearsal, test |
 | Hand-over cut off between the link and the metadata file | next hand-over completes it | test |
+| A half file under the photo's name in the outbox | replaced by the link before any facts are written | test |
+| Submit cut off after the draft | `sync` finishes it; the rollback refuses meanwhile | test |
 | Upload repeated by Armen | the portal stores the bytes once | rehearsal, test |
 
 ### 9. Steps on the server, after the review and Gev's yes
@@ -94,7 +113,7 @@ Beyond the database: take `--outbox` out of the portal's unit and restart it, re
 1. Read-only facts; the two backups.
 2. Group `kryuk-media-in` with its two members; the outbox folder; the data folder to 710. Check as in the rehearsal: what `kryuk-run` can and cannot reach, on the real paths.
 3. Portal unit: add `--outbox`; one restart; `hand_over` runs at the next upload. Today it would hand over nothing: the only photo is Gev's marked test.
-4. `/opt/kryuk24-media` with its Python; the 23 tests on the server.
+4. `/opt/kryuk24-media` with its Python; the 28 tests on the server.
 5. Media folder; `storage` once (creates the four tables); snapshot compared with step 1: no existing table changed.
 6. From here a real photo of Armen's: upload → outbox → `intake` → an agent claims, looks, declares the regions → variants → `submit` → the draft in Gev's dashboard. Started by hand; no service, no timer.
 7. Facts again; evidence; `docs/CURRENT_STATE.md`.
@@ -108,6 +127,19 @@ Beyond the database: take `--outbox` out of the portal's unit and restart it, re
 - Not verified until installed: the live dashboard showing a media draft with pictures made by this pipeline.
 
 ## HY
+
+### 0. `02c21fb` head-ի review-ը (GPT, 08.10.2026). յոթ գտած, ամեն մեկը ուղղված՝ թեստով, որը review-ած կոդի վրա ընկնում ա
+
+1. **Rollback-ը ջնջում էր inbox-ի նախկին բնօրինակը։** Գործը հիմա գրանցում ա՝ բնօրինակը հոսքն ա սարքել, թե միայն օգտագործել (`owns_original`)։ Չսարքած բնօրինակն ու իր տողը երբեք չեն հանվում. գործի օգտագործած ամեն բնօրինակ արխիվում ա։
+2. **Արխիվը transaction-ից առաջ էր։** Rollback-ը հիմա աշխատում ա մենակ. հոսքի կողպեքի տակ ու մեկ գրելու transaction-ի մեջ՝ պատմությունը կարդալուց մինչև աղյուսակները ջնջելը։
+3. **Կիսատ ֆայլի repair-ը կարող էր ջնջել նոր գրանցված բնօրինակը։** Մեկ միջպրոցեսային կողպեք (`media_lock.py`) ընդունման, մշակման, submit-ի, sync-ի, մաքրման ու rollback-ի համար. ներսում ստուգումն ու հանելը մեկ transaction են, ու արդեն ամբողջ ֆայլը երբեք չի հանվում։
+4. **Չեղած outbox-ը համարվում էր հետկանչ։** Չեղած, չկարդացվող կամ ոչ-պանակ outbox-ը մերժվում ա։ Հետկանչին ապացույց ա պետք՝ կաբինետի սեփական `INDEX.json`-ը. դատարկ պանակը ոչինչ չի ապացուցում։
+5. **Կիսատ hand-over copy-ն հրապարակվում էր։** Copy այլևս չկա. hard link կամ ասված սխալ։ Փաստերը գրվում են միայն ֆայլը հետ կարդալուց ու sha256-ը ստուգելուց հետո։
+6. **Ընդհատված submit-ը շրջանցում էր rollback-ի արգելքը։** Գործերը սևագրից առաջ նշվում են `SUBMITTING`. `sync`-ը ավարտում կամ հետ ա բերում՝ ըստ task-ի իրական վիճակի։ Rollback-ը կարդում ա հենց task-երը։
+7. **Test-ի պատասխանը վերադարձնում էր `ARMEN_REPORTED`։** Հիմա `TEST_NOT_COUNTED` ա, կրկնության դեպքում էլ։
+
+Review-ած կոդի վրա նոր թեստերն ընկնում են (հոսքի 28-ից 10-ը, կաբինետի 28-ից 4-ը). էս head-ի վրա երկու հավաքածուն էլ անցնում են Windows-ում ու սերվերում։ Փորձը նորից քշվել ա էս կոդով (12:06 UTC)։
+
 
 **Վիճակը. պլան՝ review-ի համար։ Կենդանի runtime-ում սրանից ոչինչ արված չի, ու Գևի 08.10.2026-ի խոսքով չի արվի, մինչև GPT-ն չնայի ընթացիկ head-ը, diff-ն ու evidence-ը։** Փորձվածը փորձվել ա սերվերում ժամանակավոր տեղում (11:37 UTC)։
 
@@ -176,7 +208,7 @@ r2-ը փոխարինում ա նույն օրվա r1-ին։ Ինչ փոխվեց.
 1. Միայն-կարդացող փաստեր. երկու պահուստ։
 2. `kryuk-media-in` խումբը երկու անդամով. outbox-ի պանակը. տվյալների պանակը՝ 710։ Ստուգում իրական ճանապարհների վրա. ինչին ա `kryuk-run`-ը հասնում, ինչին՝ չէ։
 3. Կաբինետի unit-ում `--outbox`. մեկ restart։ Այսօր ոչինչ չէր փոխանցվի. միակ նկարը Գևի նշված տեստն ա։
-4. `/opt/kryuk24-media`-ն իր Python-ով. 23 թեստը սերվերում։
+4. `/opt/kryuk24-media`-ն իր Python-ով. 28 թեստը սերվերում։
 5. Media պանակը. `storage` մեկ անգամ (ստեղծում ա չորս աղյուսակը). snapshot-ը համեմատվում ա 1-ին քայլի հետ։
 6. Էստեղից Արմենի իրական նկարը. upload → outbox → `intake` → ագենտը վերցնում ա, նայում, նշում տեղերը → տարբերակներ → `submit` → սևագիր Գևի վահանակում։ Ձեռքով. ծառայություն ու timer չկա։
 7. Նորից փաստեր. evidence. `docs/CURRENT_STATE.md`։

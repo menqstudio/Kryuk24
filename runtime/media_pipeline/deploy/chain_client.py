@@ -5,6 +5,7 @@ make WORK         three different sample pictures (4000 x 3000 JPEG with a strip
 upload WORK PORT  over HTTP: as armen picture 0, picture 1, picture 0 again and one answer; as test picture 2 and one answer
 plan DB MEDIA     plan today's tasks in the temporary runtime database (the existing Operations.plan)
 compare A B       two snapshot files (media_rollback.py snapshot): which tables differ
+before DB MEDIA F register file F in the temporary inbox the way another source would (not this pipeline), and print its row
 """
 import http.client, io, json, re, sys
 from pathlib import Path
@@ -76,6 +77,10 @@ if __name__ == '__main__':
         upload(Path(sys.argv[2]), int(sys.argv[3]))
     elif sys.argv[1] == 'compare':
         compare(sys.argv[2], sys.argv[3])
+    elif sys.argv[1] == 'before':
+        from ops_work import Operations
+        row = Operations(sys.argv[2], sys.argv[3]).media.original(sys.argv[4], 'OPERATOR: SAMPLE, came in another way before the pipeline', 'SAMPLE permission reference')
+        print('in the inbox before the pipeline: %s sha256 %s provenance "%s"' % (row['id'][:17], row['digest'][:12], row['provenance']))
     else:
         from ops_work import Operations
         print(json.dumps(Operations(sys.argv[2], sys.argv[3]).plan()))

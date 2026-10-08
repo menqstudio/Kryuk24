@@ -1,6 +1,6 @@
 """Private Armen input portal. Separate credentials/data; no operator approvals."""
 from http.cookies import SimpleCookie,CookieError
-import argparse,base64,hashlib,hmac,io,json,os,re,secrets,shutil,sqlite3,threading,time,uuid,warnings
+import argparse,base64,hashlib,hmac,io,json,os,re,secrets,sqlite3,sys,threading,time,uuid,warnings
 from contextlib import contextmanager
 from datetime import datetime,timedelta,timezone
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
@@ -63,6 +63,11 @@ MOSCOW=timezone(timedelta(hours=3))
 def now():return datetime.now(timezone.utc).isoformat()
 def day():return datetime.now(MOSCOW).date().isoformat()
 def encode(x):return json.dumps(x,ensure_ascii=False,sort_keys=True,separators=(',',':'))
+def _sha256(path):
+ h=hashlib.sha256()
+ with open(path,'rb') as f:
+  for block in iter(lambda:f.read(1<<20),b''):h.update(block)
+ return h.hexdigest()
 def credential(password):
  # 8 since 08.10.2026, by Gev's decision (it was 16): Armen types it on a phone. The Nginx per-address limit on the
  # login address and the failed-login cap of this process are what stand against guessing.
@@ -125,7 +130,8 @@ CREATE TABLE IF NOT EXISTS armen_excluded(kind TEXT,id TEXT,reason TEXT,marked_b
     return json.loads(old['result'])
    # Only a new answer must be for today: the repeat of a saved one gets its saved result after midnight too.
    if d['day']!=day():raise ValueError('invalid question/answer/day; reload page')
-   ident=uuid.uuid4().hex;result={'saved':True,'id':ident,'trust':'ARMEN_REPORTED','day':d['day']}
+   # The test account's answer is never an Armen-reported fact: the stored result says so, so a repeat says so too.
+   ident=uuid.uuid4().hex;result={'saved':True,'id':ident,'trust':'TEST_NOT_COUNTED' if actor=='test' else 'ARMEN_REPORTED','day':d['day']}
    c.execute('INSERT INTO armen_answers VALUES(?,?,?,?,?,?)',(ident,actor,d['day'],d['question'],d['answer'],now()))
    c.execute('INSERT INTO armen_commands VALUES(?,?,?,?)',(actor,key,dg,encode(result)))
    return result
@@ -165,37 +171,64 @@ CREATE TABLE IF NOT EXISTS armen_excluded(kind TEXT,id TEXT,reason TEXT,marked_b
   # After the photo is saved: hand it over. A failure here does not undo the upload; the next hand-over catches up.
   if actor=='armen':
    try:self.hand_over()
-   except (OSError,sqlite3.Error):pass
+   except (OSError,sqlite3.Error) as e:print('hand-over failed, the photo is saved in the portal and NOT handed over: %s: %s'%(type(e).__name__,e),file=sys.stderr,flush=True)
   return result
  def hand_over(self):
   """The only way a photo leaves the portal. For each of Armen's own photos (account 'armen', not marked as a test):
-  a hard link to the original and a small metadata file in the outbox folder. Nothing else is put there: no answer,
-  no preview, no row of the test account, no database. A photo that is no longer Armen's (marked later) is taken
-  back out. Safe to run again at any time; an interrupted run is completed by the next one."""
-  if not self.outbox:return {'handed_over':0,'taken_back':0,'outbox':None}
+  a hard link to the original and a small metadata file in the outbox folder, and one index of what is handed over
+  now. Nothing else is put there: no answer, no preview, no row of the test account, no database. A photo that is no
+  longer Armen's (marked later) is taken back out. Safe to run again at any time.
+  A hard link, never a copy: one file on the disk under two names, so there is nothing that can be half written.
+  When the outbox is on another file system the link is refused and this raises: the photo stays in the portal and
+  is not handed over, and that is said, not hidden. The metadata file is written only after the outbox file was read
+  back and its sha256 is the recorded one; a file under the photo's name that is not the photo (what an older,
+  cut-off copy left) is replaced first."""
+  if not self.outbox:return {'handed_over':0,'taken_back':0,'outbox':None,'damaged':[]}
   with self.handing:
    self.outbox.mkdir(parents=True,exist_ok=True,mode=0o750)
    with self.db() as c:
     rows=[dict(r) for r in c.execute("SELECT id,actor,digest,format,original,purpose,created FROM armen_photos WHERE actor='armen' AND id NOT IN (SELECT id FROM armen_excluded WHERE kind='photo') ORDER BY rowid")]
-   wanted={r['id'] for r in rows};done=0;back=0
+   wanted={r['id'] for r in rows};done=0;back=0;damaged=[]
    for entry in sorted(self.outbox.iterdir()):
     ident=entry.name.split('.')[0]
     if re.fullmatch('[a-f0-9]{32}',ident) and ident not in wanted and entry.is_file() and not entry.is_symlink():
      entry.unlink();back+=entry.suffix=='.json'   # the portal's own copy in the photo folder is untouched
    for r in rows:
-    meta=self.outbox/(r['id']+'.json')
-    if meta.exists():continue
-    source=self.root/r['original'];link=self.outbox/r['original']
-    if not link.exists():
-     try:os.link(source,link)            # one file on the disk under two names
-     except OSError:shutil.copyfile(source,link)   # another file system: a copy
+    meta=self.outbox/(r['id']+'.json');source=self.root/r['original'];link=self.outbox/r['original']
+    if meta.exists() and link.is_file() and os.path.samefile(source,link):continue
+    if link.exists() and not os.path.samefile(source,link):link.unlink()   # not the photo itself: a leftover under its name
+    if not link.exists():os.link(source,link)   # OSError when the outbox is not on the photo folder's file system: no silent copy
+    if _sha256(link)!=r['digest']:
+     # The portal's own original no longer matches what was recorded at upload: nothing is published for it.
+     if meta.exists():meta.unlink()
+     link.unlink();damaged.append(r['id']);continue
     os.chmod(link,0o640)
     try:os.chown(link,-1,self.outbox.stat().st_gid)   # readable by the outbox folder's group, by nobody else
     except (OSError,AttributeError):pass
-    tmp=self.outbox/(r['id']+'.json.tmp')
-    tmp.write_text(encode({'id':r['id'],'sha256':r['digest'],'format':r['format'],'file':r['original'],'actor':r['actor'],'uploaded':r['created'],'purpose':r['purpose']}),encoding='utf-8')
-    os.chmod(tmp,0o640);os.replace(tmp,meta);done+=1   # the metadata file appears last and whole: without it the intake ignores the photo
-   return {'handed_over':done,'taken_back':back,'outbox':len(wanted)}
+    self._publish(meta,{'id':r['id'],'sha256':r['digest'],'format':r['format'],'file':r['original'],'actor':r['actor'],'uploaded':r['created'],'purpose':r['purpose']})
+    done+=1
+   # The index: the portal's own statement of what it hands over now. The intake takes a photo for withdrawn only when
+   # this file says so; a missing file or an empty folder proves nothing.
+   handed=sorted(i for i in wanted-set(damaged) if (self.outbox/(i+'.json')).exists())
+   self._publish(self.outbox/'INDEX.json',{'outbox':'ARMEN_PORTAL','generated':now(),'ids':handed})
+   return {'handed_over':done,'taken_back':back,'outbox':len(handed),'damaged':damaged}
+ def _publish(self,target,data):
+  tmp=target.with_name(target.name+'.tmp');tmp.write_text(encode(data),encoding='utf-8')
+  os.chmod(tmp,0o640);os.replace(tmp,target)   # appears whole or not at all
+ def check_outbox(self):
+  """At start: can a photo be handed over at all? A hard link from the photo folder into the outbox is tried with an
+  empty probe file. When it fails the portal does not start with that outbox: better no service than photos that
+  silently never arrive."""
+  if not self.outbox:return
+  self.outbox.mkdir(parents=True,exist_ok=True,mode=0o750)
+  probe=self.root/('.probe-'+uuid.uuid4().hex);there=self.outbox/probe.name
+  try:
+   probe.write_bytes(b'');os.link(probe,there)
+  except OSError as e:
+   raise SystemExit('the outbox must be on the same file system as the photo folder (hard link refused: %s)'%e.strerror) from None
+  finally:
+   for f in (there,probe):
+    if f.exists():f.unlink()
  def exclude(self,kind,ident,reason,marked_by):
   """Mark one answer or photo as not Armen's own (a test by somebody else under his account). The row and the file
   stay; from then on it is in no state, no count and no preview, and the media intake does not take it in."""
@@ -209,7 +242,7 @@ CREATE TABLE IF NOT EXISTS armen_excluded(kind TEXT,id TEXT,reason TEXT,marked_b
    mark=dict(c.execute('SELECT * FROM armen_excluded WHERE kind=? AND id=?',(kind,ident)).fetchone())
   if kind=='photo':
    try:self.hand_over()   # a photo marked after it was handed over is taken back out of the outbox
-   except (OSError,sqlite3.Error):pass
+   except (OSError,sqlite3.Error) as e:print('hand-over failed after a mark: %s: %s'%(type(e).__name__,e),file=sys.stderr,flush=True)
   return mark
  def state(self,actor,owner=False):
   today=day()
@@ -337,4 +370,5 @@ if __name__=='__main__':
  p=argparse.ArgumentParser();p.add_argument('--db',required=True);p.add_argument('--photos',required=True);p.add_argument('--credentials',required=True);p.add_argument('--port',type=int,default=8790)
  p.add_argument('--outbox',help='folder the media intake reads; without it no photo leaves the portal');a=p.parse_args()
  os.umask(0o077)
- server(Store(a.db,a.photos,a.outbox),json.loads(Path(a.credentials).read_text(encoding='utf-8')),'https://runtime.kryuk24.ru',a.port).serve_forever()
+ store=Store(a.db,a.photos,a.outbox);store.check_outbox()
+ server(store,json.loads(Path(a.credentials).read_text(encoding='utf-8')),'https://runtime.kryuk24.ru',a.port).serve_forever()

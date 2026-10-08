@@ -320,12 +320,13 @@ print(len(saved),round(peak()))
     self.assertEqual((seen['photos'],seen['answers'],seen['test_account']),([],[],False),user)
     self.assertEqual(call('preview/'+mine['photos'][0]['id'],other)[0],404,user)
    self.assertEqual(store.hand_over()['outbox'],0)
-   self.assertEqual([f.name for f in Path(folder.name+'/outbox').iterdir()],[],'nothing of the test account is handed over')
+   self.assertEqual([f.name for f in Path(folder.name+'/outbox').iterdir()],['INDEX.json'],'nothing of the test account is handed over')
+   self.assertEqual(json.loads(Path(folder.name+'/outbox/INDEX.json').read_text(encoding='utf-8'))['ids'],[])
    # Armen's own photo and answer are his, with the test rows beside them in the same database.
    cookie,csrf=enter('armen')
    s,_,_=call('api/photo',cookie,self.png(),{'Content-Type':'image/png','X-CSRF-Token':csrf,'X-Photo-Purpose':'WORK'});self.assertEqual(s,201)
    state=json.loads(call('api/state',cookie)[1]);self.assertEqual((len(state['photos']),state['answers'],state['trust']),(1,[],'ARMEN_REPORTED'))
-   self.assertEqual(sorted(f.suffix for f in Path(folder.name+'/outbox').iterdir()),['.json','.png'])
+   self.assertEqual(sorted(f.suffix for f in Path(folder.name+'/outbox').iterdir()),['.json','.json','.png'],'the index, the facts and the photo')
   finally:
    http.shutdown();http.server_close();thread.join();folder.cleanup()
  def test_the_outbox_holds_photos_and_their_facts_only_and_follows_marks(self):
@@ -334,16 +335,58 @@ print(len(saved),round(peak()))
   try:
    raw=self.png();ident=store.photo('armen',raw,'EQUIPMENT')['id']
    store.answer('armen',uuid.uuid4().hex,dict(question='inquiries',answer='YES',day=day()))
-   names=sorted(f.name for f in outbox.iterdir());self.assertEqual(names,[ident+'.json',ident+'.png'])
+   names=sorted(f.name for f in outbox.iterdir());self.assertEqual(names,sorted(['INDEX.json',ident+'.json',ident+'.png']))
+   index=json.loads((outbox/'INDEX.json').read_text(encoding='utf-8'));self.assertEqual((index['outbox'],index['ids']),('ARMEN_PORTAL',[ident]))
    meta=json.loads((outbox/(ident+'.json')).read_text(encoding='utf-8'))
    self.assertEqual(set(meta),{'id','sha256','format','file','actor','uploaded','purpose'})
    self.assertEqual((meta['actor'],meta['purpose'],meta['file'],(outbox/meta['file']).read_bytes()==raw),('armen','EQUIPMENT',ident+'.png',True))
-   self.assertEqual(store.hand_over(),{'handed_over':0,'taken_back':0,'outbox':1},'a second run adds nothing')
+   self.assertEqual(store.hand_over(),{'handed_over':0,'taken_back':0,'outbox':1,'damaged':[]},'a second run adds nothing')
    # an interrupted hand-over: the link is there, the metadata file is not; the next run completes it
    (outbox/(ident+'.json')).unlink();self.assertEqual(store.hand_over()['handed_over'],1)
    # marked as a test afterwards: taken back out, the portal's own file stays
-   store.exclude('photo',ident,'SAMPLE','GEV');self.assertEqual(list(outbox.iterdir()),[])
+   store.exclude('photo',ident,'SAMPLE','GEV');self.assertEqual([f.name for f in outbox.iterdir()],['INDEX.json'])
+   self.assertEqual(json.loads((outbox/'INDEX.json').read_text(encoding='utf-8'))['ids'],[],'the index says it is no longer handed over')
    self.assertTrue((Path(folder.name+'/media')/(ident+'.png')).is_file())
    self.assertEqual(Store(folder.name+'/db2',folder.name+'/media2').hand_over()['outbox'],None,'without an outbox nothing leaves the portal')
   finally:folder.cleanup()
+ def test_hand_over_is_a_hard_link_checked_before_its_facts_appear_and_never_a_silent_copy(self):
+  # Review of 08.10.2026: a copy cut off at 1000 bytes got its facts published on the next run, with a hash that
+  # could not match. Now there is no copy: a link or an error. And the facts wait for the file to be read back.
+  import tempfile as t,os as o,contextlib as cl
+  folder=t.TemporaryDirectory();outbox=Path(folder.name+'/outbox');store=Store(folder.name+'/db',folder.name+'/media')
+  try:
+   raw=self.png();ident=store.photo('armen',raw,'WORK')['id'];source=Path(folder.name+'/media')/(ident+'.png')
+   outbox.mkdir();(outbox/(ident+'.png')).write_bytes(raw[:10])        # what a cut-off copy of an older version left
+   store.outbox=outbox.resolve()
+   self.assertEqual(store.hand_over(),{'handed_over':1,'taken_back':0,'outbox':1,'damaged':[]})
+   self.assertTrue(o.path.samefile(source,outbox/(ident+'.png')),'one file under two names')
+   meta=json.loads((outbox/(ident+'.json')).read_text(encoding='utf-8'))
+   self.assertEqual((outbox/meta['file']).read_bytes(),raw);self.assertEqual(meta['sha256'],__import__('hashlib').sha256(raw).hexdigest())
+   # the outbox on another file system: the link is refused; nothing is copied and nothing is published for the photo
+   with patch('portal.os.link',side_effect=OSError(18,'Invalid cross-device link')):
+    err=io.StringIO()
+    with cl.redirect_stderr(err):saved=store.photo('armen',self.png2(),'WORK')
+    self.assertEqual(saved['saved'],True,'the upload itself is kept')
+    self.assertIn('NOT handed over',err.getvalue())
+    with self.assertRaises(OSError):store.hand_over()
+    with self.assertRaises(SystemExit):store.check_outbox()
+   self.assertEqual(sorted(f.name for f in outbox.iterdir()),sorted(['INDEX.json',ident+'.json',ident+'.png']),'no file and no facts for the photo that could not be linked')
+   store.check_outbox();self.assertEqual(store.hand_over()['handed_over'],1,'with the link possible again the next run hands it over')
+   # the portal's own original damaged after upload: its facts are withdrawn, never published over wrong bytes
+   third=store.photo('armen',self.png3(),'WORK')['id'];damaged=Path(folder.name+'/media')/(third+'.png')
+   (outbox/(third+'.json')).unlink();o.chmod(damaged,0o600);damaged.write_bytes(b'not the photo')
+   result=store.hand_over();self.assertEqual(result['damaged'],[third])
+   self.assertFalse((outbox/(third+'.json')).exists());self.assertFalse((outbox/(third+'.png')).exists())
+   self.assertNotIn(third,json.loads((outbox/'INDEX.json').read_text(encoding='utf-8'))['ids'])
+  finally:folder.cleanup()
+ def png2(self):
+  out=io.BytesIO();Image.new('RGB',(21,20),'maroon').save(out,'PNG');return out.getvalue()
+ def png3(self):
+  out=io.BytesIO();Image.new('RGB',(22,20),'olive').save(out,'PNG');return out.getvalue()
+ def test_the_test_accounts_answer_is_never_reported_as_armens_also_when_repeated(self):
+  key=uuid.uuid4().hex;d=dict(question='inquiries',answer='YES',day=day())
+  first=self.store.answer('test',key,d);self.assertEqual(first['trust'],'TEST_NOT_COUNTED')
+  self.assertEqual(self.store.answer('test',key,d),first,'the repeat of the same request gives the same classification')
+  self.assertEqual(self.store.answer('armen',uuid.uuid4().hex,d)['trust'],'ARMEN_REPORTED')
+  self.assertEqual(self.store.state('test')['trust'],'TEST_NOT_COUNTED')
 if __name__=='__main__':unittest.main()
