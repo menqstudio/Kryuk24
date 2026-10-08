@@ -10,7 +10,7 @@ Times are UTC unless marked. MSK = UTC+3, Yerevan = UTC+4. The VPS address is in
 
 | What | By | Who | Status and evidence |
 | --- | --- | --- | --- |
-| Step 11 of the API reader install: one supervised write run | 08.10.2026, after 06:00 UTC (10:00 Yerevan) | Claude | PLANNED. `runtime/api_reader/README.md`, install step 11 |
+| Step 11 of the API reader install: one supervised write run | 08.10.2026, after 06:00 UTC (10:00 Yerevan) | Claude | DONE 08.10.2026 07:33 UTC, see 3.4. The next run is not scheduled: no timer |
 | Avito: 24 listings expire, balance 0 ₽. On hold, nothing paid or changed | 11.10.2026 | Gev (decision) | VERIFIED, Avito API, 07.10.2026 11:57 |
 | Address confirmation for the Yandex Business card (video). The banner is still in the cabinet | 13.10.2026 | Armen | VERIFIED, cabinet, 06.10.2026; deadline unchanged in the round of 07.10.2026 |
 | Avito: 1 listing expires 14.10, 20 more expire 15.10, 1 on 26.10 | 15.10.2026 | Gev (decision) | VERIFIED, Avito API, 07.10.2026 11:57 |
@@ -89,13 +89,13 @@ Times are UTC unless marked. MSK = UTC+3, Yerevan = UTC+4. The VPS address is in
 | Step 8: earlier state restored (`kryuk-capture` active / enabled, `kryuk-bro-api` active / disabled, both timers active / enabled); `/health` STAGING, sending off | VERIFIED | server, 07.10.2026 13:02 |
 | Step 9: credentials provisioned to `/etc/kryuk24-api-read` (`root:kryuk-api-read 750`, files `640`); answer `written: beget-read.json, yandex-read.json`; open checks ALLOWED / DENIED as expected; `/etc/kryuk24-bro` unchanged | VERIFIED | server, 07.10.2026 13:02. The script was run by Claude; no value was printed anywhere |
 | Step 10: dry-run as `kryuk-api-read` on the real database, read-only: exit 0, three readings OK, all three `would_write: false` (today's rows have the old kind and are already DONE) | VERIFIED | server, 07.10.2026 13:02 |
-| Step 11: plan check, install `kryuk-api-read.service`, one supervised run, three `DONE` with `MACHINE_OBSERVED` | PLANNED | 08.10.2026 after 06:00 UTC. No timer is created |
-| Collector unit file in `/etc/systemd/system` | not installed | server, 07.10.2026 13:02 |
-| After the install: the dashboard page in a browser and `bro_pull.py --queue-only` | unverified | both need a password. The first real write of the services under the new group is the 06:00 UTC planning of 08.10.2026 |
+| Step 11: plan check, install `kryuk-api-read.service`, one supervised run, three `DONE` with `MACHINE_OBSERVED` | VERIFIED | server, 08.10.2026 07:32–07:34 UTC, on Gev's yes of 07.10.2026. Before: the 06:01 UTC planning had written ten tasks for 08.10, three of them `API_READ` and `PENDING`; folder `kryuk-run:kryuk-db 2770`, database `660`; `ops_api.py` and `bro_api_reader.py` on the server equal to the repository by sha256. Run: unit file installed (sha256 `5a526982…`, the repository's), `systemctl start kryuk-api-read` returned 0 in 5 s, result `success`, the three readings `OK`, `external_writes: false`. After: `METRICA`, `WEBMASTER`, `HOSTING_DEADLINES` are `DONE` at revision 2 with one observation each, trust `MACHINE_OBSERVED`, actor `API_READ:<random>`, events `PLANNED → CLAIMED → DONE`; the other seven tasks are unchanged (same digest of id, job, kind, status, revision, worker, lease before and after); tables: `ops_observations` 12 → 15, `ops_events` 67 → 73, every other count the same; `/health` STAGING, sending off; the operator page answers 401 without credentials. The content of the readings was not read out here |
+| Collector unit file in `/etc/systemd/system` | installed, `static` (no `[Install]` section), no timer names it; inactive after its one run | server, 08.10.2026 07:33 UTC. A second run is started only by hand and writes nothing for tasks already `DONE` |
+| After the install: the dashboard page in a browser and `bro_pull.py --queue-only` | unverified | both need a password. The first real write of the services under the new group, the 06:00 UTC planning of 08.10.2026, happened: ten tasks written at 06:01 UTC, exit status 0, the database still `kryuk-run:kryuk-db 660` |
 | Tests 18 + 27 on Windows and on the server | VERIFIED | 07.10.2026 12:37 (server, temp folder, removed after) |
 | Whole chain with real readings into a throwaway database | VERIFIED | `runtime/api_reader/evidence/real_chain_windows_v032_20261007T123548Z.json` |
 | A sampled Metrica answer from the real API; a really full disk during install; the counters' own time-zone setting | unverified | `runtime/api_reader/README.md` |
-| Factual report of the install to GPT | PLANNED | after step 11 |
+| Factual report of the install to GPT | IMPLEMENTED | handed to Gev for GPT on 08.10.2026 after step 11; GPT's answer is not recorded here yet |
 
 ### 3.5 Bro bridge and browser path
 
@@ -252,7 +252,7 @@ API access: VERIFIED 07.10.2026 09:07. Allowed methods are limited to "Account a
 
 | Ինչ | Մինչև | Ով | Վիճակ ու ապացույց |
 | --- | --- | --- | --- |
-| API reader-ի 11-րդ քայլը. մեկ հսկվող գրող գործարկում | 08.10.2026, 06:00 UTC-ից հետո (10:00 Երևան) | Claude | PLANNED. `runtime/api_reader/README.md`, քայլ 11 |
+| API reader-ի 11-րդ քայլը. մեկ հսկվող գրող գործարկում | 08.10.2026, 06:00 UTC-ից հետո (10:00 Երևան) | Claude | ԱՐՎԱԾ 08.10.2026 07:33 UTC, տես 3.4։ Հաջորդ գործարկումը նշանակված չի. timer չկա |
 | Avito. 24 հայտարարություն փակվում ա, մնացորդ 0 ₽։ HOLD, ոչինչ չի վճարվել ու չի փոխվել | 11.10.2026 | Գև (որոշում) | VERIFIED, Avito API, 07.10.2026 11:57 |
 | Yandex Բիզնեսի քարտի հասցեի հաստատում (վիդեո)։ Բանները կաբինետում դեռ կա | 13.10.2026 | Արմեն | VERIFIED, կաբինետ, 06.10.2026. ժամկետը 07.10-ի շրջայցում նույնն էր |
 | Avito. 1-ը փակվում ա 14.10-ին, ևս 20-ը՝ 15.10-ին, 1-ը՝ 26.10-ին | 15.10.2026 | Գև (որոշում) | VERIFIED, Avito API, 07.10.2026 11:57 |
@@ -331,13 +331,13 @@ API access: VERIFIED 07.10.2026 09:07. Allowed methods are limited to "Account a
 | Քայլ 8. վերադարձվել ա նախկին վիճակը (`kryuk-capture` active / enabled, `kryuk-bro-api` active / disabled, երկու timer-ը active / enabled). `/health`՝ STAGING, ուղարկելը անջատված | VERIFIED | սերվեր, 07.10.2026 13:02 |
 | Քայլ 9. credential-ները դրվել են `/etc/kryuk24-api-read`-ում (`root:kryuk-api-read 750`, ֆայլերը `640`). պատասխանը՝ `written: beget-read.json, yandex-read.json`. բացելու ստուգումները ALLOWED / DENIED՝ ոնց սպասվում էր. `/etc/kryuk24-bro`-ն անփոփոխ ա | VERIFIED | սերվեր, 07.10.2026 13:02։ Սկրիպտը գործարկել ա Claude-ը. արժեք ոչ մի տեղ չի տպվել |
 | Քայլ 10. dry-run `kryuk-api-read`-ով իրական բազայի վրա, միայն կարդալով. exit 0, երեք ընթերցումն էլ OK, երեքն էլ `would_write: false` (այսօրվա տողերը հին տեսակի են ու արդեն DONE) | VERIFIED | սերվեր, 07.10.2026 13:02 |
-| Քայլ 11. ստուգել պլանը, դնել `kryuk-api-read.service`-ը, մեկ հսկվող գործարկում, երեք `DONE`՝ `MACHINE_OBSERVED`-ով | PLANNED | 08.10.2026, 06:00 UTC-ից հետո։ Timer չի ստեղծվում |
-| Collector-ի unit ֆայլը `/etc/systemd/system`-ում | դրված չի | սերվեր, 07.10.2026 13:02 |
-| Install-ից հետո. վահանակի էջը զննարկչով ու `bro_pull.py --queue-only`-ն | չստուգված | երկուսն էլ գաղտնաբառով են։ Ծառայությունների առաջին իրական գրելը նոր խմբով 08.10.2026-ի 06:00 UTC-ի պլանավորումն ա |
+| Քայլ 11. ստուգել պլանը, դնել `kryuk-api-read.service`-ը, մեկ հսկվող գործարկում, երեք `DONE`՝ `MACHINE_OBSERVED`-ով | VERIFIED | սերվեր, 08.10.2026 07:32–07:34 UTC, Գևի 07.10.2026-ի «հա»-ով։ Մինչև. 06:01 UTC-ի պլանավորումը գրել էր 08.10-ի տասը գործը, երեքը՝ `API_READ` ու `PENDING`. թղթապանակը `kryuk-run:kryuk-db 2770`, բազան `660`. սերվերի `ops_api.py`-ն ու `bro_api_reader.py`-ն sha256-ով նույնն են, ինչ repo-ում։ Գործարկում. unit ֆայլը դրված ա (sha256 `5a526982…`, repo-ինը), `systemctl start kryuk-api-read`-ը վերադարձրեց 0՝ 5 վայրկյանում, արդյունքը `success`, երեք ընթերցումն էլ `OK`, `external_writes: false`։ Հետո. `METRICA`, `WEBMASTER`, `HOSTING_DEADLINES` գործերը `DONE` են՝ revision 2, ամեն մեկը մեկ դիտարկումով, trust `MACHINE_OBSERVED`, actor `API_READ:<պատահական>`, իրադարձությունները `PLANNED → CLAIMED → DONE`. մյուս յոթ գործը չի փոխվել (id, job, kind, status, revision, worker, lease-ի նույն digest-ը առաջ ու հետո). աղյուսակներ՝ `ops_observations` 12 → 15, `ops_events` 67 → 73, մնացած թվերը նույնն են. `/health`՝ STAGING, ուղարկելը անջատված. աշխատանքների էջը առանց credential-ի պատասխանում ա 401։ Ընթերցումների պարունակությունը էստեղ չի կարդացվել |
+| Collector-ի unit ֆայլը `/etc/systemd/system`-ում | դրված ա, `static` (առանց `[Install]` բաժնի), ոչ մի timer իրան չի կանչում. մեկ գործարկումից հետո inactive ա | սերվեր, 08.10.2026 07:33 UTC։ Երկրորդ գործարկումը միայն ձեռքով ա սկսվում ու արդեն `DONE` գործերի համար ոչինչ չի գրում |
+| Install-ից հետո. վահանակի էջը զննարկչով ու `bro_pull.py --queue-only`-ն | չստուգված | երկուսն էլ գաղտնաբառով են։ Ծառայությունների առաջին իրական գրելը նոր խմբով՝ 08.10.2026-ի 06:00 UTC-ի պլանավորումը, եղել ա. տասը գործը գրվել ա 06:01 UTC-ին, exit status 0, բազան էլի `kryuk-run:kryuk-db 660` ա |
 | Թեստեր 18 + 27 Windows-ում ու սերվերում | VERIFIED | 07.10.2026 12:37 (սերվեր, ժամանակավոր թղթապանակ, հետո ջնջված) |
 | Ամբողջ շղթան իրական ընթերցումներով ժամանակավոր բազայում | VERIFIED | `runtime/api_reader/evidence/real_chain_windows_v032_20261007T123548Z.json` |
 | Sampled պատասխան իրական API-ից. իրոք լցված սկավառակ install-ի ժամանակ. հաշվիչների սեփական ժամային գոտին | չստուգված | `runtime/api_reader/README.md` |
-| Install-ի փաստացի զեկույցը GPT-ին | PLANNED | 11-րդ քայլից հետո |
+| Install-ի փաստացի զեկույցը GPT-ին | IMPLEMENTED | տրվել ա Գևին GPT-ի համար 08.10.2026-ին՝ 11-րդ քայլից հետո. GPT-ի պատասխանը էստեղ դեռ գրանցված չի |
 
 ### 3.5 Bro-ի կամուրջն ու զննարկչի ճանապարհը
 

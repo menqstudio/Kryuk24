@@ -1,0 +1,132 @@
+API reader, install step 11 on the staging server, 08.10.2026. Output of three scripts run over SSH with sudo, as printed.
+The scripts read no secret file and print no content of a reading. The last line of part 3 (0) is the count of helper scripts left in /tmp.
+
+===== part 1: read-only facts before the run
+== time
+2026-10-08T07:32:54Z
+== database files (owner:group mode name)
+kryuk-run:kryuk-db 2770 /var/lib/kryuk24
+kryuk-run:kryuk-db 660 /var/lib/kryuk24/runtime.sqlite
+== unit file present already?
+ls: cannot access '/etc/systemd/system/kryuk-api-read.service': No such file or directory
+== timers
+NEXT                            LEFT LAST                               PASSED UNIT                           ACTIVATES
+Fri 2026-10-09 00:00:13 UTC      16h Thu 2026-10-08 00:00:31 UTC        7h ago kryuk-backup.timer             kryuk-backup.service
+Fri 2026-10-09 06:00:45 UTC      22h Thu 2026-10-08 06:01:21 UTC  1h 31min ago kryuk-operations.timer         kryuk-operations.service
+== services
+kryuk-capture: active
+kryuk-bro-api: active
+kryuk-operations.timer: active
+== last planning run
+ExecMainStartTimestamp=Thu 2026-10-08 06:01:21 UTC
+ExecMainExitTimestamp=Thu 2026-10-08 06:01:21 UTC
+ExecMainStatus=0
+== collector user and credential folder (no file is opened)
+uid=999(kryuk-api-read) gid=982(kryuk-api-read) groups=982(kryuk-api-read),986(kryuk-db)
+root:kryuk-api-read 750 /etc/kryuk24-api-read
+root:kryuk-api-read 640 /etc/kryuk24-api-read/beget-read.json
+root:kryuk-api-read 640 /etc/kryuk24-api-read/yandex-read.json
+== installed collector file
+f194e425fe12c3725b04ed1c4bd0a78a661e0ba2b35af75944bbacc6fb093469  /opt/kryuk24/ops_api.py
+503e5d60e653126814498ec026969a54481c34af47631956cf2417bf55d59f67  /opt/kryuk24/bro_api_reader.py
+== today's tasks
+utc today: 2026-10-08 | last days in the queue: ['2026-10-08', '2026-10-07']
+day 2026-10-08 tasks: 10 | API_READ: 3
+   ('AVITO', 'BROWSER_READ', 'GEV', 'PENDING', 0, None)
+   ('DAILY_REPORT', 'PREPARE', 'GEV', 'PENDING', 0, None)
+   ('HOSTING_DEADLINES', 'API_READ', 'GEV', 'PENDING', 0, None)
+   ('LOCAL_LEDGER', 'LOCAL_READ', 'GEV', 'DONE', 2, None)
+   ('MEDIA_INBOX', 'PREPARE', 'GEV', 'PENDING', 0, None)
+   ('METRICA', 'API_READ', 'GEV', 'PENDING', 0, None)
+   ('RUNTIME_HEALTH', 'LOCAL_READ', 'GEV', 'DONE', 2, None)
+   ('WEBMASTER', 'API_READ', 'GEV', 'PENDING', 0, None)
+   ('YANDEX_BUSINESS', 'BROWSER_READ', 'GEV', 'PENDING', 0, None)
+   ('YANDEX_DIRECT', 'BROWSER_READ', 'GEV', 'PENDING', 0, None)
+observations for that day: 2
+row counts: {'bro_receipts': 0, 'bro_runs': 0, 'call_jobs': 0, 'contact_interactions': 36, 'dispatch_decisions': 0, 'events': 40, 'matches': 0, 'messages': 0, 'notifications': 0, 'ops_approvals': 1, 'ops_assets': 0, 'ops_events': 67, 'ops_observations': 12, 'ops_originals': 0, 'ops_tasks': 20, 'orders': 20}
+digest of the non-API_READ tasks of that day: 78dc59565365668eae3f5719ee7db34a555f5270d1c96794e4d2757dc7a5a1cd
+
+===== part 2: unit file installed, one supervised run
+== start 2026-10-08T07:33:24Z
+unit installed: 5a526982daf1d81d49593c4fc351f489c20f250e1d58855862e66034adf4e81d; enabled state: static
+== systemctl start returned 0 at 2026-10-08T07:33:29Z
+ActiveState=inactive
+SubState=dead
+Result=success
+ExecMainStartTimestamp=
+ExecMainExitTimestamp=
+ExecMainStatus=0
+== journal of this run
+Starting kryuk-api-read.service - KRYUK24 API_READ jobs: Beget, Metrica, Webmaster (read-only)...
+{
+ "day": "2026-10-08",
+ "worker": "API_READ",
+ "results": [
+  {
+   "job": "METRICA",
+   "task_id": "WORK-bfcdc5e7a0b452a5845d3b625ae83020",
+   "outcome": "DONE",
+   "reading": "OK",
+   "error_code": null
+  },
+  {
+   "job": "WEBMASTER",
+   "task_id": "WORK-03a5ce48b24d581ca50514651a701562",
+   "outcome": "DONE",
+   "reading": "OK",
+   "error_code": null
+  },
+  {
+   "job": "HOSTING_DEADLINES",
+   "task_id": "WORK-314455141dd15268b6c1f2f568e5d38c",
+   "outcome": "DONE",
+   "reading": "OK",
+   "error_code": null
+  }
+ ],
+ "external_writes": false
+}
+kryuk-api-read.service: Deactivated successfully.
+Finished kryuk-api-read.service - KRYUK24 API_READ jobs: Beget, Metrica, Webmaster (read-only).
+== timers that name it (must be none)
+none
+kryuk-api-read.service
+
+===== part 3: read-only check after the run
+== time
+2026-10-08T07:33:50Z
+== database files
+kryuk-run:kryuk-db 2770 /var/lib/kryuk24
+kryuk-run:kryuk-db 660 /var/lib/kryuk24/runtime.sqlite
+== services
+kryuk-capture: active / enabled
+kryuk-bro-api: active / disabled
+kryuk-operations.timer: active / enabled
+kryuk-api-read: inactive / static
+== health
+{"mode":"STAGING","ok":true,"sending_enabled":false}
+
+== operator page without credentials (expected: a refusal, the page is there)
+401
+day 2026-10-08 tasks: 10
+   ('AVITO', 'BROWSER_READ', 'PENDING', 0, None, None)
+   ('DAILY_REPORT', 'PREPARE', 'PENDING', 0, None, None)
+   ('HOSTING_DEADLINES', 'API_READ', 'DONE', 2, None, None)
+   ('LOCAL_LEDGER', 'LOCAL_READ', 'DONE', 2, None, None)
+   ('MEDIA_INBOX', 'PREPARE', 'PENDING', 0, None, None)
+   ('METRICA', 'API_READ', 'DONE', 2, None, None)
+   ('RUNTIME_HEALTH', 'LOCAL_READ', 'DONE', 2, None, None)
+   ('WEBMASTER', 'API_READ', 'DONE', 2, None, None)
+   ('YANDEX_BUSINESS', 'BROWSER_READ', 'PENDING', 0, None, None)
+   ('YANDEX_DIRECT', 'BROWSER_READ', 'PENDING', 0, None, None)
+== observations of the three API_READ tasks (source, trust, actor, observed_at, created, length of the summary)
+   HOSTING_DEADLINES ('Beget API: user/getAccountInfo', 'MACHINE_OBSERVED', 'API_READ:7a8536920ec94847975ec8a823b2631d', '2026-10-08T07:33:29+00:00', '2026-10-08T07:33:29.027007+00:00', 410)
+   METRICA ('Yandex Metrica API: stat/v1/data, site counter and Yandex Maps card counter', 'MACHINE_OBSERVED', 'API_READ:09eb2d42780c4a53aef6f0aaf8ce3872', '2026-10-08T07:33:27+00:00', '2026-10-08T07:33:27.206756+00:00', 1884)
+   WEBMASTER ('Yandex Webmaster API v4: summary of the verified host', 'MACHINE_OBSERVED', 'API_READ:e94f928305b8421cb2bc28ad7204c2f2', '2026-10-08T07:33:27+00:00', '2026-10-08T07:33:27.571966+00:00', 374)
+== events of those tasks (kind, created)
+   HOSTING_DEADLINES [('PLANNED', '2026-10-08T06:01:21.200247+00:00'), ('CLAIMED', '2026-10-08T07:33:27.575505+00:00'), ('DONE', '2026-10-08T07:33:29.027084+00:00')]
+   METRICA [('PLANNED', '2026-10-08T06:01:21.200188+00:00'), ('CLAIMED', '2026-10-08T07:33:24.702693+00:00'), ('DONE', '2026-10-08T07:33:27.206865+00:00')]
+   WEBMASTER [('PLANNED', '2026-10-08T06:01:21.200209+00:00'), ('CLAIMED', '2026-10-08T07:33:27.212053+00:00'), ('DONE', '2026-10-08T07:33:27.572058+00:00')]
+row counts: {'bro_receipts': 0, 'bro_runs': 0, 'call_jobs': 0, 'contact_interactions': 36, 'dispatch_decisions': 0, 'events': 40, 'matches': 0, 'messages': 0, 'notifications': 0, 'ops_approvals': 1, 'ops_assets': 0, 'ops_events': 73, 'ops_observations': 15, 'ops_originals': 0, 'ops_tasks': 20, 'orders': 20}
+digest of the non-API_READ tasks of that day: 78dc59565365668eae3f5719ee7db34a555f5270d1c96794e4d2757dc7a5a1cd
+0

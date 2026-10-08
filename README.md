@@ -41,7 +41,7 @@ Boundaries and data flow: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 - **Queue and dashboard**: installed; ten tasks are planned every day at 06:00 UTC
 - **Bro bridge**: installed; the service runs but does not start by itself after a reboot
-- **API reader (hosting, Metrica, Webmaster)**: installed on 07.10.2026; its first supervised write is pending
+- **API reader (hosting, Metrica, Webmaster)**: installed on 07.10.2026; first supervised write done on 08.10.2026; no timer
 - **Mailbox**: planned; blocked until the mail application exists
 - **Approvals**: planned; today only the daily report draft can be approved, not an action
 - **Executor**: planned; nothing is written
@@ -61,7 +61,7 @@ Evidence for each line: [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md).
   - State: started: off-disk copy exists; credentials clean-up and a rehearsed restore are open
 - **2 Reliable collection**
   - Owner / acceptor: Claude / GPT
-  - State: started: API reader installed, first supervised write pending
+  - State: started: API reader installed, first supervised write done
 - **3 Real business flow**
   - Owner / acceptor: GPT / Armen
   - State: not started
@@ -120,7 +120,7 @@ A source that is not read is UNKNOWN, never "no problem". A click is not a call,
 1. The live site equals git tag `v33.1-live` (checked 06.10.2026: 57 of 58 file hashes equal, the 58th is `.htaccess`, which the hosting does not serve).
 2. A VPS runs the runtime in **STAGING** at `runtime.kryuk24.ru`; sending is off; every request in its database is a test one.
 3. The server plans ten daily tasks at 06:00 UTC (`kryuk-operations.timer`); the backup timer runs separately around 00:00–00:05 UTC.
-4. API reader v0.3.2 r2 is **installed** on the staging server (steps 1–10, 07.10.2026 13:00–13:02 UTC, all verified). Step 11, one supervised write run, is **pending** for 08.10.2026 after the 06:00 UTC planning. No timer for it.
+4. API reader v0.3.2 r2 is **installed** on the staging server (steps 1–10, 07.10.2026 13:00–13:02 UTC, all verified). Step 11, one supervised write run, was **done** on 08.10.2026 07:33 UTC: three tasks `DONE` with `MACHINE_OBSERVED`, the other seven untouched. No timer for it; the next run is not scheduled.
 5. Beget, Yandex Metrica and Yandex Webmaster are read by API. Yandex Direct API is blocked (access request sent, status "new"). Avito API reads, but Avito is on hold by Gev.
 6. The owner approves one thing today: the daily report draft, by its digest. That is not an approval of any action. No executor of actions exists.
 7. The mailbox connector does not exist (no app, no credential). Browser reading by an unattended model does not exist (proxy package waits for GPT).
@@ -230,7 +230,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 
 - **Հերթ ու վահանակ**: դրված ա. ամեն օր 06:00 UTC-ին պլանավորվում ա տասը գործ
 - **Bro-ի կամուրջ**: դրված ա. ծառայությունը աշխատում ա, բայց reboot-ից հետո ինքը չի բարձրանում
-- **API reader (հոստինգ, Metrica, Webmaster)**: դրված ա 07.10.2026-ին. առաջին հսկվող գրելը սպասվում ա
+- **API reader (հոստինգ, Metrica, Webmaster)**: դրված ա 07.10.2026-ին. առաջին հսկվող գրելը արված ա 08.10.2026-ին. timer չկա
 - **Փոստ**: պլանում ա. փակ ա, մինչև փոստի հավելվածը լինի
 - **Հաստատումներ**: պլանում ա. այսօր հաստատվում ա միայն օրվա հաշվետվության սևագիրը, ոչ թե գործողությունը
 - **Executor**: պլանում ա. ոչինչ գրված չի
@@ -250,7 +250,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
   - Վիճակ: սկսված ա. արտաքին պատճենը կա. credential-ների մաքրումն ու փորձված restore-ը բաց են
 - **2 Հուսալի հավաքում**
   - Պատասխանատու / ընդունող: Claude / GPT
-  - Վիճակ: սկսված ա. API reader-ը դրված ա, առաջին հսկվող գրելը սպասվում ա
+  - Վիճակ: սկսված ա. API reader-ը դրված ա, առաջին հսկվող գրելը արված ա
 - **3 Իրական բիզնես հոսք**
   - Պատասխանատու / ընդունող: GPT / Արմեն
   - Վիճակ: սկսված չի
@@ -309,7 +309,7 @@ Also: [`docs/LESSONS.md`](docs/LESSONS.md) (what went wrong and what to do inste
 1. Կենդանի կայքը նույնն ա, ինչ git-ի `v33.1-live` պիտակը (ստուգված 06.10.2026. 58 ֆայլից 57-ի hash-ը համընկնում ա, 58-րդը `.htaccess`-ն ա, որ հոստինգը դրսից չի տալիս)։
 2. VPS-ում runtime-ը աշխատում ա **STAGING** ռեժիմով՝ `runtime.kryuk24.ru`. ուղարկելը անջատված ա. բազայի բոլոր հայտերը թեստային են։
 3. Սերվերը ամեն օր 06:00 UTC-ին պլանավորում ա տասը գործ (`kryuk-operations.timer`). պահուստի timer-ը առանձին ա, մոտ 00:00–00:05 UTC։
-4. API reader v0.3.2 r2-ը **դրված ա** staging սերվերում (1–10 քայլերը, 07.10.2026 13:00–13:02 UTC, բոլորը ստուգված)։ 11-րդ քայլը՝ մեկ հսկվող գրող գործարկում, **սպասում ա** 08.10.2026-ին, 06:00 UTC-ի պլանավորումից հետո։ Timer չկա։
+4. API reader v0.3.2 r2-ը **դրված ա** staging սերվերում (1–10 քայլերը, 07.10.2026 13:00–13:02 UTC, բոլորը ստուգված)։ 11-րդ քայլը՝ մեկ հսկվող գրող գործարկում, **արված ա** 08.10.2026 07:33 UTC-ին. երեք գործը `DONE` են `MACHINE_OBSERVED`-ով, մյուս յոթին ձեռք տված չի։ Timer չկա, հաջորդ գործարկումը նշանակված չի։
 5. Beget-ը, Yandex Metrica-ն ու Webmaster-ը կարդացվում են API-ով։ Yandex Direct-ի API-ն փակ ա (հայտը ուղարկված ա, վիճակը «новая»)։ Avito-ի API-ն կարդում ա, բայց Avito-ն Գևի HOLD-ի տակ ա։
 6. Այսօր տերը հաստատում ա մի բան՝ օրվա հաշվետվության սևագիրը, digest-ով։ Դա ոչ մի գործողության թույլտվություն չի։ Գործողությունների executor չկա։
 7. Փոստի connector չկա (ոչ հավելված, ոչ credential)։ Առանց հսկողության մոդելով զննարկիչ կարդալը չկա (proxy-ի փաթեթը սպասում ա GPT-ին)։
