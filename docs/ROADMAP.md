@@ -59,7 +59,7 @@ A dated snapshot, kept as approved. The right-hand column says what the reposito
 | --- | --- |
 | The live site exists with calculator and contact buttons; no runtime connection | unchanged |
 | VPS runtime is STAGING, sending off; daily queue and dashboard exist; Bro HTTP bridge accepted | unchanged |
-| API reader v0.3.2 r2 installed; first supervised write against the day's queue pending | unchanged; planned for 08.10.2026 after 06:00 UTC |
+| API reader v0.3.2 r2 installed; first supervised write against the day's queue pending | done on 08.10.2026 07:33 UTC (`docs/CURRENT_STATE.md`, 3.4) |
 | Direct API blocked externally; Avito reads work, HOLD applies | unchanged |
 | Mailbox connector, complete action-approval contract and executor do not exist | unchanged |
 | Browser, proxy and trials are work in progress; fail-closed behaviour not fully proven with a real model | unchanged |
@@ -146,7 +146,7 @@ It is queue item 27. Built on 07.10.2026 (root README, `docs/assets/readme/`, `t
 
 | Date | What | Owner |
 | --- | --- | --- |
-| 08.10.2026, after 06:00 UTC (10:00 Yerevan) | Step 11 of the API reader install | Claude |
+| 08.10.2026, after 06:00 UTC (10:00 Yerevan) | Step 11 of the API reader install: **done 08.10.2026 07:33 UTC** | Claude |
 | before 10.10.2026 | One answer from Armen about Avito prolongation (Claude's proposal for the timing) | Gev asks Armen |
 | 11.10.2026 | Avito: 24 listings expire, balance 0 ₽ | Gev (decision) |
 | 13.10.2026 | Address confirmation video for the Yandex Business card | Armen |
@@ -162,7 +162,7 @@ It is queue item 27. Built on 07.10.2026 (root README, `docs/assets/readme/`, `t
 
 | # | Item | Owner | Depends on | Next step |
 | --- | --- | --- | --- | --- |
-| 1 | **API reader, step 11:** one supervised write run | Claude | The 06:00 UTC planning of 08.10.2026 wrote the new day (ten tasks, three `API_READ`); `runtime.sqlite*` still shows group `kryuk-db` | Check the plan; install `kryuk-api-read.service`; one `systemctl start`; check three `DONE` with `MACHINE_OBSERVED`, seven others untouched, the dashboard opens. No timer. Then the factual report to GPT |
+| 1 | **API reader, step 11:** one supervised write run. **Done 08.10.2026 07:33 UTC**; what is left of this item is GPT's answer to the factual report | Claude | The 06:00 UTC planning of 08.10.2026 wrote the new day (ten tasks, three `API_READ`); `runtime.sqlite*` still shows group `kryuk-db` | Check the plan; install `kryuk-api-read.service`; one `systemctl start`; check three `DONE` with `MACHINE_OBSERVED`, seven others untouched, the dashboard opens. No timer. Then the factual report to GPT |
 | 2 | **Avito before 11.10** (on hold) | Gev | Armen's answer: is prolongation in his cabinet free or paid, and who holds the autoload file | Claude's proposal: if free, permission for prolongation only, texts unchanged; if paid, decide after the figure. Until Gev's word nothing is changed or paid |
 | 3 | **Address confirmation by 13.10** | Armen | Signage sizes question (his screenshot and voice messages of 06.10.2026, content unknown) → print → video | Gev finds out what is wrong with the sizes; Claude corrects the files; Armen films and sends the video |
 | 4 | **Credentials clean-up on Windows** | Gev (decision on the store), Claude (preparation without values) | GPT fixed the placement; open is the store for the action and Avito secrets: the VPS or a separate Windows user | Claude prepares the move-and-verify plan, the list of everything that reads the user variables (`tools/api_setup/*.ps1`, `provision_from_windows.ps1`, `bro_api_reader.py --windows-user-store`, `.mcp.json`) and a canary check for each AI start. Gev starts the script; Claude and editor sessions are restarted |
@@ -264,7 +264,7 @@ It is queue item 27. Built on 07.10.2026 (root README, `docs/assets/readme/`, `t
 | --- | --- |
 | Կենդանի կայքը կա՝ հաշվիչով ու կապի կոճակներով. runtime-ին կապված չի | նույնն ա |
 | VPS-ի runtime-ը STAGING ա, ուղարկելը անջատված. օրվա հերթն ու վահանակը կան. Bro-ի HTTP կամուրջը ընդունված ա | նույնն ա |
-| API reader v0.3.2 r2-ը դրված ա. օրվա հերթի առաջին հսկվող գրող run-ը սպասվում ա | նույնն ա. նախատեսված ա 08.10.2026-ին, 06:00 UTC-ից հետո |
+| API reader v0.3.2 r2-ը դրված ա. օրվա հերթի առաջին հսկվող գրող run-ը սպասվում ա | արված ա 08.10.2026 07:33 UTC-ին (`docs/CURRENT_STATE.md`, 3.4) |
 | Direct-ի API-ն դրսից փակ ա. Avito-ի կարդալը աշխատում ա, HOLD ա | նույնն ա |
 | Փոստի connector, ամբողջական action approval ու executor չկան | նույնն ա |
 | Զննարկիչը, proxy-ն ու փորձերը WIP են. fail-closed վարքը իրական model-ով լրիվ ապացուցված չի | նույնն ա |
@@ -351,7 +351,7 @@ It is queue item 27. Built on 07.10.2026 (root README, `docs/assets/readme/`, `t
 
 | Օր | Ինչ | Ով |
 | --- | --- | --- |
-| 08.10.2026, 06:00 UTC-ից հետո (10:00 Երևան) | API reader-ի install-ի 11-րդ քայլը | Claude |
+| 08.10.2026, 06:00 UTC-ից հետո (10:00 Երևան) | API reader-ի install-ի 11-րդ քայլը. **արված ա 08.10.2026 07:33 UTC-ին** | Claude |
 | մինչև 10.10.2026 | Արմենի մեկ պատասխանը Avito-ի երկարաձգման մասին (ժամկետը Claude-ի առաջարկն ա) | Գևը հարցնում ա Արմենին |
 | 11.10.2026 | Avito. 24 հայտարարություն փակվում ա, մնացորդ 0 ₽ | Գև (որոշում) |
 | 13.10.2026 | Հասցեի հաստատման վիդեոն Yandex Բիզնեսի քարտի համար | Արմեն |
@@ -367,7 +367,7 @@ It is queue item 27. Built on 07.10.2026 (root README, `docs/assets/readme/`, `t
 
 | # | Կետ | Ով | Կախված ա | Հաջորդ քայլ |
 | --- | --- | --- | --- | --- |
-| 1 | **API reader, քայլ 11.** մեկ հսկվող գրող գործարկում | Claude | 08.10.2026-ի 06:00 UTC-ի պլանավորումը գրել ա նոր օրը (տասը գործ, երեքը `API_READ`). `runtime.sqlite*`-ը դեռ `kryuk-db` խմբով ա | Ստուգել պլանը. դնել `kryuk-api-read.service`-ը. մեկ `systemctl start`. ստուգել երեք `DONE`՝ `MACHINE_OBSERVED`-ով, մնացած յոթը անփոփոխ, վահանակը բացվում ա։ Timer չկա։ Հետո՝ փաստացի զեկույց GPT-ին |
+| 1 | **API reader, քայլ 11.** մեկ հսկվող գրող գործարկում։ **Արված ա 08.10.2026 07:33 UTC-ին**. կետից մնում ա GPT-ի պատասխանը փաստացի զեկույցին | Claude | 08.10.2026-ի 06:00 UTC-ի պլանավորումը գրել ա նոր օրը (տասը գործ, երեքը `API_READ`). `runtime.sqlite*`-ը դեռ `kryuk-db` խմբով ա | Ստուգել պլանը. դնել `kryuk-api-read.service`-ը. մեկ `systemctl start`. ստուգել երեք `DONE`՝ `MACHINE_OBSERVED`-ով, մնացած յոթը անփոփոխ, վահանակը բացվում ա։ Timer չկա։ Հետո՝ փաստացի զեկույց GPT-ին |
 | 2 | **Avito մինչև 11.10** (HOLD) | Գև | Արմենի պատասխանը. երկարաձգումը իրա կաբինետում անվճա՞ր ա, թե վճարովի, ու ում մոտ ա autoload-ի ֆայլը | Claude-ի առաջարկը. եթե անվճար ա՝ թույլտվություն միայն երկարաձգման համար, տեքստերը չեն փոխվում. եթե վճարովի ա՝ որոշել թիվը իմանալուց հետո։ Մինչև Գևի խոսքը ոչինչ չի փոխվում ու չի վճարվում |
 | 3 | **Հասցեի հաստատում մինչև 13.10** | Արմեն | Ցուցանակների չափերի հարցը (06.10.2026-ի սքրինշոթն ու ձայնայինները, բովանդակությունը հայտնի չի) → տպել → վիդեո | Գևը պարզում ա՝ չափերի հետ ինչն ա սխալ. Claude-ը ուղղում ա ֆայլերը. Արմենը նկարում ու ուղարկում ա վիդեոն |
 | 4 | **Credential-ների մաքրում Windows-ում** | Գև (պահոցի որոշումը), Claude (պատրաստում առանց արժեքների) | GPT-ն տեղերը ֆիքսել ա. բաց ա գործող ու Avito-ի գաղտնիքների պահոցը՝ VPS, թե առանձին Windows օգտատեր | Claude-ը պատրաստում ա տեղափոխման ու ստուգման պլանը, user փոփոխականները կարդացողների ցուցակը (`tools/api_setup/*.ps1`, `provision_from_windows.ps1`, `bro_api_reader.py --windows-user-store`, `.mcp.json`) ու canary ստուգում ամեն AI մեկնարկի համար։ Սկրիպտը գործարկում ա Գևը. Claude-ի ու editor-ի նիստերը վերամեկնարկվում են |
