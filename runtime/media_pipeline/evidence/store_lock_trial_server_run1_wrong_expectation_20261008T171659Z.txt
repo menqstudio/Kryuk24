@@ -1,0 +1,45 @@
+script sha256: 082b8bb0aa4a6234eafceae6670c3b50856abccb8cce25efb481a8c819f5baae
+time: 2026-10-08T17:16:59Z; systemd 259 (259.5-0ubuntu3.4); Python 3.14.4
+the real files and the real service before: 5ca3e4dea8b0b11040a4a85ff0985c4c881ac80348abfaf7c8058cca2dbbda4c d1e6a2dfa653f40ddbf886c170e8c0d143b1750ad59c1703c647313f7e8818d6 pid=68640 since=Thu 2026-10-08 11:12:38 UTC state=active
+--- A. the hold, with the real systemd
+  ok    A1 the throwaway unit is loaded: loaded
+  ok    A2 a running one-shot unit, ActiveState: activating
+  ok    A3 the same moment, is-active: activating
+  ok    A4 the same moment, exit code of is-active --quiet (0 would mean active): 3
+  ok    A5 it really ran: 1
+  WRONG A6 stopped: failed (expected: inactive)
+  ok    A7 the drop-in is loaded (DropInPaths): yes
+  ok    A8 held: exit code of systemctl start: 0
+  ok    A9 held: ConditionResult: no
+  WRONG A10 held: ActiveState: failed (expected: inactive)
+  ok    A11 held: its command did not run: 0
+Warning: The unit file, source configuration file or drop-ins of kryuk-holdtrial-84984.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+  ok    A12 drop-in deleted, before any reload: it starts (a failed reload cannot keep a unit held): 1
+Warning: The unit file, source configuration file or drop-ins of kryuk-holdtrial-84984.service changed on disk. Run 'systemctl daemon-reload' to reload units.
+  ok    A13 after the release, DropInPaths: 
+  ok    A14 after the release it starts: activating/1
+--- B. the service with the new files, in a temporary place
+  ok    B1 the copy holds the new ops_media.py: 0f877f7703279ec984da924f5f34965b99ac0d9488b428facae6d9fa1c897df4
+  ok    B2 the copy holds the new ops_work.py: 69aa0809da3b8dd5c894b1abe2c2e9feb735785184bf8bc79fe979a3495da251
+  ok    B3 the rest of the copy is the installed code: 0
+  ok    B4 systemd-run: 0
+  ok    B5 /health with the new files: {"mode":"STAGING","ok":true,"sending_enabled":false}
+  ok    B6 it runs as: kryuk-run
+  ok    B7 it runs the copy: /tmp/store-lock-trial.IgbDi3/code/secure_server.py
+  ok    B8 its database is its own: 1
+  ok    B9 the new store answers in that Python (LOCKING): 1
+  ok    B10 restart: 0
+  ok    B11 active after the restart: active
+  ok    B12 /health after the restart: {"mode":"STAGING","ok":true,"sending_enabled":false}
+  ok    B13 a new process after the restart: yes
+  ok    B14 nothing in its journal that looks like an error: 0
+  ok    B15 the real service still answers on its own port: {"mode":"STAGING","ok":true,"sending_enabled":false}
+--- after the clean-up
+  ok    throwaway unit: not-found
+  ok    trial service: not-found
+  ok    files left in /etc/systemd/system, /run, /tmp: 0
+  ok    port 18788 listening: 0
+  ok    the real files and the real service: 5ca3e4dea8b0b11040a4a85ff0985c4c881ac80348abfaf7c8058cca2dbbda4c d1e6a2dfa653f40ddbf886c170e8c0d143b1750ad59c1703c647313f7e8818d6 pid=68640 since=Thu 2026-10-08 11:12:38 UTC state=active
+time: 2026-10-08T17:17:12Z
+TRIAL FAILED
+exit: 1

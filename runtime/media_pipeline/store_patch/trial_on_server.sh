@@ -80,7 +80,11 @@ check "A3 the same moment, is-active" "$(systemctl is-active "$HT")" "activating
 systemctl is-active --quiet "$HT"; check "A4 the same moment, exit code of is-active --quiet (0 would mean active)" "$?" "3"
 check "A5 it really ran" "$(ls /run/kryuk-holdtrial-$TAG.marker 2>/dev/null | wc -l)" "1"
 systemctl stop "$HT"; rm -f "/run/kryuk-holdtrial-$TAG.marker"
-check "A6 stopped" "$(systemctl show -p ActiveState --value "$HT")" "inactive"
+# a one-shot unit stopped while its command runs ends as "failed" (first run of this trial, 17:16 UTC, expected
+# "inactive" here and was wrong); install.sh takes both "inactive" and "failed" as not running
+check "A6 stopped while running" "$(systemctl show -p ActiveState --value "$HT")" "failed"
+systemctl reset-failed "$HT"
+check "A6b after reset-failed" "$(systemctl show -p ActiveState --value "$HT")" "inactive"
 mkdir -p "/run/systemd/system/$HT.d"
 printf '[Unit]\nConditionPathExists=!%s\n' "/run/systemd/system/$HT.d/90-kryuk-store-lock-install.conf" > "/run/systemd/system/$HT.d/90-kryuk-store-lock-install.conf"
 systemctl daemon-reload
@@ -89,12 +93,12 @@ check "A7 the drop-in is loaded (DropInPaths)" "$shown" "yes"
 systemctl start "$HT"; started=$?; sleep 1
 check "A8 held: exit code of systemctl start" "$started" "0"
 check "A9 held: ConditionResult" "$(systemctl show -p ConditionResult --value "$HT")" "no"
-check "A10 held: ActiveState" "$(systemctl show -p ActiveState --value "$HT")" "inactive"
+check "A10 held: ActiveState (it was inactive before the start)" "$(systemctl show -p ActiveState --value "$HT")" "inactive"
 check "A11 held: its command did not run" "$(ls /run/kryuk-holdtrial-$TAG.marker 2>/dev/null | wc -l)" "0"
 rm -f "/run/systemd/system/$HT.d/90-kryuk-store-lock-install.conf"
 systemctl start --no-block "$HT"; sleep 2
 check "A12 drop-in deleted, before any reload: it starts (a failed reload cannot keep a unit held)" "$(ls /run/kryuk-holdtrial-$TAG.marker 2>/dev/null | wc -l)" "1"
-systemctl stop "$HT"; rm -f "/run/kryuk-holdtrial-$TAG.marker"
+systemctl stop "$HT"; systemctl reset-failed "$HT"; rm -f "/run/kryuk-holdtrial-$TAG.marker"
 rmdir "/run/systemd/system/$HT.d"; systemctl daemon-reload
 check "A13 after the release, DropInPaths" "$(systemctl show -p DropInPaths --value "$HT")" ""
 systemctl start --no-block "$HT"; sleep 2
