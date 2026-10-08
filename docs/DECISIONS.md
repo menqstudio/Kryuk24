@@ -35,6 +35,7 @@ A working-rules draft (`RULES.md`, 06.10.2026) was never approved by Gev. It is 
 | 07.10.2026 | The owner's cabinet in the runtime replaces the Google form and the WhatsApp poll: read-only role, a one-tap question of the day without questions about money, upload of real photos. GPT writes the code, Claude installs and checks, STAGING only | Gev |
 | 07.10.2026 | Armen is not asked about money in forms or polls. Changes in his WhatsApp need his knowledge, not only Gev's go-ahead | Gev (money questions); the WhatsApp part is a working lesson in `docs/LESSONS.md` |
 | standing | Not promised or written anywhere: an arrival time; a dispatcher's "10 %"; a free trip to the customer. Generated images are never presented as own equipment or own jobs | Recorded in the task list ("not doing"); the decider is not named there |
+| 07.10.2026 (22:58 UTC) | The operator page takes KRYUK24 colours (navy / orange), colours only; the site's `logo-dark.png` and the black `theme-color` of the SEO pages are corrected. Both prepared in the repository first, shown with screenshots, installed or deployed by Gev | Gev |
 
 ## 3. Advertising
 
@@ -155,6 +156,7 @@ Other open points that are decisions waiting for a person, not contradictions be
 | 07.10.2026 | Runtime-ում տիրոջ կաբինետը փոխարինում ա Google ձևին ու WhatsApp-ի հարցմանը. միայն-կարդալու դեր, օրվա հարց մեկ սեղմումով՝ առանց փողի հարցերի, իսկական նկարների վերբեռնում։ Կոդը գրում ա GPT-ն, Claude-ը դնում ու ստուգում ա, միայն STAGING | Գև |
 | 07.10.2026 | Արմենին ձևերում ու հարցումներում փողի մասին չենք հարցնում։ Իրա WhatsApp-ում փոփոխությունը իրա իմացությամբ ա լինում, ոչ միայն Գևի «հա»-ով | Գև (փողի հարցերը). WhatsApp-ի մասը աշխատանքային դաս ա՝ `docs/LESSONS.md`-ից |
 | մշտական | Ոչ մի տեղ չի խոստացվում ու չի գրվում. հասնելու ժամ. դիսպետչերի «10 %». անվճար ճանապարհ մինչև հաճախորդ։ Գեներացված նկարը չի ներկայացվում որպես սեփական տեխնիկա կամ սեփական գործ | Գրված ա անելիքների ցուցակի «չենք անում» բաժնում. որոշողը էնտեղ նշված չի |
+| 07.10.2026 (22:58 UTC) | Աշխատանքների էջը ստանում ա КРЮК24-ի գույները (navy / նարնջագույն), միայն գույները. կայքի `logo-dark.png`-ն ու SEO էջերի սև `theme-color`-ը ուղղվում են։ Երկուսն էլ նախ repo-ում, նկարներով ցույց տրված, տեղադրում ու հրապարակում ա Գևը | Գև |
 
 ## 3. Գովազդ
 
