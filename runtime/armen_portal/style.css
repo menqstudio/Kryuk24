@@ -1,1 +1,74 @@
-:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#13233a;background:#f2f5f9;font-size:16px}*{box-sizing:border-box}body{margin:0}main{max-width:620px;margin:auto;padding:22px 16px 36px}header{display:flex;align-items:center;justify-content:space-between;gap:12px}.logo{display:flex;align-items:center;gap:7px;font-size:23px;font-weight:800;color:#13233a}.tag{font-size:12px;background:#fff;border-radius:20px;padding:8px 12px;color:#3d5967}h1{font-size:30px;line-height:1.15;margin:28px 0 8px}h2{font-size:21px;margin:0 0 12px}.intro{color:#536477;margin:0 0 24px}section{background:#fff;border:1px solid #dfe5ee;border-radius:20px;padding:20px;margin:16px 0;box-shadow:0 3px 14px #13233a05}p{line-height:1.5}.hint,footer{color:#526477;font-size:14px}label{display:block;margin:10px 0;font-weight:600}select{width:100%;padding:13px;border:1px solid #ccd6e2;border-radius:12px;background:white;font:inherit}button,.button{min-height:48px;border:1px solid #ccd6e2;border-radius:12px;padding:12px 16px;font:inherit;font-weight:600;cursor:pointer;text-align:center;background:#f8fafc;color:#13233a;touch-action:manipulation}button[aria-pressed=true]{background:#13233a;color:#fff;border-color:#13233a}.button input{position:absolute;width:1px;height:1px;opacity:0}.button:focus-within,button:focus-visible{outline:3px solid #ef5b00;outline-offset:2px}.primary{background:#ef5b00;color:white;border-color:#ef5b00}.secondary{background:#fff}.upload-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}.question{padding:16px 0;border-top:1px solid #edf0f4}.question h3{font-size:17px;margin:0 0 12px}.choices{display:flex;flex-wrap:wrap;gap:8px}.choices button{flex:1 1 auto}.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:12px}.photo p{margin:4px 0;font-size:12px}.success{color:#246044}.error{color:#a22c24}button:disabled{opacity:.65;cursor:wait}footer{margin-top:24px}#status,#upload-status{overflow-wrap:anywhere}@media(max-width:360px){section{padding:16px}.upload-actions{grid-template-columns:1fr}h1{font-size:27px}}
+/* Armen portal. Every colour, font, radius, space and shadow comes from tokens.css, the design system's own file
+   (design/tokens/kryuk.tokens.css). No colour value is written here: design/scripts/check_shared_design.py refuses one.
+   Phone first: 360 px wide and up, no sideways scroll. */
+*{box-sizing:border-box}
+html{color-scheme:light dark}
+html[data-theme=light]{color-scheme:light}
+html[data-theme=dark]{color-scheme:dark}
+body{margin:0;font-family:var(--font-sans);font-size:16px;line-height:1.45;color:var(--color-content-primary);background:var(--color-page-bg);-webkit-font-smoothing:antialiased;overflow-wrap:anywhere}
+main{max-width:var(--container-narrow);margin:0 auto;padding:var(--space-3) var(--space-3) var(--space-8)}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;margin:0;line-height:1.2}
+h1{font-size:22px;margin:var(--space-3) 0 var(--space-2)}
+h2{font-size:18px;margin-bottom:var(--space-3)}
+h3{font-size:16px;font-family:var(--font-sans);font-weight:600;margin-bottom:var(--space-2)}
+p{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);min-height:44px}
+.klogo{height:36px;width:auto;display:block}
+.on-dark{display:none}
+html[data-theme=dark] .on-light{display:none}
+html[data-theme=dark] .on-dark{display:block}
+@media (prefers-color-scheme:dark){html:not([data-theme=light]) .on-light{display:none}html:not([data-theme=light]) .on-dark{display:block}}
+.tools{display:flex;gap:var(--space-1)}
+
+.card{background:var(--color-surface-primary);border:1px solid var(--color-border-subtle);border-radius:var(--radius-card);box-shadow:var(--shadow-card);padding:var(--space-4) var(--space-3);margin:var(--space-3) 0}
+.hint,footer{color:var(--color-content-muted);font-size:14px}
+.hint{margin:var(--space-2) 0}
+footer{margin-top:var(--space-4)}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:var(--space-1)}
+select,input[type=text],input[type=password]{width:100%;min-height:var(--button-height-md);padding:0 var(--space-3);border:1px solid var(--color-border-strong);border-radius:var(--radius-button);background:var(--color-surface-primary);color:var(--color-content-primary);font:inherit}
+
+button,.button{display:inline-flex;align-items:center;justify-content:center;min-height:var(--button-height-md);padding:var(--space-2) var(--space-3);border:1px solid var(--color-border-strong);border-radius:var(--radius-button);background:var(--color-surface-primary);color:var(--color-content-primary);font-family:var(--font-display);font-weight:700;font-size:16px;line-height:1.15;text-align:center;cursor:pointer;touch-action:manipulation;transition:background var(--duration-fast) var(--ease-standard)}
+.button{margin:0}
+.button input{position:absolute;width:1px;height:1px;opacity:0}
+button:focus-visible,.button:focus-within,select:focus-visible,input:focus-visible{outline:3px solid var(--color-focus-ring);outline-offset:2px}
+button:disabled{opacity:var(--opacity-disabled);cursor:default}
+.primary{background:var(--color-action-primary);border-color:var(--color-action-primary);color:var(--color-action-on);width:100%}
+.quiet{min-height:44px;border-color:transparent;background:transparent;color:var(--color-content-secondary);font-family:var(--font-sans);font-weight:500;font-size:14px;padding:0 var(--space-2)}
+button[aria-pressed=true]{background:var(--color-action-secondary);border-color:var(--color-action-secondary);color:var(--color-content-inverse)}
+
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-top:var(--space-3)}
+.pending{list-style:none;margin:var(--space-2) 0 0;padding:0}
+.pending li{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:center;gap:var(--space-2);padding:var(--space-2) 0;border-top:1px solid var(--color-border-subtle)}
+.pending img{width:56px;height:56px;object-fit:cover;border-radius:var(--radius-lg);background:var(--color-surface-secondary);display:block}
+.pending .name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pending .state{font-size:14px;color:var(--color-content-muted)}
+.act{margin-top:var(--space-3)}
+.act .note{margin-top:var(--space-2)}
+progress{display:block;width:100%;height:8px;margin-top:var(--space-2);accent-color:var(--color-action-primary)}
+
+.question{padding:var(--space-3) 0;border-top:1px solid var(--color-border-subtle)}
+.question:first-child{border-top:0;padding-top:0}
+.choices{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+.choices button{flex:1 1 auto;font-family:var(--font-sans);font-weight:600;font-size:15px}
+.question .note{margin-top:var(--space-2)}
+
+.note{font-size:14px;font-weight:600}
+.note:empty{display:none}
+.ok,.pending .state.ok{color:var(--color-success-text)}
+.error,.pending .state.error{color:var(--color-danger-text)}
+.warn,.pending .state.warn{color:var(--color-warning-text)}
+
+.photos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-2)}
+.photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius-lg);display:block;background:var(--color-surface-secondary)}
+.photo p{margin-top:var(--space-1);font-size:12px;color:var(--color-content-muted)}
+.photos .empty{grid-column:1/-1;margin:0}
+
+.login{margin-top:var(--space-4)}
+.login label{margin-top:var(--space-3)}
+.login button{margin-top:var(--space-4)}
+
+@media (min-width:600px){main{padding:var(--space-5) var(--space-4) var(--space-10)}h1{font-size:26px}.card{padding:var(--space-5)}.klogo{height:44px}.primary{width:auto;min-width:16rem}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}

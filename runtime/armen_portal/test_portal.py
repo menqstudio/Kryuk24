@@ -257,4 +257,18 @@ print(len(saved),round(peak()))
     headers={'Content-Type':'application/json','Origin':'https://runtime.kryuk24.ru'})
    with urllib.request.urlopen(req) as r:self.assertEqual(r.status,200)
   finally:http.shutdown();http.server_close();thread.join();tmp.cleanup()
+ def test_design_files_are_public_and_the_page_script_is_not(self):
+  # The look of the page is readable before login (tokens, fonts, logo, theme); app.js and the data are not.
+  for name,kind in portal.PUBLIC.items():
+   status,raw,headers=self.request(PREFIX+name,user=None)
+   self.assertEqual((status,headers['Content-Type'],len(raw)>0),(200,kind,True),name)
+   self.assertEqual(headers['Cache-Control'],'public, max-age=86400' if name.endswith(('.woff2','.webp')) else 'no-store',name)
+  self.assertEqual(self.request(PREFIX+'app.js',user=None)[0],401)
+  self.assertEqual(self.request(PREFIX+'portal.py',user=None)[0],401)
+  self.assertEqual(self.request(PREFIX+'app.js')[0],200)
+  status,raw,headers=self.request(user=None)
+  self.assertIn("font-src 'self'",headers['Content-Security-Policy'])
+  for name in (b'tokens.css',b'fonts.css',b'style.css',b'theme.js',b'logo-light.webp',b'logo-dark.webp'):self.assertIn(name,raw)
+  page=self.request()[1]
+  for part in (b'id="send"',b'id="save"',b'id="pending"',b'tokens.css'):self.assertIn(part,page)
 if __name__=='__main__':unittest.main()

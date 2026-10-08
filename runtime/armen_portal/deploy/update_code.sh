@@ -7,7 +7,7 @@ umask 022
 SRC=${1:?package folder required}
 CODE=/opt/kryuk24-armen
 NAME=kryuk-armen
-FILES="portal.py provision.py app.js login.js index.html login.html style.css requirements.txt"
+FILES="portal.py provision.py app.js login.js theme.js index.html login.html style.css tokens.css fonts.css logo-light.webp logo-dark.webp font-golos-cyrillic.woff2 font-golos-latin.woff2 font-robotocond-700-cyrillic.woff2 font-robotocond-700-latin.woff2 requirements.txt"
 stop() { echo "STOP: $1"; exit 1; }
 echo "== time"; date -u +"%FT%TZ"
 [ "$(id -u)" = 0 ] || stop "run with sudo"
@@ -18,7 +18,7 @@ cmp -s "$SRC/requirements.txt" "$CODE/requirements.txt" || stop "requirements ch
 echo "package: matches its checksums"
 echo "== tests of the new package on this server, as the service user"
 WORK=$(mktemp -d /tmp/armen_tests.XXXXXX)
-cp "$SRC"/*.py "$SRC"/*.js "$SRC"/*.html "$SRC"/*.css "$WORK"/
+cp "$SRC"/*.py "$SRC"/*.js "$SRC"/*.html "$SRC"/*.css "$SRC"/*.webp "$SRC"/*.woff2 "$WORK"/
 chown -R "$NAME":"$NAME" "$WORK"
 if (cd "$WORK" && runuser -u "$NAME" -- "$CODE/.venv/bin/python" -B -m unittest test_portal > "$WORK/result.txt" 2>&1); then TESTS=0; else TESTS=$?; fi
 tail -n 4 "$WORK/result.txt"

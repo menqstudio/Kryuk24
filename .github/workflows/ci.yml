@@ -65,6 +65,9 @@ jobs:
         run: |
           node --check runtime/armen_portal/app.js
           node --check runtime/armen_portal/login.js
+          node --check runtime/armen_portal/theme.js
+      - name: One design source for the Armen portal and the operator page (tokens, logo, fonts)
+        run: python design/scripts/check_shared_design.py
       - name: Package manifest matches the files
         working-directory: runtime/api_reader
         run: sha256sum -c SHA256SUMS.txt

@@ -39,6 +39,12 @@ class Sessions:
   with self.lock:self.records.pop(key,None)
 
 MAX_LOGIN_BODY=16384
+# Files anybody may read, also before login: the look of the page and nothing else. tokens.css is the design
+# system's own file (design/tokens/kryuk.tokens.css, copied byte for byte and checked in CI); the logo files are the
+# official lockup; the fonts are the site's. Fonts and logo may be kept by the browser for a day.
+PUBLIC={'login.js':'text/javascript; charset=utf-8','theme.js':'text/javascript; charset=utf-8','style.css':'text/css; charset=utf-8',
+ 'tokens.css':'text/css; charset=utf-8','fonts.css':'text/css; charset=utf-8','logo-light.webp':'image/webp','logo-dark.webp':'image/webp',
+ 'font-golos-cyrillic.woff2':'font/woff2','font-golos-latin.woff2':'font/woff2','font-robotocond-700-cyrillic.woff2':'font/woff2','font-robotocond-700-latin.woff2':'font/woff2'}
 MAX_IMAGE=20*1024*1024
 MAX_TOTAL=1024*1024*1024
 QUESTIONS=[
@@ -180,11 +186,11 @@ def server(store,users,origin,port=8790):
  class H(BaseHTTPRequestHandler):
   def setup(self):super().setup();self.connection.settimeout(30)
   def log_message(self,*args):pass
-  def reply(self,status,data,kind='application/json; charset=utf-8',cookie=None):
+  def reply(self,status,data,kind='application/json; charset=utf-8',cookie=None,keep=False):
    raw=data if isinstance(data,bytes) else (encode(data) if isinstance(data,dict) else data).encode()
    self.send_response(status);self.send_header('Content-Type',kind);self.send_header('Content-Length',str(len(raw)))
-   for k,v in [('Cache-Control','no-store'),('X-Content-Type-Options','nosniff'),('X-Frame-Options','DENY'),('Referrer-Policy','no-referrer'),('X-Robots-Tag','noindex, nofollow')]:self.send_header(k,v)
-   self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+   for k,v in [('Cache-Control','public, max-age=86400' if keep else 'no-store'),('X-Content-Type-Options','nosniff'),('X-Frame-Options','DENY'),('Referrer-Policy','no-referrer'),('X-Robots-Tag','noindex, nofollow')]:self.send_header(k,v)
+   self.send_header('Content-Security-Policy',"default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
    if cookie is not None:self.send_header('Set-Cookie',cookie)
    self.end_headers();self.wfile.write(raw)
   def identity(self):
@@ -222,9 +228,8 @@ def server(store,users,origin,port=8790):
     return self.reply(200,{'logged_in':True},cookie=self.cookie(token))
    finally:logins.release()
   def do_GET(self):
-   if self.path in (PREFIX+'login.js',PREFIX+'style.css'):
-    name=self.path[len(PREFIX):];kind='text/javascript; charset=utf-8' if name.endswith('.js') else 'text/css; charset=utf-8'
-    return self.reply(200,(Path(__file__).parent/name).read_bytes(),kind)
+   name=self.path[len(PREFIX):] if self.path.startswith(PREFIX) else None
+   if name in PUBLIC:return self.reply(200,(Path(__file__).parent/name).read_bytes(),PUBLIC[name],keep=name.endswith(('.woff2','.webp')))
    actor=self.identity()
    if not actor:
     if self.path==PREFIX:return self.reply(200,(Path(__file__).parent/'login.html').read_bytes(),'text/html; charset=utf-8')
@@ -233,9 +238,7 @@ def server(store,users,origin,port=8790):
    if self.path==PREFIX:
     raw=(Path(__file__).parent/'index.html').read_text(encoding='utf-8').replace('__CSRF__',self.session[1]).replace('__ACTOR__',actor)
     return self.reply(200,raw,'text/html; charset=utf-8')
-   if self.path in (PREFIX+'app.js',PREFIX+'style.css'):
-    name=self.path[len(PREFIX):];kind='text/javascript; charset=utf-8' if name.endswith('.js') else 'text/css; charset=utf-8'
-    return self.reply(200,(Path(__file__).parent/name).read_bytes(),kind)
+   if self.path==PREFIX+'app.js':return self.reply(200,(Path(__file__).parent/'app.js').read_bytes(),'text/javascript; charset=utf-8')
    if self.path==PREFIX+'api/state':return self.reply(200,store.state(actor,owner=actor=='gev'))
    if self.path.startswith(PREFIX+'preview/'):
     try:return self.reply(200,store.preview(actor,self.path[len(PREFIX+'preview/'):],actor=='gev'),'image/jpeg')
