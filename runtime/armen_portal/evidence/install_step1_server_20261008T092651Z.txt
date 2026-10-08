@@ -1,0 +1,293 @@
+Armen portal, server install: step 1 of 3. Outputs of the scripts as they were printed on the server.
+Not done at the end of this file: no password stored, the unit never started, Nginx unchanged.
+
+####################################################################################################
+# 1. Read-only facts BEFORE the install (deploy/preinstall_facts.sh)
+####################################################################################################
+== time
+2026-10-08T09:23:25Z
+== system
+Ubuntu 26.04.1 LTS
+7.0.0-31-generic
+systemd 259 (259.5-0ubuntu3.4)
+== cgroup (MemoryMax needs cgroup2fs)
+cgroup2fs
+== memory and swap (MiB)
+               total        used        free      shared  buff/cache   available
+Mem:            1962         486         285          32        1413        1475
+Swap:              0           0           0
+== disk
+Filesystem Size Avail Use% Mounted
+/dev/vda1 28G 25G 11% /
+/dev/vda1 28G 25G 11% /
+/dev/vda1 28G 25G 11% /
+== python
+3.14.4 3.46.1
+ModuleNotFoundError: No module named 'ensurepip'
+== listening sockets (port 8790 must be absent before the install, loopback only after it)
+0.0.0.0:22
+0.0.0.0:443
+0.0.0.0:80
+127.0.0.1:8788
+127.0.0.1:8789
+127.0.0.53%lo:53
+127.0.0.54:53
+[::]:22
+[::]:80
+== user and group of the portal
+id: 'kryuk-armen': no such user
+group kryuk-armen: absent
+== folders of the portal (owner:group mode name)
+stat: cannot stat '/opt/kryuk24-armen': No such file or directory (os error 2)
+stat: cannot stat '/var/lib/kryuk24-armen': No such file or directory (os error 2)
+stat: cannot stat '/var/lib/kryuk24-armen/photos': No such file or directory (os error 2)
+stat: cannot stat '/var/lib/kryuk24-armen/portal.sqlite': No such file or directory (os error 2)
+stat: cannot stat '/etc/kryuk24-armen': No such file or directory (os error 2)
+stat: cannot stat '/etc/kryuk24-armen/users.json': No such file or directory (os error 2)
+== files in the code folder (sha256)
+absent
+== counts in the data folder (no file is opened)
+absent
+== unit of the portal
+stat: cannot stat '/etc/systemd/system/kryuk-armen.service': No such file or directory (os error 2)
+active: inactive; enabled: not-found
+MainPID=0 NRestarts=0 MemoryCurrent=[not set] MemoryPeak=[not set] MemoryMax=infinity 
+== the other kryuk units: active / enabled
+kryuk-api-read.service: inactive / static
+kryuk-backup.service: inactive / static
+kryuk-backup.timer: active / enabled
+kryuk-bro-api.service: active / disabled
+kryuk-capture.service: active / enabled
+kryuk-operations.service: inactive / static
+kryuk-operations.timer: active / enabled
+== timers
+NEXT                            LEFT LAST                               PASSED UNIT                           ACTIVATES
+Fri 2026-10-09 00:00:26 UTC      14h Thu 2026-10-08 00:00:31 UTC        9h ago kryuk-backup.timer             kryuk-backup.service
+Fri 2026-10-09 06:00:09 UTC      20h Thu 2026-10-08 06:01:21 UTC  3h 22min ago kryuk-operations.timer         kryuk-operations.service
+== nginx
+nginx version: nginx/1.28.3 (Ubuntu)
+active: active
+== nginx files that name runtime.kryuk24.ru (sha256)
+3485b6743c8ac5b9dbdd2ce70605ed2cc97176144270f22e97425d9f44db3a17  /etc/nginx/conf.d/kryuk24.conf
+== enabled sites
+total   
+drwxr-xr-x .  
+drwxr-xr-x ..  
+lrwxrwxrwx default -> /etc/nginx/sites-available/default
+== rate limit zones and body limits anywhere in the nginx config
+/etc/nginx/conf.d/kryuk24.conf:4:limit_req_zone $binary_remote_addr zone=kryuk_capture:10m rate=10r/m;
+/etc/nginx/conf.d/kryuk24.conf:5:limit_req_zone $binary_remote_addr zone=kryuk_operator:10m rate=20r/m;
+/etc/nginx/conf.d/kryuk24.conf:6:limit_req_zone $binary_remote_addr zone=kryuk_preview:10m rate=5r/s;
+/etc/nginx/conf.d/kryuk24.conf:24: client_max_body_size 8k;
+/etc/nginx/conf.d/kryuk24.conf:56:  client_max_body_size 32k;
+== the nginx files that name runtime.kryuk24.ru, in full (configuration, no credential)
+(left out of this file; the sha256 is above)
+== password files the config points at: owner:group mode (not opened)
+root:www-data 640 /etc/nginx/kryuk-bro.htpasswd
+root:www-data 640 /etc/nginx/kryuk-staging.htpasswd
+== nginx -t
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+== end
+
+####################################################################################################
+# 2. Install step 1 (deploy/install_1_prepare.sh), package made from main d92e302
+####################################################################################################
+== time
+2026-10-08T09:26:19Z
+== preconditions
+portal.py: OK
+provision.py: OK
+app.js: OK
+login.js: OK
+index.html: OK
+login.html: OK
+style.css: OK
+requirements.txt: OK
+test_portal.py: OK
+kryuk-armen.service: OK
+preconditions: ok
+== python3-venv (the system Python has no ensurepip)
+0 upgraded, 4 newly installed, 0 to remove and 14 not upgraded.
+Setting up python3-setuptools-whl (78.1.1-0.1build1)…
+Setting up python3-pip-whl (25.1.1+dfsg-1ubuntu2)…
+Setting up python3.14-venv (3.14.4-1ubuntu0.2)…
+Setting up python3-venv (3.14.3-0ubuntu2)…
+== user
+uid=997(kryuk-armen) gid=981(kryuk-armen) groups=981(kryuk-armen)
+== folders and code
+root:root 755 /opt/kryuk24-armen
+root:root 644 /opt/kryuk24-armen/app.js
+root:root 644 /opt/kryuk24-armen/index.html
+root:root 644 /opt/kryuk24-armen/login.html
+root:root 644 /opt/kryuk24-armen/login.js
+root:root 644 /opt/kryuk24-armen/portal.py
+root:root 644 /opt/kryuk24-armen/provision.py
+root:root 644 /opt/kryuk24-armen/requirements.txt
+root:root 644 /opt/kryuk24-armen/style.css
+kryuk-armen:kryuk-armen 700 /var/lib/kryuk24-armen
+root:kryuk-armen 750 /etc/kryuk24-armen
+== isolated Python
+pillow==12.3.0
+code folder: everything owned by root
+== the service user can load the code and cannot write it
+python 3.14.4 Pillow 12.3.0
+write to the code folder refused: ok
+== tests on this server, as the service user (package copy, temporary folders only)
+----------------------------------------------------------------------
+Ran 21 tests in 22.986s
+
+OK
+== unit file (not started, not enabled)
+active: inactive; enabled: disabled
+systemd-analyze verify: nothing reported for this unit
+== step 1 done
+2026-10-08T09:26:51Z
+
+####################################################################################################
+# 3. Memory under two uploads at once over HTTP (deploy/memtest.sh, temporary instance, SAMPLE password, port 8791)
+####################################################################################################
+== time
+2026-10-08T09:29:12Z
+== memory of the machine before (MiB)
+Mem:            1962         509         430          32        1245        1453
+== test files (made outside the measured unit)
+big-0.jpg: 8000x5000 noise, quality 65, 19.5 MiB
+big-1.jpg: 8000x5000 noise, quality 65, 19.5 MiB
+flat-0.png: 8000x5000 RGBA, 0.16 MiB
+flat-1.png: 8000x5000 RGBA, 0.16 MiB
+sample credential file written
+== temporary unit with the limits of kryuk-armen.service
+listening on 127.0.0.1:8791 only: 1 socket
+MemoryCurrent=17862656 MemoryPeak=17862656 MemoryMax=805306368 (idle)
+== two uploads at once
+login: 200
+upload big-0.jpg: status 201, 0.6 s, {"duplicate":false,"id":"1200e16925a9496aad2b46aec6d3bc13","publishing_enabled":false,"saved":true}
+upload big-1.jpg: status 201, 0.33 s, {"duplicate":false,"id":"90868dddef874724b98f7f4b790bd88e","publishing_enabled":false,"saved":true}
+peak of the unit so far: 93 MiB
+upload flat-0.png: status 201, 2.57 s, {"duplicate":false,"id":"032d0bd5fa8c419bb9776e4f659802fb","publishing_enabled":false,"saved":true}
+upload flat-1.png: status 201, 1.3 s, {"duplicate":false,"id":"79ae7aceb6ff48188077dd6f7de658a5","publishing_enabled":false,"saved":true}
+peak of the unit so far: 379 MiB
+state: 200 photos listed: 4
+preview: status 200, 4276 bytes, starts as JPEG: True, 0.002 s
+preview: status 200, 4276 bytes, starts as JPEG: True, 0.001 s
+preview: status 200, 19900 bytes, starts as JPEG: True, 0.001 s
+preview: status 200, 19887 bytes, starts as JPEG: True, 0.001 s
+logout: 200
+state with the cookie after logout: 401
+== after the uploads
+NRestarts=0 MemoryCurrent=62500864 MemoryPeak=397828096 
+peak in MiB: 379
+still active: active
+kernel memory events of the unit: low 0 high 0 max 0 oom 0 oom_kill 0 oom_group_kill 0 sock_throttled 0 
+stored files:
+-rw------- 165442
+-rw------- 4276
+-rw------- 20415719
+-rw------- 19900
+-rw------- 165442
+-rw------- 4276
+-rw------- 20415528
+-rw------- 19887
+== memory of the machine after (MiB)
+Mem:            1962         560         438          32        1186        1402
+2026-10-08T09:29:22Z
+== measurement done
+temporary unit stopped, temporary folder removed: yes
+
+####################################################################################################
+# 4. Read-only facts AFTER step 1 (deploy/preinstall_facts.sh)
+####################################################################################################
+== time
+2026-10-08T09:31:24Z
+== system
+Ubuntu 26.04.1 LTS
+7.0.0-31-generic
+systemd 259 (259.5-0ubuntu3.4)
+== cgroup (MemoryMax needs cgroup2fs)
+cgroup2fs
+== memory and swap (MiB)
+               total        used        free      shared  buff/cache   available
+Mem:            1962         509         565          32        1110        1453
+Swap:              0           0           0
+== disk
+Filesystem Size Avail Use% Mounted
+/dev/vda1 28G 25G 12% /
+/dev/vda1 28G 25G 12% /
+/dev/vda1 28G 25G 12% /
+== python
+3.14.4 3.46.1
+venv and ensurepip: present
+== listening sockets (port 8790 must be absent before the install, loopback only after it)
+0.0.0.0:22
+0.0.0.0:443
+0.0.0.0:80
+127.0.0.1:8788
+127.0.0.1:8789
+127.0.0.53%lo:53
+127.0.0.54:53
+[::]:22
+[::]:80
+== user and group of the portal
+uid=997(kryuk-armen) gid=981(kryuk-armen) groups=981(kryuk-armen)
+kryuk-armen:x:981:
+== folders of the portal (owner:group mode name)
+root:root 755 /opt/kryuk24-armen
+kryuk-armen:kryuk-armen 700 /var/lib/kryuk24-armen
+stat: cannot stat '/var/lib/kryuk24-armen/photos': No such file or directory (os error 2)
+stat: cannot stat '/var/lib/kryuk24-armen/portal.sqlite': No such file or directory (os error 2)
+root:kryuk-armen 750 /etc/kryuk24-armen
+stat: cannot stat '/etc/kryuk24-armen/users.json': No such file or directory (os error 2)
+== files in the code folder (sha256)
+3e429a1e9078b38bd3d2a33af00d665bfdda347204f41f784f87b8a8550a607d  portal.py
+4c4e30398d37f129243f385d42d40d4aeb986a431921657af4fffb8d0a19bca1  provision.py
+5dcbfa23bfdc8e4dc602c5b6c4b6a5ab948c5f174eab0d8a64baab962d73d4ed  app.js
+38372c8084e8daa26712da92836b4eea10347d16a922cfe31b5a46e35e2e3edc  login.js
+c126d5a50d2f5753d5b03ecf681f92cc5b7e5f61363f575fa9bdbe03d1a9f9af  index.html
+1657796f5cbc2b2f4dc982f0fc853f82c84c29237f2c0cda203893d7b29c27c7  login.html
+1a76d45786e6daf6d639f057556b8357bfa5c9fda628961139394e66e69cdd63  style.css
+41b54a6fb2918667ca47a61d73b522629d84490f3d78f0f20b21135faba10d35  requirements.txt
+== counts in the data folder (no file is opened)
+absent
+== unit of the portal
+root:root 644 /etc/systemd/system/kryuk-armen.service
+active: inactive; enabled: disabled
+MainPID=0 NRestarts=0 MemoryCurrent=[not set] MemoryPeak=[not set] MemoryMax=805306368 
+== the other kryuk units: active / enabled
+kryuk-api-read.service: inactive / static
+kryuk-armen.service: inactive / disabled
+kryuk-backup.service: inactive / static
+kryuk-backup.timer: active / enabled
+kryuk-bro-api.service: active / disabled
+kryuk-capture.service: active / enabled
+kryuk-operations.service: inactive / static
+kryuk-operations.timer: active / enabled
+== timers
+NEXT                                LEFT LAST                               PASSED UNIT                           ACTIVATES
+Fri 2026-10-09 00:04:57 UTC          14h Thu 2026-10-08 00:00:31 UTC        9h ago kryuk-backup.timer             kryuk-backup.service
+Fri 2026-10-09 06:00:32 UTC          20h Thu 2026-10-08 06:01:21 UTC  3h 30min ago kryuk-operations.timer         kryuk-operations.service
+== nginx
+nginx version: nginx/1.28.3 (Ubuntu)
+active: active
+== nginx files that name runtime.kryuk24.ru (sha256)
+3485b6743c8ac5b9dbdd2ce70605ed2cc97176144270f22e97425d9f44db3a17  /etc/nginx/conf.d/kryuk24.conf
+== enabled sites
+total   
+drwxr-xr-x .  
+drwxr-xr-x ..  
+lrwxrwxrwx default -> /etc/nginx/sites-available/default
+== rate limit zones and body limits anywhere in the nginx config
+/etc/nginx/conf.d/kryuk24.conf:4:limit_req_zone $binary_remote_addr zone=kryuk_capture:10m rate=10r/m;
+/etc/nginx/conf.d/kryuk24.conf:5:limit_req_zone $binary_remote_addr zone=kryuk_operator:10m rate=20r/m;
+/etc/nginx/conf.d/kryuk24.conf:6:limit_req_zone $binary_remote_addr zone=kryuk_preview:10m rate=5r/s;
+/etc/nginx/conf.d/kryuk24.conf:24: client_max_body_size 8k;
+/etc/nginx/conf.d/kryuk24.conf:56:  client_max_body_size 32k;
+== the nginx files that name runtime.kryuk24.ru, in full (configuration, no credential)
+(left out of this file; the sha256 is above)
+== password files the config points at: owner:group mode (not opened)
+root:www-data 640 /etc/nginx/kryuk-bro.htpasswd
+root:www-data 640 /etc/nginx/kryuk-staging.htpasswd
+== nginx -t
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+== end
