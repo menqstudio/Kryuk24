@@ -1,8 +1,8 @@
-# Media pipeline: install plan for the server, r5 / Մեդիայի հոսք. սերվերում դնելու պլան, r5
+# Media pipeline: install plan for the server, r6 / Մեդիայի հոսք. սերվերում դնելու պլան, r6
 
 **Status: a plan for review. Nothing in it has been done on the live runtime, and by Gev's word of 08.10.2026 nothing will be until GPT has reviewed the current head, the diff and the evidence.** Server facts were read on 08.10.2026 11:13 UTC with a read-only script. What was tried was tried in a temporary place on the server (11:37 UTC); each such line says so.
 
-r5 adds the fix of GPT's third review, of head `85ad816` (section 0c: the store itself becomes lock-aware, which adds one step to the install), and corrects "four tables" to five in the instructions. Numbers inside the evidence files of earlier rounds are left as they were: they are the record of those runs. r4 added the fixes of GPT's second review, of head `a52d133` (section 0b), to r3. r3 added the fixes of GPT's review of head `02c21fb` (section 0) to r2; the rest of the plan is r2's, with the numbers of the new rehearsal. r2 replaced r1 of the same day. What changed in r2: the runtime no longer gets read access to the portal's database or photo folder; test data is kept apart by an account, not by marks; backup and rollback are code with tests and were tried.
+r6 adds the fix of GPT's fourth review, of head `c957f87` (section 0d: a precondition moved inside the lock, and a second patched file, `ops_work.py`). r5 added the fix of GPT's third review, of head `85ad816` (section 0c: the store itself becomes lock-aware, which adds one step to the install), and corrects "four tables" to five in the instructions. Numbers inside the evidence files of earlier rounds are left as they were: they are the record of those runs. r4 added the fixes of GPT's second review, of head `a52d133` (section 0b), to r3. r3 added the fixes of GPT's review of head `02c21fb` (section 0) to r2; the rest of the plan is r2's, with the numbers of the new rehearsal. r2 replaced r1 of the same day. What changed in r2: the runtime no longer gets read access to the portal's database or photo folder; test data is kept apart by an account, not by marks; backup and rollback are code with tests and were tried.
 
 ## EN
 
@@ -54,6 +54,27 @@ So writing, registering and deleting in this store are serialised for everybody 
 **What this does not cover, said outright:** a program that writes into the media folder and the database without the store's code takes no lock, and no design on this side can coordinate with it. Nothing in the repository does that. And until the patched `ops_media.py` is installed on the server, the pipeline does not run there at all: that is the refusal above, on purpose.
 
 Against the reviewed code (`85ad816`, with the store as installed) the two tests fail exactly where the loss began: the clean-up did not wait, the importer did not wait. On this head the pipeline's 35 tests pass on Windows and on the server (Linux), the portal's 28 unchanged. The rehearsal was run again with the lock-aware store at 13:07 UTC.
+
+### 0d. Review of head `c957f87` (GPT, 08.10.2026): a precondition checked outside the lock
+
+| # | Found | Fix | Test (real parallel processes, Linux and Windows) |
+| --- | --- | --- | --- |
+| 1 | `MediaStore.prepared()` checked that the original exists and only then took the lock. In between a rollback could take the lock, remove the original's row and file, and finish; `prepared()` then stored a variant and a row for an original that was gone | The check is inside the lock now, before the file is written. The file, its row and the check they rest on are one step | `test_an_importer_that_checked_its_original_before_a_rollback_leaves_no_dangling_variant`: the importer is stopped right where it is about to take the lock, the rollback runs to its end in another process, the importer goes on and is refused; no variant row, no variant file |
+| 2 | Found while fixing 1, not in the review, the same kind: `Operations.draft()` (`ops_work.py`) checked the assets a draft names and wrote the draft afterwards; a clean-up or a rollback in between could remove an asset no draft named yet | `draft()` checks and writes as one step under the store's lock (only for a draft that names assets; a report takes no lock). `ops_work.py` is patched by the same script, by exact replacements from the recorded installed file | `test_a_draft_that_checked_its_assets_before_a_clean_up_never_names_a_removed_asset` |
+
+On `c957f87` exactly these two tests fail: the importer stores its variant (`STORED` instead of `REFUSED`), and the clean-up does not wait for the draft.
+
+**Who can write into this store, and why a writer outside its code is not expected.** GPT's point: a process doing a raw file write and raw SQL takes no lock; that has to be prevented by rights, or every writer has to go through the store. Read on the server and in the repository:
+
+| Where | Who has the right to write | What code of theirs writes there |
+| --- | --- | --- |
+| The media folder (`/var/lib/kryuk24/media`, to be created `kryuk-run:kryuk-run` 700) | `kryuk-run` only | the store (`ops_media.py`) and, after the install, the pipeline, which uses the store's lock |
+| `ops_originals`, `ops_assets` in `runtime.sqlite` (`kryuk-run:kryuk-db` 660) | `kryuk-run`, and through the group `kryuk-db` also `kryuk-api-read` | in the installed code only `ops_media.py` writes these two tables (`ops_backup.py` reads them). The API reader's code does not name them |
+| The importers `original()` / `prepared()` | — | called only by the command line (`ops_cli.py`), not by the dashboard's server |
+
+So today every writer of the files goes through the store, and the one other account with a right on the database has no right on the media folder and no code for these tables. This is a statement about the code as it is, not a barrier: `kryuk-api-read` could be given a database right that excludes these tables only by moving them to a database of their own, which is not proposed here.
+
+**The lock's waiting time as an operating risk.** An importer or a draft with assets waits up to 30 seconds for the lock and then raises `TimeoutError`. The callers are the command line and the local worker (`bro_worker.py`); neither handles that exception today, so a person or the worker would see a failed command and has to repeat it. The dashboard's server does not call the importers; it calls `verify()` only, which takes no lock. The pipeline's own operations are short (seconds), except processing a large picture.
 
 ### 1. What the photo flow actually needs from the portal
 
@@ -125,7 +146,7 @@ Five new tables in `runtime.sqlite`, `CREATE TABLE IF NOT EXISTS`: `media_work`,
 | A second run does nothing | "nothing to roll back" |
 | Files are removed after the database step: a run cut off there leaves unnamed files, never a missing one | by the order in the code |
 
-Beyond the database: put the original `ops_media.py` back from its kept copy and restart the services that use it (only when nothing else needs the lock-aware store), take `--outbox` out of the portal's unit and restart it, remove the outbox folder (its photos are the same files as in `photos`, which stay), put `/var/lib/kryuk24-armen` back to 700 and `kryuk-armen`, remove the group, remove `/opt/kryuk24-media` and an empty `/var/lib/kryuk24/media`.
+Beyond the database: put the original `ops_media.py` and `ops_work.py` back from their kept copies and restart the services that use it (only when nothing else needs the lock-aware store), take `--outbox` out of the portal's unit and restart it, remove the outbox folder (its photos are the same files as in `photos`, which stay), put `/var/lib/kryuk24-armen` back to 700 and `kryuk-armen`, remove the group, remove `/opt/kryuk24-media` and an empty `/var/lib/kryuk24/media`.
 
 ### 8. Repeated and interrupted runs, tried
 
@@ -148,9 +169,9 @@ Beyond the database: put the original `ops_media.py` back from its kept copy and
 
 1. Read-only facts; the two backups.
 2. Group `kryuk-media-in` with its two members; the outbox folder; the data folder to 710. Check as in the rehearsal: what `kryuk-run` can and cannot reach, on the real paths.
-3. **The store becomes lock-aware.** `/opt/kryuk24/ops_media.py` is replaced by `store_patch/ops_media.py` with a small install script of the same kind as the operator page's: both files checked by sha256 (installed `5ca3e4de…`, new `67c80488…`), the original kept beside it, an import check, a restart of `kryuk-capture` (the service that uses the store), a health check, and the original put back by itself when the import or the health check fails. The script is not written yet: it is written and reviewed before the install. Without this step the pipeline refuses to run on the server.
+3. **The store becomes lock-aware.** `/opt/kryuk24/ops_media.py` and `/opt/kryuk24/ops_work.py` are replaced by the two files of `store_patch/` with a small install script of the same kind as the operator page's: all four files checked by sha256 (installed `5ca3e4de…` and `d1e6a2df…`, new `0f877f77…` and `69aa0809…`), the original kept beside it, an import check, a restart of `kryuk-capture` and `kryuk-bro-api` (the services that load these files), a health check, and the original put back by itself when the import or the health check fails. The script is not written yet: it is written and reviewed before the install. Without this step the pipeline refuses to run on the server.
 3a. Portal unit: add `--outbox`; one restart; `hand_over` runs at the next upload. Today it would hand over nothing: the only photo is Gev's marked test.
-4. `/opt/kryuk24-media` with its Python; the 35 tests on the server.
+4. `/opt/kryuk24-media` with its Python; the 37 tests on the server.
 5. Media folder; `storage` once (creates the five tables); snapshot compared with step 1: no existing table changed.
 6. From here a real photo of Armen's: upload → outbox → `intake` → an agent claims, looks, declares the regions → variants → `submit` → the draft in Gev's dashboard. Started by hand; no service, no timer.
 7. Facts again; evidence; `docs/CURRENT_STATE.md`.
@@ -209,6 +230,17 @@ Review-ած կոդի վրա նոր թեստերն ընկնում են (հոսք�
 **Ինչ սա չի ծածկում, ուղիղ.** ծրագիր, որը media պանակում ու բազայում գրում ա առանց պահեստի կոդի, կողպեք չի վերցնում։ Repo-ում էդպիսի բան չկա։ Ու մինչև patched `ops_media.py`-ն սերվերում չդրվի, հոսքը էնտեղ ընդհանրապես չի աշխատի։
 
 Review-ած կոդի վրա երկու թեստն ընկնում են հենց էնտեղ, որտեղ կորուստը սկսվում էր։ Էս head-ի վրա հոսքի 35 թեստն անցնում են Windows-ում ու սերվերում (Linux), կաբինետի 28-ը անփոփոխ ա։ Փորձը նորից քշվել ա 13:07 UTC-ին։
+
+### 0դ. `c957f87` head-ի review-ը (GPT, 08.10.2026). նախապայման, որ ստուգվում էր կողպեքից դուրս
+
+1. **`MediaStore.prepared()`-ը** նախ ստուգում էր, որ բնօրինակը կա, հետո նոր վերցնում կողպեքը։ Էդ արանքում rollback-ը կարող էր վերցնել կողպեքը, ջնջել բնօրինակի տողն ու ֆայլը ու ավարտվել. `prepared()`-ը հետո գրում էր տարբերակն ու տողը արդեն չեղած բնօրինակի համար։ Ստուգումը հիմա կողպեքի ներսում ա, ֆայլը գրելուց առաջ։ Թեստը իրական զուգահեռ պրոցեսներով ա. importer-ը կանգնեցվում ա հենց կողպեքը վերցնելուց առաջ, rollback-ը մյուս պրոցեսում գնում ա մինչև վերջ, importer-ը շարունակում ա ու մերժվում. ոչ տող, ոչ ֆայլ։
+2. **Նույն դասի ևս մեկը գտա ուղղելիս, review-ում չկար.** `Operations.draft()`-ը (`ops_work.py`) ստուգում էր սևագրի նշած asset-ները, իսկ սևագիրը գրում էր հետո. մաքրումը կամ rollback-ը արանքում կարող էր հանել դեռ ոչ մի սևագրի չնշած asset-ը։ Հիմա ստուգումն ու գրելը մեկ քայլ են պահեստի կողպեքի տակ։ `ops_work.py`-ն patch ա արվում նույն սկրիպտով։
+
+`c957f87`-ի վրա հենց էս երկու թեստն են ընկնում։
+
+**Ով կարող ա գրել էս պահեստում.** media պանակում գրելու իրավունք ունի միայն `kryuk-run`-ը, ու էնտեղ գրում ա միայն պահեստի կոդը (ու տեղադրումից հետո՝ հոսքը, որ նույն կողպեքն ա վերցնում)։ `ops_originals`-ն ու `ops_assets`-ը դրված կոդում գրում ա միայն `ops_media.py`-ն։ `kryuk-api-read`-ը `kryuk-db` խմբով բազայում գրելու իրավունք ունի, բայց media պանակում՝ չէ, ու իր կոդը էս աղյուսակները չի հիշատակում։ Սա կոդի այսօրվա վիճակի մասին ա, ոչ թե արգելք։
+
+**Կողպեքի սպասելը որպես շահագործման ռիսկ.** importer-ը կամ asset-ներով սևագիրը սպասում ա մինչև 30 վայրկյան, հետո տալիս ա `TimeoutError`։ Կանչողները հրամանային գործիքն ու լոկալ worker-ն են. ոչ մեկը էդ սխալը այսօր չի մշակում, այսինքն հրամանը կձախողվի ու պիտի կրկնվի։ Վահանակի սերվերը importer-ները չի կանչում։
 
 ### 1. Ինչ ա իրականում պետք նկարների հոսքին
 
@@ -272,9 +304,9 @@ Review-ած կոդի վրա երկու թեստն ընկնում են հենց �
 
 1. Միայն-կարդացող փաստեր. երկու պահուստ։
 2. `kryuk-media-in` խումբը երկու անդամով. outbox-ի պանակը. տվյալների պանակը՝ 710։ Ստուգում իրական ճանապարհների վրա. ինչին ա `kryuk-run`-ը հասնում, ինչին՝ չէ։
-3. **Պահեստը դառնում ա կողպեքով։** `/opt/kryuk24/ops_media.py`-ն փոխարինվում ա `store_patch/ops_media.py`-ով՝ փոքր install սկրիպտով, ինչպես Գևի էջինը. երկու ֆայլն էլ ստուգվում են sha256-ով, բնօրինակը պահվում ա կողքին, import-ի ստուգում, `kryuk-capture`-ի restart, health-ի ստուգում, ձախողման դեպքում բնօրինակը ինքն ա հետ դրվում։ Սկրիպտը դեռ գրված չի. կգրվի ու կնայվի տեղադրումից առաջ։ Առանց էս քայլի հոսքը սերվերում հրաժարվում ա աշխատել։
+3. **Պահեստը դառնում ա կողպեքով։** `/opt/kryuk24/ops_media.py`-ն ու `/opt/kryuk24/ops_work.py`-ն փոխարինվում են `store_patch/`-ի երկու ֆայլով՝ փոքր install սկրիպտով, ինչպես Գևի էջինը. չորս ֆայլն էլ ստուգվում են sha256-ով, բնօրինակները պահվում են կողքին, import-ի ստուգում, `kryuk-capture`-ի ու `kryuk-bro-api`-ի restart, health-ի ստուգում, ձախողման դեպքում բնօրինակը ինքն ա հետ դրվում։ Սկրիպտը դեռ գրված չի. կգրվի ու կնայվի տեղադրումից առաջ։ Առանց էս քայլի հոսքը սերվերում հրաժարվում ա աշխատել։
 3ա. Կաբինետի unit-ում `--outbox`. մեկ restart։ Այսօր ոչինչ չէր փոխանցվի. միակ նկարը Գևի նշված տեստն ա։
-4. `/opt/kryuk24-media`-ն իր Python-ով. 35 թեստը սերվերում։
+4. `/opt/kryuk24-media`-ն իր Python-ով. 37 թեստը սերվերում։
 5. Media պանակը. `storage` մեկ անգամ (ստեղծում ա հինգ աղյուսակը). snapshot-ը համեմատվում ա 1-ին քայլի հետ։
 6. Էստեղից Արմենի իրական նկարը. upload → outbox → `intake` → ագենտը վերցնում ա, նայում, նշում տեղերը → տարբերակներ → `submit` → սևագիր Գևի վահանակում։ Ձեռքով. ծառայություն ու timer չկա։
 7. Նորից փաստեր. evidence. `docs/CURRENT_STATE.md`։

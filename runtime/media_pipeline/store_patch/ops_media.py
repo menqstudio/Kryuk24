@@ -91,10 +91,10 @@ CREATE TABLE IF NOT EXISTS ops_assets(id TEXT PRIMARY KEY,original_id TEXT,diges
     return dict(c.execute('SELECT * FROM ops_originals WHERE id=?',(ident,)).fetchone())
  def prepared(self,original,source,note,reviewed=False):
   if reviewed is not True or not isinstance(note,str) or not note.strip() or len(note)>2000:raise ValueError('explicit operator masking/scene review and edit note required')
-  with self.runtime.db() as c:
-   if not c.execute('SELECT id FROM ops_originals WHERE id=?',(original,)).fetchone():raise ValueError('original not found')
   raw,extension,digest=self.read_image(source);relative='prepared/'+original+'/'+digest+'.'+extension
-  with self.lock():  # the file and its row are one step for everybody who uses this store
+  with self.lock():  # the check of the original, the file and its row are one step for everybody who uses this store
+   with self.runtime.db() as c:
+    if not c.execute('SELECT id FROM ops_originals WHERE id=?',(original,)).fetchone():raise ValueError('original not found')
    self.store(relative,raw,digest)
    with self.runtime.db() as c:
     c.execute('BEGIN IMMEDIATE');old=c.execute('SELECT * FROM ops_assets WHERE original_id=? AND digest=?',(original,digest)).fetchone()

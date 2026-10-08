@@ -634,6 +634,61 @@ print(MediaPipeline(sys.argv[1], sys.argv[2], lock_wait=60).cleanup())
         self.assertEqual(self.rows('SELECT count(*) FROM media_work_deletions'), [(0,)], 'the stale line is gone, without a removal')
         self.assertEqual(self.pipe.get(work)['status'], 'PREPARED')
 
+    def test_a_draft_that_checked_its_assets_before_a_clean_up_never_names_a_removed_asset(self):
+        # The same kind of gap, found while fixing the one above (not in the review): Operations.draft() checked the
+        # assets it names and wrote the draft afterwards. A clean-up in between removed an asset no draft named yet.
+        work = self.prepared()['id']
+        first_variants = self.pipe.get(work)['variants']
+        self.pipe.reopen(work, 'SAMPLE: again')
+        self.pipe.claim(work, 'agent')
+        self.pipe.prepare(work, 'agent', [{'kind': 'PLATE', 'box': PLATE}, {'kind': 'PLATE', 'box': [800, 1300, 1400, 1600]}])   # the first variants are unused now
+        ((asset, sha, path),) = self.rows('SELECT id,digest,path FROM ops_assets WHERE id=?', (first_variants['FULL'],))
+        self.pipe.ops.plan('2026-01-05')
+        ((task,),) = self.rows("SELECT id FROM ops_tasks WHERE day='2026-01-05' AND job='MEDIA_INBOX'")
+        self.pipe.ops.claim(task, 'operator')
+        checked, go = self.base / 'assets-checked', self.base / 'go-on'
+        drafter = """
+import sys, time
+from pathlib import Path
+from ops_work import Operations
+db, media, task, asset, sha, flag, go = sys.argv[1:8]
+ops = Operations(db, media)
+real = ops.media.verify
+def slow(*a, **k):
+    done = real(*a, **k)                  # the asset is there and whole
+    Path(flag).write_text('x')
+    while not Path(go).exists(): time.sleep(0.02)
+    return done
+ops.media.verify = slow
+print(ops.draft(task, 'operator', {'action': 'PHOTO_BATCH', 'account': 'KRYUK24', 'destination': 'SAMPLE', 'body': 'SAMPLE', 'reason': 'SAMPLE',
+                                   'assets': [{'id': asset, 'sha256': sha}]})['status'])
+"""
+        cleaner = """
+import sys
+from media_pipeline import MediaPipeline
+print(MediaPipeline(sys.argv[1], sys.argv[2], lock_wait=60).cleanup())
+"""
+        first = subprocess.Popen([sys.executable, '-c', drafter, str(self.db), str(self.media_root), task, asset, sha, str(checked), str(go)], env=CHILD_ENV, stdout=subprocess.DEVNULL)
+        second = None
+        try:
+            wait_for(checked, 'the draft to check its asset')
+            second = subprocess.Popen([sys.executable, '-c', cleaner, str(self.db), str(self.media_root)], env=CHILD_ENV, stdout=subprocess.DEVNULL)
+            time.sleep(1.5)
+            self.assertIsNone(second.poll(), 'the clean-up waits while a draft is between checking its assets and being written')
+            self.assertTrue((self.media_root / path).is_file(), 'and has removed nothing meanwhile')
+            go.write_text('x')
+            self.assertEqual((first.wait(60), second.wait(90)), (0, 0))
+        finally:
+            go.write_text('x')
+            for child in (first, second):
+                if child is not None and child.poll() is None:
+                    child.kill()
+                    child.wait(30)
+        named = [a for (draft,) in self.rows('SELECT draft FROM ops_tasks WHERE draft IS NOT NULL') for a in json.loads(draft)['assets']]
+        self.assertEqual([a['id'] for a in named], [asset], 'the draft was written')
+        for a in named:
+            self.assertEqual(sha256(self.media_root / self.rows('SELECT path FROM ops_assets WHERE id=?', (a['id'],))[0][0]), a['sha256'], 'and what it names is there, whole')
+
     def test_a_clean_up_cut_off_never_leaves_a_row_without_its_file(self):
         # Review of a52d133, finding 3: the file was deleted before the database step was committed; an error after the
         # first file rolled the rows back and left a registered variant whose file was gone.
@@ -831,6 +886,58 @@ print(store.original(sys.argv[3], 'OPERATOR: the same picture, taken in during t
         rows = self.rows('SELECT digest,path,provenance FROM ops_originals')
         self.assertEqual([(r[0], r[2]) for r in rows], [(digest, 'OPERATOR: the same picture, taken in during the rollback')])
         self.assertEqual((self.media_root / rows[0][1]).read_bytes(), raw, 'the row the importer wrote has its file, whole')
+
+    def test_an_importer_that_checked_its_original_before_a_rollback_leaves_no_dangling_variant(self):
+        # Review of c957f87, with real parallel processes. prepared() checked that the original exists and only then
+        # took the lock. In between a rollback took the lock, removed the original's row and file and finished; then
+        # prepared() stored a variant and wrote a row for an original that was gone. The order is forced here: the
+        # importer stops right where it is about to take the lock, the rollback runs to its end, the importer goes on.
+        raw = photo(plate=PLATE)
+        self.upload(raw)
+        self.take_in()
+        ((oid,),) = self.rows('SELECT original_id FROM media_work')
+        (self.base / 'variant.jpg').write_bytes(photo(colour=(77, 66, 55), size=(800, 600)))
+        at_the_lock, go = self.base / 'at-the-lock', self.base / 'go-on'
+        importer = """
+import sys, time
+from pathlib import Path
+from ops_media import MediaStore
+db, media, original, source, flag, go = sys.argv[1:7]
+store = MediaStore(db, media)
+real = store.lock
+def slow(*a, **k):
+    Path(flag).write_text('x')            # about to take the lock (before the fix: the original was already checked)
+    while not Path(go).exists(): time.sleep(0.02)
+    return real(*a, **k)
+store.lock = slow
+try:
+    print('STORED', store.prepared(original, source, 'SAMPLE: an operator variant', reviewed=True)['id'])
+except ValueError as e:
+    print('REFUSED', e)
+    sys.exit(3)
+"""
+        first = subprocess.Popen([sys.executable, '-c', importer, str(self.db), str(self.media_root), oid, str(self.base / 'variant.jpg'), str(at_the_lock), str(go)],
+                                 env=CHILD_ENV, stdout=subprocess.PIPE, text=True)
+        try:
+            wait_for(at_the_lock, 'the importer to reach the lock')
+            second = subprocess.run([sys.executable, str(Path(__file__).with_name('media_rollback.py')), 'rollback', '--db', str(self.db), '--media-root', str(self.media_root),
+                                     '--outbox', str(self.outbox), '--archive', str(self.base / 'history.json')], env=CHILD_ENV, capture_output=True, text=True, timeout=120)
+            self.assertEqual(second.returncode, 0, second.stderr[-600:])
+            self.assertEqual(json.loads(second.stdout)['originals_removed'], [hashlib.sha256(raw).hexdigest()], 'the rollback ran to its end and removed the original')
+            self.assertEqual(self.rows('SELECT count(*) FROM ops_originals'), [(0,)])
+            go.write_text('x')
+            said = first.communicate(timeout=60)[0]
+        finally:
+            go.write_text('x')
+            if first.poll() is None:
+                first.kill()
+                first.wait(30)
+            if first.stdout:
+                first.stdout.close()
+        self.assertEqual((first.returncode, said.split()[0]), (3, 'REFUSED'), 'the importer finds, under the lock, that its original is gone: ' + said)
+        self.assertEqual(self.rows('SELECT count(*) FROM ops_assets a LEFT JOIN ops_originals o ON o.id=a.original_id WHERE o.id IS NULL'), [(0,)], 'no variant row without its original')
+        self.assertEqual(self.rows('SELECT count(*) FROM ops_assets'), [(0,)])
+        self.assertEqual(self.files('prepared'), [], 'and no variant file was written for it')
 
     def test_the_pipeline_and_the_rollback_refuse_a_store_whose_importers_do_not_lock(self):
         import ops_media
