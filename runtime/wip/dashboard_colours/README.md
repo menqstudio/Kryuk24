@@ -12,6 +12,8 @@ Made by `make_patch.py` from the installed file (`runtime/server/ops_views.py`, 
 2. **UX** (Gev's yes, 08.10.2026 00:07 UTC): the official KRYUK24 lockup in the header instead of the MenQ logo (`kryuk-logo-dark.webp`, rendered from `brand/02_lockups/lockup_horizontal_transparent_dark.svg` by `make_logo.py`, nothing redrawn); a summary-card button that opens what waits for Gev; every tile shows its state as an icon and a word; today's tiles ordered by what needs attention.
 3. **Daily use** (independent design review by a second model, checked here): switches on the logo row; no sentence repeating the pills; the button names what it opens; no triple listing of one waiting task; queue-creation is primary only when no queue exists; "In the queue" instead of a second "Waiting"; tiles that need action are outlined, done tiles recede; 44 px tap targets; one-line task rows on phones.
 
+4. **One design source** (Gev's requirement of 08.10.2026, "always the same design"): the page loads the design system's token file, the one the Armen portal serves (`/operator/work/armen/tokens.css`, byte for byte `design/tokens/kryuk.tokens.css`), and the portal's font list. Its grey and navy steps are references to those tokens, its orange steps carry the tokens' names and are overridden by the file, its text font is the tokens' font. Every reference keeps today's value as a fallback: when the portal does not answer, the page looks as in stage 3. A later change of the tokens reaches this page and the portal from one file. The page now depends on the portal for that file only, never for data.
+
 Routes, forms, scripts, data and every server-side rule stay as they are. Bro's avatar stays.
 
 ### Checked
@@ -34,6 +36,8 @@ The script checks both files by sha256, keeps the original as `/opt/kryuk24/ops_
 ## Հայերեն
 
 **Ինչ է փոխվում.** Երեք փուլ. (1) գույները՝ КРЮК24-ի navy և նարնջագույն, (2) վերևում КРЮК24-ի պաշտոնական լոգոն, «Բացել» կոճակ քեզ սպասող գործի համար, ամեն սալիկի վիճակը՝ իկոն և բառ, գործերը՝ ըստ կարևորության, (3) ամենօրյա օգտագործման մանրուքներ՝ հեռախոսում մեկ տողով գործեր, 44px կոճակներ, կրկնությունների հեռացում։ Route-ները, ձևերը, տվյալները և սերվերի կանոնները նույնն են։
+
+(4) **մեկ դիզայնի աղբյուր** (Գևի 08.10.2026-ի պահանջը)՝ էջը բեռնում է դիզայն սիստեմի token-ների ֆայլը, նույնը, ինչ Արմենի կաբինետը (`/operator/work/armen/tokens.css`), ու կաբինետի տառերի ցուցակը. ամեն հղում պահում է այսօրվա արժեքը որպես պահեստային, ուստի եթե կաբինետը չպատասխանի, էջը նույն տեսքն ունի։ Token-ի հետագա փոփոխությունը մեկ ֆայլից հասնում է երկու էջին։
 
 **Ստուգված է.** Սերվերի 102 թեստն անցնում են նոր ֆայլով։ axe-ը 0 սխալ է տալիս light-ում, dark-ում և 390px-ում (ներկայիս էջում light-ում 1 սխալ կա, 390px-ում՝ 2)։
 

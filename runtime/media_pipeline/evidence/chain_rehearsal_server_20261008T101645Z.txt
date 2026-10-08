@@ -1,0 +1,74 @@
+NOTE added 08.10.2026 11:40 UTC: this is the rehearsal of v0.1, whose intake read the portal database. v0.2 reads the outbox only;
+its rehearsal is rehearsal_outbox_backup_rollback_20261008T113734Z.txt. Kept as the record of what was run then.
+
+Media pipeline: rehearsal of the whole chain on the server (deploy/chain_rehearsal.sh). Output as printed.
+A temporary portal instance (installed portal code, port 8791, SAMPLE password), sample pictures made on the server,
+a temporary runtime database and media folder. NOT a phone, NOT a real account, NOT HTTPS, NOT real data.
+Stops where the draft waits for approval: no approval was simulated here (the tests cover that path).
+
+== time
+2026-10-08T10:16:01Z
+== 0. the module's own tests on this server
+Ran 16 tests in 3.612s
+
+OK
+== 1. sample pictures and a temporary portal
+sample-0.jpg: 4000x3000 JPEG, 5.7 MiB, GPS block in EXIF: True
+sample-1.jpg: 4000x3000 JPEG, 5.7 MiB, GPS block in EXIF: True
+5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377  sample-0.jpg
+97e2eb1f7dd60b1786c94d730121bed35c9632438c61530c9b9d65b1cb7e046d  sample-1.jpg
+== 2. upload over HTTP: two pictures, the first one twice
+login: 200
+upload of picture 0: 201 {"duplicate":false,"id":"a93ad133a68842ca992da54964c8ae7b","publishing_enabled":false,"saved":true}
+upload of picture 1: 201 {"duplicate":false,"id":"37b69db56ef6475bbe568ec73e9580b8","publishing_enabled":false,"saved":true}
+upload of picture 0 again: 201 {"duplicate":true,"id":"a93ad133a68842ca992da54964c8ae7b","publishing_enabled":false,"saved":true}
+portal lists 2 photos; preview: 200, 30250 bytes
+files the portal holds: 4 (two originals and two previews)
+== 3. intake into the shared inbox, twice
+{"duplicates":0,"imported":2,"known":0,"mismatched":0,"refused_storage":0,"seen":2}
+{"duplicates":0,"imported":0,"known":2,"mismatched":0,"refused_storage":0,"seen":2}
+originals in the inbox (name is the sha256 of the file):
+5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377.jpg
+97e2eb1f7dd60b1786c94d730121bed35c9632438c61530c9b9d65b1cb7e046d.jpg
+== 4. what an agent sees in the queue
+  MEDIA-4623c8f2 NEW attempts 0 actor armen purpose WORK sha256 5bc408bbcfe1 variants []
+  MEDIA-e404b19e NEW attempts 0 actor armen purpose WORK sha256 97e2eb1f7dd6 variants []
+== 5. agent-1 claims the first, reads the original, covers the plate
+{"bytes":5999287,"out":"/var/lib/kryuk24-media-chain.qGWnrQ/out/a.jpg","work":"MEDIA-4623c8f276224575bb578c56b1226568"}
+the copy the agent got: 5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377
+another worker asks for the same original:
+REFUSED: PermissionError: active owned lease required
+prepare without regions and without a declaration:
+REFUSED: ValueError: either regions to cover or an explicit declaration that there are none
+  MEDIA-4623c8f2 PREPARED attempts 1 actor armen purpose WORK sha256 5bc408bbcfe1 variants ['FULL', 'WEB']
+  MEDIA-e404b19e NEW attempts 0 actor armen purpose WORK sha256 97e2eb1f7dd6 variants []
+== 6. an interrupted attempt on the second: agent-1 claims for 30 s, leaves a half-written file and never returns
+agent-2 tries at once:
+REFUSED: ValueError: work not claimable
+after the lease ran out agent-2 holds it; temporary files left by agent-1: 0
+agent-1 comes back late:
+REFUSED: PermissionError: active owned lease required
+  MEDIA-4623c8f2 PREPARED attempts 1 actor armen purpose WORK sha256 5bc408bbcfe1 variants ['FULL', 'WEB']
+  MEDIA-e404b19e PREPARED attempts 2 actor armen purpose WORK sha256 97e2eb1f7dd6 variants ['FULL', 'WEB']
+== 7. the variants: size, EXIF, and the plate region
+  ORIGINAL-3174f865 JPEG (1600, 1200) EXIF tags: 0 contrast left inside the plate region: 43 of 255
+  ORIGINAL-3174f865 JPEG (747, 560) EXIF tags: 0 contrast left inside the plate region: 42 of 255
+  ORIGINAL-f5c48e97 JPEG (1600, 1200) EXIF tags: 0 contrast left inside the plate region: 41 of 255
+  ORIGINAL-f5c48e97 JPEG (747, 560) EXIF tags: 0 contrast left inside the plate region: 41 of 255
+== 8. the draft for Gev: a named platform, waiting for his approval
+{"day": "2026-10-08", "added": 10, "external_execution": false}
+{"assets":[{"id":"ASSET-709aa92ee49248deb1746940897d6735","sha256":"6a0c26d85398831c3c6de8a2215740cf7b2b25c111b66e11729ffe76954e3793"},{"id":"ASSET-704cb01d588f445e86c26842d5be98a6","sha256":"1d5a4ed564999e63b6d222a869d3ea8d06baf94a18e74d91d9a603fb9484287e"}],"day":"2026-10-08","destination":"YANDEX_BUSINESS","digest":"2e6ae293e976fabae1c4535c1984f44421fc1449b5b157812e1d41b8216f5907","id":"WORK-a37fa7cf5ebb58f48af11b39e6035a0b","job":"MEDIA_INBOX","published":false,"status":"READY_REVIEW"}
+sync (nothing decided yet):
+[]
+  MEDIA-4623c8f2 IN_REVIEW attempts 1 actor armen purpose WORK sha256 5bc408bbcfe1 variants ['FULL', 'WEB']
+  MEDIA-e404b19e IN_REVIEW attempts 2 actor armen purpose WORK sha256 97e2eb1f7dd6 variants ['FULL', 'WEB']
+== 9. clean-up while the work is unfinished, then storage
+{"bytes":0,"originals_deleted":0,"removed":[]}
+{"limit_bytes":5368709120,"media_root":{"originals":{"bytes":11999704,"files":2},"prepared":{"bytes":1368601,"files":4},"tmp":{"bytes":0,"files":0}},"portal_photos":{"bytes":12060268,"files":4},"status":"OK","used_bytes":13368305,"work":{"APPROVED":0,"CLAIMED":0,"IN_REVIEW":2,"NEW":0,"PREPARED":0,"PUBLISHED":0}}
+originals still in the inbox, checked against the uploaded files:
+  5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377 intact
+  97e2eb1f7dd60b1786c94d730121bed35c9632438c61530c9b9d65b1cb7e046d intact
+files the portal still holds: 4
+2026-10-08T10:16:45Z
+== rehearsal done
+temporary portal stopped, temporary folder removed: yes

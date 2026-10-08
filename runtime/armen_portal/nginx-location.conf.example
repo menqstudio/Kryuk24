@@ -1,20 +1,36 @@
-# Insert into EXISTING runtime.kryuk24.ru HTTPS server; do not replace its config.
-# Existing TLS/basic-auth/Bro/owner routes remain as installed.
-# The exact portal subtree uses its own backend login (armen / optional gev).
-# Never turn off auth_basic for /operator or the whole host.
-location = /operator/work/armen { return 301 /operator/work/armen/; }
-location ^~ /operator/work/armen/ {
-    auth_basic off;
-    client_max_body_size 20m;
-    client_body_timeout 45s;
-    limit_req zone=kryuk_operator burst=15 nodelay;
-    limit_req_status 429;
-    proxy_pass http://127.0.0.1:8790;
-    proxy_set_header Host $host;
-    proxy_set_header Authorization $http_authorization;
-    proxy_read_timeout 60s;
-    proxy_send_timeout 60s;
-    access_log off;
-}
-# Confirm the existing kryuk_operator limit_req_zone actually exists.
-# If its name differs, use the verified current zone; do not declare a duplicate.
+ # Armen portal (runtime/armen_portal). To be inserted into the EXISTING runtime.kryuk24.ru HTTPS server,
+ # before its catch-all `location / { return 404; }`; it never replaces the server block.
+ # The whole server stays behind the STAGING Basic password. Only this subtree is taken out of it:
+ # the portal has its own login form and session, and Armen has no STAGING password.
+ # Never turn off auth_basic for /operator or the whole host.
+ # Reconciled with the installed config (read 08.10.2026): both zones below already exist there.
+ # - the login address keeps the strict operator zone (20 a minute for one address);
+ # - the rest uses the preview zone (5 a second): one page is the form or the page, a script, a style sheet,
+ #   the state and one request for every photo preview, repeated after every saved answer. In the operator
+ #   zone a page with a few photos is refused with 429 after 16 requests.
+ # The browser's Basic header (the STAGING password of whoever opens it) is not passed to the portal;
+ # the portal does not use it. Origin and Cookie are passed by default and Set-Cookie is not hidden.
+ location = /operator/work/armen { return 301 /operator/work/armen/; }
+ location = /operator/work/armen/api/login {
+  auth_basic off;
+  client_max_body_size 32k;
+  limit_req zone=kryuk_operator burst=10 nodelay;
+  limit_req_status 429;
+  proxy_set_header Host $host;
+  proxy_set_header Authorization "";
+  proxy_pass http://127.0.0.1:8790;
+  access_log off;
+ }
+ location ^~ /operator/work/armen/ {
+  auth_basic off;
+  client_max_body_size 20m;
+  client_body_timeout 45s;
+  limit_req zone=kryuk_preview burst=30 nodelay;
+  limit_req_status 429;
+  proxy_read_timeout 60s;
+  proxy_send_timeout 60s;
+  proxy_set_header Host $host;
+  proxy_set_header Authorization "";
+  proxy_pass http://127.0.0.1:8790;
+  access_log off;
+ }

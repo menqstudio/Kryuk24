@@ -65,6 +65,9 @@ jobs:
         run: |
           node --check runtime/armen_portal/app.js
           node --check runtime/armen_portal/login.js
+          node --check runtime/armen_portal/theme.js
+      - name: One design source for the Armen portal and the operator page (tokens, logo, fonts)
+        run: python design/scripts/check_shared_design.py
       - name: Package manifest matches the files
         working-directory: runtime/api_reader
         run: sha256sum -c SHA256SUMS.txt
@@ -88,6 +91,15 @@ jobs:
         run: python -m unittest discover -s runtime/business_service -p "test_*.py"
       - name: Deterministic monitor (offline evaluation of supplied observations; no collector, no timer, no alert)
         run: python -m unittest discover -s runtime/deterministic_monitor -p "test_*.py"
+      - name: Media pipeline (portal uploads to the shared inbox, agent queue, covered variants, Gev's review; not installed, publishes nothing)
+        env:
+          # the lock-aware store first: the pipeline refuses the store as installed (its importers take no lock)
+          PYTHONPATH: "runtime/media_pipeline/store_patch:runtime/server:runtime/armen_portal"
+        run: python -m unittest discover -s runtime/media_pipeline -p "test_*.py"
+      - name: Media store patch (the file is what the patch makes from the installed one; the server's own suites pass with it)
+        run: |
+          python runtime/media_pipeline/store_patch/make_patch.py --check
+          python runtime/media_pipeline/store_patch/make_patch.py --server-tests
       - name: README visuals hold nothing GitHub would block or that loads from outside
         run: |
           ! grep -l -E "<script|foreignObject|@font-face|<image|href=|url\(http" docs/assets/readme/*.svg
@@ -143,6 +155,10 @@ jobs:
         run: python -m unittest discover -s runtime/business_service -p "test_*.py"
       - name: Deterministic monitor (offline evaluation of supplied observations; no collector, no timer, no alert)
         run: python -m unittest discover -s runtime/deterministic_monitor -p "test_*.py"
+      - name: Media pipeline (portal uploads to the shared inbox, agent queue, covered variants, Gev's review; not installed, publishes nothing)
+        env:
+          PYTHONPATH: "runtime/media_pipeline/store_patch;runtime/server;runtime/armen_portal"
+        run: python -m unittest discover -s runtime/media_pipeline -p "test_*.py"
       - name: Design system (same check as on Linux; Windows encoding and line endings)
         run: python design/scripts/validate_design.py
       - name: WIP, Chrome proxy (stand-in upstream, no browser)
@@ -150,11 +166,25 @@ jobs:
         run: python -m unittest test_bro_chrome_proxy
       - name: WIP, trial harness self-test (stand-in for the model, no model run)
         working-directory: runtime/wip/trial
+        env:
+          # A failed clean-up check writes what it was decided on here (process lists without command lines, the job's
+          # pids and times, the parent chain); the folder is uploaded below when a step fails.
+          TRIAL_DIAGNOSTICS_DIR: ${{ runner.temp }}/trial-diagnostics
         run: python -m unittest test_trial_harness
       - name: WIP, the three tests that used to fail here, five more times (the race they exposed is fixed)
         working-directory: runtime/wip/trial
+        env:
+          TRIAL_DIAGNOSTICS_DIR: ${{ runner.temp }}/trial-diagnostics
         shell: bash
         run: |
           for n in 1 2 3 4 5; do
             python -m unittest test_trial_harness.Honest.test_deny_cases test_trial_harness.Order.test_tab_id_mismatch_stops_the_queue test_trial_harness.Order.test_tab_id_unknown_form_stays_informational_and_matching_id_passes
           done
+      - name: Keep what a failed clean-up check of the trial harness was decided on
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: trial-diagnostics
+          path: ${{ runner.temp }}/trial-diagnostics
+          if-no-files-found: ignore
+          retention-days: 30

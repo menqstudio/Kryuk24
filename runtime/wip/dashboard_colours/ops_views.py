@@ -38,7 +38,7 @@ AVATAR='data:image/webp;base64,UklGRuALAABXRUJQVlA4INQLAACQLwCdASpwAHAAPlEgjESjo
 def icon(name,size=22):return _S.format(size,PATHS.get(name,PATHS['dot']))
 CSS='''
 :root{color-scheme:light;
---neutral-0:#ffffff;--neutral-50:#f4f6f8;--neutral-100:#eef1f4;--neutral-200:#dde3ea;--neutral-300:#c5cdd7;--neutral-400:#9aa6b6;--neutral-500:#5a6676;--neutral-700:#3e4a5a;--neutral-800:#1c3150;--neutral-900:#13233a;--neutral-950:#0b1524;
+--neutral-0:var(--grey-0,#ffffff);--neutral-50:var(--grey-50,#f4f6f8);--neutral-100:var(--grey-100,#eef1f4);--neutral-200:var(--grey-200,#dde3ea);--neutral-300:var(--grey-300,#c5cdd7);--neutral-400:var(--grey-400,#9aa6b6);--neutral-500:var(--grey-600,#5a6676);--neutral-700:var(--grey-700,#3e4a5a);--neutral-800:var(--navy-800,#1c3150);--neutral-900:var(--navy-900,#13233a);--neutral-950:var(--navy-950,#0b1524);
 --orange-300:#f18a4b;--orange-350:#ff8a4c;--orange-400:#ff7424;--orange-500:#ef5b00;--orange-700:#a33d00;
 --bg:var(--neutral-50);--card:var(--neutral-0);--soft:var(--neutral-50);--elev:var(--neutral-0);
 --text:var(--neutral-900);--text2:var(--neutral-700);--muted:var(--neutral-500);--inverse:var(--neutral-0);--on-action:var(--neutral-900);
@@ -65,7 +65,7 @@ html[data-theme=dark]{color-scheme:dark;
 --hover:rgba(255,255,255,.06);--selected:rgba(241,138,75,.16);--overlay:rgba(3,8,16,.72);
 --glow:0 0 0 3px rgba(241,138,75,.24);--shadow-hover:0 18px 44px rgba(0,0,0,.45);--shadow:0 12px 30px rgba(0,0,0,.35);--shadow-lg:0 24px 70px rgba(0,0,0,.5)}
 *{box-sizing:border-box}
-body{font:16px/1.5 "Inter","Noto Sans Armenian",system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);margin:0;-webkit-font-smoothing:antialiased}
+body{font:16px/1.5 var(--font-sans,"Inter","Noto Sans Armenian",system-ui,-apple-system,"Segoe UI",sans-serif);background:var(--bg);color:var(--text);margin:0;-webkit-font-smoothing:antialiased}
 svg{flex:none;vertical-align:middle}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .wrap{max-width:960px;margin:auto;padding:0 20px 56px}
@@ -293,7 +293,7 @@ def dashboard(report,interactive=True):
  night=lambda hour:'' if 7<=hour<19 else ' night'
  clock=lambda key,name,t:'<div class="clock'+night(t.hour)+'" id="box-'+key+'"><small>'+P(name)+'<span><span class="sun">'+icon('sun',15)+'</span><span class="moon">'+icon('moon',15)+'</span></span></small><strong id="clock-'+key+'">'+e(t.strftime('%H:%M'))+'</strong></div>'
  hello=_greeting(y.hour)
- out=['<!doctype html><html lang="hy" data-lang="hy"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>КРЮК24 — աշխատանքների հերթ</title><style>'+CSS+'</style>']
+ out=['<!doctype html><html lang="hy" data-lang="hy" data-theme="light"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>КРЮК24 — աշխատանքների հերթ</title><style>'+CSS+'</style><link rel="stylesheet" href="/operator/work/armen/tokens.css"><link rel="stylesheet" href="/operator/work/armen/fonts.css">']
  switch='<div class="lang" role="group" aria-label="Լեզու / Язык"><button type="button" data-lang="hy" aria-pressed="true">Հայ</button><button type="button" data-lang="ru" aria-pressed="false">Рус</button></div><button type="button" class="theme" id="theme" aria-label="Բաց / մուգ · Светлая / темная"><span class="moon">'+icon('moon',18)+'</span><span class="sun">'+icon('sun',18)+'</span></button>' if interactive else ''
  out.append('<div class="top"><div class="wrap"><div class="bar0"><img class="klogo" src="'+LOGO+'" alt="КРЮК24 · эвакуатор" width="130" height="44">'+switch+'</div><div class="brand"><span class="bro"><img class="avatar" src="'+AVATAR+'" alt="Bro" width="56" height="56"><i>Bro</i></span><div><b id="hello">'+L(hello[0]+', Գև',hello[1]+', Гев')+'</b><span>'+L('աշխատանքների հերթ','очередь работ')+' · '+L(str(y.day)+' '+MONTHS[y.month-1],str(y.day)+' '+MONTHS_RU[y.month-1])+'</span></div></div><div class="side"><div class="clocks">'+clock('yerevan',('Երևան','Ереван'),y)+clock('moscow',('Մոսկվա','Москва'),m)+'</div></div></div></div><div class="wrap">')
  if total:
@@ -338,7 +338,7 @@ function setLang(lang){document.documentElement.dataset.lang=lang;document.docum
 for(const b of document.querySelectorAll('.lang button'))b.onclick=()=>setLang(b.dataset.lang);
 let saved=null;try{saved=localStorage.getItem('kryuk-lang');}catch(error){}
 if(saved==='ru'||saved==='hy')setLang(saved);
-function setTheme(theme){if(theme==='dark')document.documentElement.dataset.theme='dark';else delete document.documentElement.dataset.theme;try{localStorage.setItem('kryuk-theme',theme);}catch(error){}}
+function setTheme(theme){document.documentElement.dataset.theme=theme==='dark'?'dark':'light';try{localStorage.setItem('kryuk-theme',theme);}catch(error){}}
 document.getElementById('theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
 let savedTheme=null;try{savedTheme=localStorage.getItem('kryuk-theme');}catch(error){}
 if(savedTheme==='dark')setTheme('dark');

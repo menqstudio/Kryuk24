@@ -13,6 +13,14 @@ the logo row; the summary card drops the sentence that repeated the pills and it
 "waits for you" list only when two or more wait; the queue button is primary when there is no queue; PENDING reads
 "in the queue"; tiles needing attention get a coloured edge and done tiles recede; 44px close button and ledger link;
 on the phone the tiles become one-line rows and the clocks shrink.
+Stage 4, one design source (Gev's requirement of 08.10.2026, "always the same design"): the page loads the design
+system's own token file, the one the Armen portal serves (/operator/work/armen/tokens.css, byte for byte
+design/tokens/kryuk.tokens.css), and the portal's font file list. The grey and navy steps of the page become
+references to those tokens, the orange steps have the tokens' own names and are overridden by the file, and the
+text font is the tokens' font. Every reference keeps today's value as its fallback, so the page looks the same when
+the token file cannot be read. A later change of the tokens reaches this page and the portal from one file, without
+another patch of this page. The theme is always written on <html> so the token file's rule for a dark phone does not
+apply to a page switched to light.
 Every replacement is an exact string that must occur the stated number of times, so a changed source stops the
 script instead of producing a half-coloured file.
 """
@@ -172,6 +180,38 @@ def stage3(out):
     return out
 
 
+TOKENS = ROOT / "design" / "tokens" / "kryuk.tokens.css"
+# the page's step -> the design token it is
+STEPS = [("neutral-0", "grey-0"), ("neutral-50", "grey-50"), ("neutral-100", "grey-100"), ("neutral-200", "grey-200"),
+         ("neutral-300", "grey-300"), ("neutral-400", "grey-400"), ("neutral-500", "grey-600"), ("neutral-700", "grey-700"),
+         ("neutral-800", "navy-800"), ("neutral-900", "navy-900"), ("neutral-950", "navy-950")]
+SAME_NAME = ["orange-300", "orange-350", "orange-400", "orange-500", "orange-700"]
+
+
+def stage4(out):
+    import re
+    tokens = {k: v.lower() for k, v in re.findall(r"--([a-z]+-\d+):\s*(#[0-9A-Fa-f]{6});", TOKENS.read_text(encoding="utf-8"))}
+    old = "".join("--%s:%s;" % (step, tokens[token]) for step, token in STEPS)
+    new = "".join("--%s:var(--%s,%s);" % (step, token, tokens[token]) for step, token in STEPS)
+    same = "".join("--%s:%s;" % (name, tokens[name]) for name in SAME_NAME)
+    R4 = [
+        (old, new, 1),   # each step is the token, with today's value as the fallback
+        (same, same, 1),  # the orange steps carry the tokens' names and values: the file loaded after the style overrides them
+        ("<style>'+CSS+'</style>']",
+         "<style>'+CSS+'</style><link rel=\"stylesheet\" href=\"/operator/work/armen/tokens.css\"><link rel=\"stylesheet\" href=\"/operator/work/armen/fonts.css\">']", 1),
+        ('<html lang="hy" data-lang="hy">', '<html lang="hy" data-lang="hy" data-theme="light">', 1),
+        ("function setTheme(theme){if(theme==='dark')document.documentElement.dataset.theme='dark';else delete document.documentElement.dataset.theme;",
+         "function setTheme(theme){document.documentElement.dataset.theme=theme==='dark'?'dark':'light';", 1),
+        ('body{font:16px/1.5 "Inter","Noto Sans Armenian",system-ui,-apple-system,"Segoe UI",sans-serif;',
+         'body{font:16px/1.5 var(--font-sans,"Inter","Noto Sans Armenian",system-ui,-apple-system,"Segoe UI",sans-serif);', 1),
+    ]
+    for a, b, n in R4:
+        if out.count(a) != n:
+            raise SystemExit("stage 4: expected %d× %r, found %d" % (n, a[:80], out.count(a)))
+        out = out.replace(a, b)
+    return out
+
+
 def build():
     src = SRC.read_text(encoding="utf-8")
     if not hashlib.sha256(src.encode("utf-8")).hexdigest().startswith(SRC_SHA):
@@ -183,6 +223,7 @@ def build():
         out = out.replace(old, new)
     out = stage2(out)
     out = stage3(out)
+    out = stage4(out)
     left = [f for f in FOREIGN if f in out]
     if left:
         raise SystemExit("azure / cyan left in the result: " + ", ".join(left))

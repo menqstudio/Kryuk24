@@ -1,0 +1,251 @@
+Armen portal: page r2 on the server, and what the portal held before it. Outputs as printed.
+No real password was used by Claude in any step.
+
+# 1. What the real portal held at 10:44 UTC (counts and times only, read-only; no answer text, no picture)
+# One photo and three answers of the account "armen" from 10:26 to 10:28 UTC, that is after the HTTPS access was
+# opened (10:18) and before this update (10:43): somebody signed in with the real password from outside and used
+# the first version of the page. Claude did not see who, on what device, or whether the sign-out was pressed.
+2026-10-08T10:44:22Z
+portal: active, enabled: disabled
+NRestarts=0 MemoryCurrent=16945152 MemoryPeak=17387520 
+armen_photos 1
+armen_answers 3
+armen_commands 3
+photo: armen JPEG WORK 2026-10-08T10:28:32.323425+00:00 64
+answer: armen 2026-10-08 inquiries 2026-10-08T10:26:40.210583+00:00
+answer: armen 2026-10-08 completed_trips 2026-10-08T10:26:41.610349+00:00
+answer: armen 2026-10-08 service_area 2026-10-08T10:26:45.826230+00:00
+files in the photo folder: 2
+600 259237 …4cde2941.jpg
+600 41026 …4cde2941.preview.jpg
+no helper left in /tmp
+
+# 2. deploy/update_and_restart.sh with the package of commit 184e45e (stop, tests on the server, replace, start)
+== time
+2026-10-08T10:43:41Z
+data before: 3 files; credential file: root:kryuk-armen 640
+== time
+2026-10-08T10:43:41Z
+package: matches its checksums
+== tests of the new package on this server, as the service user
+----------------------------------------------------------------------
+Ran 23 tests in 24.579s
+
+OK
+== replace
+replaced portal.py
+same     provision.py
+replaced app.js
+same     login.js
+replaced theme.js
+replaced index.html
+replaced login.html
+replaced style.css
+replaced tokens.css
+replaced fonts.css
+replaced logo-light.webp
+replaced logo-dark.webp
+replaced font-golos-cyrillic.woff2
+replaced font-golos-latin.woff2
+replaced font-robotocond-700-cyrillic.woff2
+replaced font-robotocond-700-latin.woff2
+same     requirements.txt
+86f3d30072301c991a5f085ee48bfa8e8c50488e3c4ffb15e521f17243dcc037  portal.py
+93f830625f7e519241466addeacc9a75f3c42d4fec1908f194d406bfff3f2b7d  provision.py
+b2d7e02e852869cfe1939c4fa7e1008b5d72f25fb578ac3030ebeeb94ad9bf9c  app.js
+38372c8084e8daa26712da92836b4eea10347d16a922cfe31b5a46e35e2e3edc  login.js
+aca785eb129b3b9729616f94a87de0ffcd8514b7d9667b37c23ba9fa3e402b3e  theme.js
+dcec2b1f47e265f84fbc56eea0822bb0db9d3541ad3c7114d0a7bae473f289a7  index.html
+ec1b1f06c14c3cd3338e8ea776f7f768e32742c33250db6028d2f3c25113cbd9  login.html
+12247610f80dc558ab71e03795b41c89b31529973f3c40de18c0094ef3266b81  style.css
+279c5f54ce63076b0e8277ec0b71de49e7c078e2f8d544852ed859f1c55f2b33  tokens.css
+5c6398703fd86257459f749a9d7a6e1b9c3a8c782eeccabc2560e9338a01ca91  fonts.css
+88dbfa573cadba7b88a5ed570c335d05232cad234173a0c437e9bcbb33dfd1da  logo-light.webp
+27124c329f9a99afaaf538766d0aa8c7b4dce3d5606746cc44566310877b17d6  logo-dark.webp
+17d048ca05cb1218af3c0d6dcdf882989e6d1cc5dcb598ea50eaf54850ff7229  font-golos-cyrillic.woff2
+9a69d0aa4734c4022224c002a3d944a702e0204972a49d892789f5668b922c2a  font-golos-latin.woff2
+7b9ef131039e058b622d4da5cbb6d2e783526d137cbf74738f8984c25c2d3fbf  font-robotocond-700-cyrillic.woff2
+ab74f0c2d7ec37e44e017b9586675dd00c519591207dc3bbc8e003c5628dc9b7  font-robotocond-700-latin.woff2
+41b54a6fb2918667ca47a61d73b522629d84490f3d78f0f20b21135faba10d35  requirements.txt
+code folder: everything owned by root; portal: inactive
+2026-10-08T10:44:06Z
+== update done
+== after the start: active active, enabled disabled, code updated: yes
+data after: 3 files; credential file: root:kryuk-armen 640
+login form: 200; state without a session: 401; page script without a session: 401
+tokens.css: 200
+fonts.css: 200
+style.css: 200
+theme.js: 200
+logo-light.webp: 200
+logo-dark.webp: 200
+font-golos-cyrillic.woff2: 200
+wrong password: 401
+2026-10-08T10:44:07Z
+== update and restart done
+
+# 3. deploy/https_checks.sh from outside after the update
+== time
+2026-10-08T10:44:22Z
+== the login form is open, the rest of the portal needs a session
+ok   login form: 200
+ok   login form is the Russian form: 1
+ok   address without the last slash: 301
+ok   login script: 200
+ok   style sheet: 200
+ok   state without a session: 401
+ok   a photo preview without a session: 401
+ok   the page script without a session: 401
+ok   an answer without a session: 401
+ok   a photo upload without a session: 401
+ok   sign-out without a session: 401
+== no Basic prompt on the portal, the security headers arrive
+HTTP/1.1 200 OK
+Cache-Control: no-store
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+X-Robots-Tag: noindex, nofollow
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'
+== wrong password, wrong origin
+ok   login with a wrong password: 401
+ok   login from another origin: 403
+ok   a Basic header instead of a session: 401
+== body limits: 6 MiB reaches the portal on the photo address, 40 KiB is refused on the login address
+ok   6 MiB to the photo address, no session: 401
+ok   40 KiB to the login address: 413
+== the other STAGING addresses still ask for the STAGING password (3 s apart: the operator limit is 20 a minute)
+ok   /operator/work: 401
+ok   /operator/work/approve: 401
+ok   /operator/work/armenx: 401
+ok   /operator/site/: 401
+ok   /health: 401
+ok   /bro/v1/queue: 401
+ok   /operator/work/armen/../: 401
+ok   / (the catch-all, nothing served): 404
+ok   /anything-else: 404
+== request budget of the portal's pages: 28 requests as fast as they go (a page with many previews)
+passed to the portal: 28, refused with 429: 0, other: 0
+ok   none of the 28 refused by the limit: 0
+== the login address keeps the strict limit: 16 wrong logins as fast as they go
+answered 401 by the portal: 13, refused with 429: 3, other: 0
+ok   the login limit holds
+== the portal's own port from outside
+ok   port 8790 (000 means no connection): 000
+ok   plain http is sent to https: 301
+2026-10-08T10:45:39Z
+== all checks passed
+
+# 4. The live login page in Chromium at phone widths over the real HTTPS and Nginx (no password typed)
+360 light scroll width [360, 360] design fonts loaded: True logo shown: ['logo-light.webp'] answers: {'font-golos-cyrillic.woff2': 200, 'font-golos-latin.woff2': 200, 'font-robotocond-700-cyrillic.woff2': 200, 'font-robotocond-700-latin.woff2': 200, 'fonts.css': 200, 'login.js': 200, 'logo-dark.webp': 200, 'logo-light.webp': 200, 'page': 200, 'style.css': 200, 'theme.js': 200, 'tokens.css': 200} failed requests: []
+390 light scroll width [390, 390] design fonts loaded: True logo shown: ['logo-light.webp'] answers: {'font-golos-cyrillic.woff2': 200, 'font-golos-latin.woff2': 200, 'font-robotocond-700-cyrillic.woff2': 200, 'font-robotocond-700-latin.woff2': 200, 'fonts.css': 200, 'login.js': 200, 'logo-dark.webp': 200, 'logo-light.webp': 200, 'page': 200, 'style.css': 200, 'theme.js': 200, 'tokens.css': 200} failed requests: []
+430 light scroll width [430, 430] design fonts loaded: True logo shown: ['logo-light.webp'] answers: {'font-golos-cyrillic.woff2': 200, 'font-golos-latin.woff2': 200, 'font-robotocond-700-cyrillic.woff2': 200, 'font-robotocond-700-latin.woff2': 200, 'fonts.css': 200, 'login.js': 200, 'logo-dark.webp': 200, 'logo-light.webp': 200, 'page': 200, 'style.css': 200, 'theme.js': 200, 'tokens.css': 200} failed requests: []
+390 dark scroll width [390, 390] design fonts loaded: True logo shown: ['logo-dark.webp'] answers: {'font-golos-cyrillic.woff2': 200, 'font-golos-latin.woff2': 200, 'font-robotocond-700-cyrillic.woff2': 200, 'font-robotocond-700-latin.woff2': 200, 'fonts.css': 200, 'login.js': 200, 'logo-dark.webp': 200, 'logo-light.webp': 200, 'page': 200, 'style.css': 200, 'theme.js': 200, 'tokens.css': 200} failed requests: []
+
+# 5. deploy/browser_check.py: the whole page in Chromium at 360, 390 and 430 px against a LOCAL portal with SAMPLE
+#    data behind a throwaway certificate (not the server, not a phone)
+ok   360-light the page uses the design fonts
+ok   360-light the logo for this theme is the one shown
+ok   360-light 1-login: no sideways scroll
+ok   360-light 2-page: no sideways scroll
+ok   360-light picking photos sends nothing
+ok   360-light previews are shown for the two pictures
+ok   360-light the text file is refused with a reason
+ok   360-light the button counts what will be sent
+ok   360-light 3-photos-picked: no sideways scroll
+ok   360-light a picked item can be removed
+ok   360-light after the button both are stored once, a double tap adds nothing
+ok   360-light the result is the server's, next to the button
+ok   360-light 4-photos-saved: no sideways scroll
+ok   360-light the same picture again makes no second photo and says so
+ok   360-light picking answers saves nothing
+ok   360-light each picked answer says it is not saved yet
+ok   360-light 5-answers-picked: no sideways scroll
+ok   360-light two saved, one refused: not shown as all saved
+ok   360-light the refused answer keeps its choice and its own message
+ok   360-light 6-answers-partly-saved: no sideways scroll
+ok   360-light saved after the second try, a double tap makes no second row
+ok   360-light every saved answer says Сохранено beside it
+ok   360-light 7-answers-saved: no sideways scroll
+ok   360-light after a reload the saved answers are the pressed ones
+ok   360-light sign-out returns to the login form and the cookie no longer opens the page
+ok   360-light no error in the browser console
+ok   390-light the page uses the design fonts
+ok   390-light the logo for this theme is the one shown
+ok   390-light 1-login: no sideways scroll
+ok   390-light 2-page: no sideways scroll
+ok   390-light picking photos sends nothing
+ok   390-light previews are shown for the two pictures
+ok   390-light the text file is refused with a reason
+ok   390-light the button counts what will be sent
+ok   390-light 3-photos-picked: no sideways scroll
+ok   390-light a picked item can be removed
+ok   390-light after the button both are stored once, a double tap adds nothing
+ok   390-light the result is the server's, next to the button
+ok   390-light 4-photos-saved: no sideways scroll
+ok   390-light the same picture again makes no second photo and says so
+ok   390-light picking answers saves nothing
+ok   390-light each picked answer says it is not saved yet
+ok   390-light 5-answers-picked: no sideways scroll
+ok   390-light two saved, one refused: not shown as all saved
+ok   390-light the refused answer keeps its choice and its own message
+ok   390-light 6-answers-partly-saved: no sideways scroll
+ok   390-light saved after the second try, a double tap makes no second row
+ok   390-light every saved answer says Сохранено beside it
+ok   390-light 7-answers-saved: no sideways scroll
+ok   390-light after a reload the saved answers are the pressed ones
+ok   390-light sign-out returns to the login form and the cookie no longer opens the page
+ok   390-light no error in the browser console
+ok   430-light the page uses the design fonts
+ok   430-light the logo for this theme is the one shown
+ok   430-light 1-login: no sideways scroll
+ok   430-light 2-page: no sideways scroll
+ok   430-light picking photos sends nothing
+ok   430-light previews are shown for the two pictures
+ok   430-light the text file is refused with a reason
+ok   430-light the button counts what will be sent
+ok   430-light 3-photos-picked: no sideways scroll
+ok   430-light a picked item can be removed
+ok   430-light after the button both are stored once, a double tap adds nothing
+ok   430-light the result is the server's, next to the button
+ok   430-light 4-photos-saved: no sideways scroll
+ok   430-light the same picture again makes no second photo and says so
+ok   430-light picking answers saves nothing
+ok   430-light each picked answer says it is not saved yet
+ok   430-light 5-answers-picked: no sideways scroll
+ok   430-light two saved, one refused: not shown as all saved
+ok   430-light the refused answer keeps its choice and its own message
+ok   430-light 6-answers-partly-saved: no sideways scroll
+ok   430-light saved after the second try, a double tap makes no second row
+ok   430-light every saved answer says Сохранено beside it
+ok   430-light 7-answers-saved: no sideways scroll
+ok   430-light after a reload the saved answers are the pressed ones
+ok   430-light sign-out returns to the login form and the cookie no longer opens the page
+ok   430-light no error in the browser console
+ok   390-dark the page uses the design fonts
+ok   390-dark the logo for this theme is the one shown
+ok   390-dark 1-login: no sideways scroll
+ok   390-dark 2-page: no sideways scroll
+ok   390-dark picking photos sends nothing
+ok   390-dark previews are shown for the two pictures
+ok   390-dark the text file is refused with a reason
+ok   390-dark the button counts what will be sent
+ok   390-dark 3-photos-picked: no sideways scroll
+ok   390-dark a picked item can be removed
+ok   390-dark after the button both are stored once, a double tap adds nothing
+ok   390-dark the result is the server's, next to the button
+ok   390-dark 4-photos-saved: no sideways scroll
+ok   390-dark the same picture again makes no second photo and says so
+ok   390-dark picking answers saves nothing
+ok   390-dark each picked answer says it is not saved yet
+ok   390-dark 5-answers-picked: no sideways scroll
+ok   390-dark two saved, one refused: not shown as all saved
+ok   390-dark the refused answer keeps its choice and its own message
+ok   390-dark 6-answers-partly-saved: no sideways scroll
+ok   390-dark saved after the second try, a double tap makes no second row
+ok   390-dark every saved answer says Сохранено beside it
+ok   390-dark 7-answers-saved: no sideways scroll
+ok   390-dark after a reload the saved answers are the pressed ones
+ok   390-dark sign-out returns to the login form and the cookie no longer opens the page
+ok   390-dark no error in the browser console
+all browser checks passed

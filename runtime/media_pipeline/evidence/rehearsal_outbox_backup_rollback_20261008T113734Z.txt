@@ -1,0 +1,154 @@
+Media pipeline v0.2: rehearsal on the server of the narrow access, the test account, an interrupted intake, a repeated run,
+the backup, the rollback and a restore (deploy/chain_rehearsal.sh). Output as printed.
+The real users kryuk-armen and kryuk-run on temporary folders; a temporary portal instance (port 8791, SAMPLE passwords);
+sample pictures made on the server; the live runtime data folder hidden from every process; one temporary group, removed.
+NOT a phone, NOT a real account, NOT HTTPS, NOT real data, NOT the live runtime.
+
+# 1. The run that counts: the outbox inside the portal data folder, 11:37 UTC
+== time
+2026-10-08T11:36:54Z
+== 0. the tests of both packages on this server
+Ran 26 tests in 27.114s  OK 
+Ran 23 tests in 4.777s  OK 
+== 1. a temporary portal with an outbox, sample pictures, the accounts armen and test
+sample-0.jpg: 4000x3000 JPEG, 5.7 MiB
+sample-1.jpg: 4000x3000 JPEG, 5.7 MiB
+sample-2.jpg: 4000x3000 JPEG, 5.7 MiB
+== 2. uploads over HTTP: armen (two pictures, the first twice, one answer) and the test account (one picture, one answer)
+armen uploads sample-0.jpg: 201 {"duplicate":false,"id":"45fb440c2b7b44438f4b7d6da78af87d","publishing_enabled":false,"saved":true}
+armen uploads sample-1.jpg: 201 {"duplicate":false,"id":"61e327f595e642dd8ffd7089aecf458a","publishing_enabled":false,"saved":true}
+armen uploads sample-0.jpg: 201 {"duplicate":true,"id":"45fb440c2b7b44438f4b7d6da78af87d","publishing_enabled":false,"saved":true}
+armen answers one question: 200
+armen sees: 2 photos, 1 answers, test account: False, trust: ARMEN_REPORTED
+test uploads sample-2.jpg: 201 {"duplicate":false,"id":"9431000433c547c58f342bc4b199cf73","publishing_enabled":false,"saved":true}
+test answers one question: 200
+test sees: 1 photos, 1 answers, test account: True, trust: TEST_NOT_COUNTED
+the portal's own folder: 6 files (three originals and three previews: armen's two and the test account's one)
+== 3. the outbox: all that leaves the portal (owner:group mode size name)
+kryuk-armen:kryuk-rehearsal-in 710 4096 portal
+kryuk-armen:kryuk-armen 600 40960 portal/portal.sqlite
+kryuk-armen:kryuk-armen 700 4096 portal/photos
+kryuk-armen:kryuk-rehearsal-in 2750 4096 portal/outbox
+kryuk-armen:kryuk-rehearsal-in 640 5999287 portal/outbox/45fb440c2b7b44438f4b7d6da78af87d.jpg
+kryuk-armen:kryuk-rehearsal-in 640 258 portal/outbox/45fb440c2b7b44438f4b7d6da78af87d.json
+kryuk-armen:kryuk-rehearsal-in 640 6000417 portal/outbox/61e327f595e642dd8ffd7089aecf458a.jpg
+kryuk-armen:kryuk-rehearsal-in 640 258 portal/outbox/61e327f595e642dd8ffd7089aecf458a.json
+one file on the disk under two names (same inode in the portal's folder and in the outbox):
+  45fb440c2b7b44438f4b7d6da78af87d.jpg: portal inode 546982, outbox inode 546982, links 2
+  61e327f595e642dd8ffd7089aecf458a.jpg: portal inode 546985, outbox inode 546985, links 2
+the facts of one photo:
+{"actor":"armen","file":"45fb440c2b7b44438f4b7d6da78af87d.jpg","format":"JPEG","id":"45fb440c2b7b44438f4b7d6da78af87d","purpose":"WORK","sha256":"5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377","uploaded":"2026-10-08T11:37:29.762845+00:00"}
+== 4. what the runtime user can and cannot reach
+reads an outbox photo: yes
+reads the portal's database: no, refused
+lists the portal's photo folder: no, refused
+reads a preview or the test account's photo by its path: no, refused
+lists the portal's data folder: no, refused
+writes into the outbox: no, refused
+removes an outbox file: no, refused
+sees the live runtime data folder: no, hidden for this rehearsal
+== 5. the temporary runtime: today's tasks, a snapshot and a backup BEFORE the pipeline
+{"day": "2026-10-08", "added": 10, "external_execution": false}
+{"bytes": 143360, "integrity": "ok", "sha256": "ec82c77a77b8a7c8bc81964855a2e820d4663c6734241db14f90789194e8207f"}
+tables before: 14
+== 6. intake: first cut off in the middle of a copy, then run, then run again
+left by the cut-off run: 1000 bytes under the name of a 5999287-byte photo
+{"duplicates":0,"imported":2,"known":0,"mismatched":0,"refused_storage":0,"repaired":1,"seen":2,"withdrawn":0}
+{"duplicates":0,"imported":0,"known":2,"mismatched":0,"refused_storage":0,"repaired":0,"seen":2,"withdrawn":0}
+originals in the inbox, each checked against its name:
+  5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377 whole
+  97e2eb1f7dd60b1786c94d730121bed35c9632438c61530c9b9d65b1cb7e046d whole
+  MEDIA-2e33cfb3 NEW attempts 0 actor armen sha256 5bc408bbcfe1 variants []
+  MEDIA-9b67a615 NEW attempts 0 actor armen sha256 97e2eb1f7dd6 variants []
+  MEDIA-2e33cfb3 PREPARED attempts 1 actor armen sha256 5bc408bbcfe1 variants ['FULL', 'WEB']
+  MEDIA-9b67a615 NEW attempts 0 actor armen sha256 97e2eb1f7dd6 variants []
+== 7. rollback: the history is kept, the photos are whole in the outbox, the other tables are as before
+{"done": true, "history_rows": {"media_work": 2, "media_work_assets": 2, "media_work_events": 4, "media_work_sources": 2, "ops_assets": 2, "ops_originals": 2}, "originals_removed": ["5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377", "97e2eb1f7dd60b1786c94d730121bed35c9632438c61530c9b9d65b1cb7e046d"], "originals_kept_only_copy": [], "variants_removed": 2, "kept_published": []}
+archive: 600 5726 bytes; events in it: ['TAKEN_IN', 'TAKEN_IN', 'CLAIMED', 'PREPARED']
+tables in the first: 14, in the second: 14; tables that differ: none
+files left in the temporary media folder: 0; outbox photos still whole: 5bc408bbcfe1 97e2eb1f7dd6 
+a second rollback:
+{"done":false,"reason":"thepipelinetablesarenotthere:nothingtorollback"}
+== 8. restore from the backup of step 5: a copy of it has the same content as the snapshot taken before
+tables in the first: 14, in the second: 14; tables that differ: none
+== 9. put in again, then the only-copy case: one photo is no longer in the outbox when the rollback runs
+{"duplicates":0,"imported":2,"known":0,"mismatched":0,"refused_storage":0,"repaired":0,"seen":2,"withdrawn":0}
+{"done": true, "originals_removed": ["97e2eb1f7dd60b1786c94d730121bed35c9632438c61530c9b9d65b1cb7e046d"], "originals_kept_only_copy": ["5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377"]}
+the original that had no other copy is still in the inbox: yes, whole
+2026-10-08T11:37:34Z
+== rehearsal done
+temporary portal stopped; temporary folder removed: yes; temporary group removed: yes
+
+# 2. The run before it, 11:35 UTC: the outbox BESIDE the data folder. Kept because it shows why the layout changed:
+#    in step 3 the two names have different inodes and one link each, so the hand-over had fallen back to a copy
+#    (the service sees each writable path as its own file system). The label printed there ("one file on the disk")
+#    was wrong for that run; the numbers beside it are right.
+== time
+2026-10-08T11:35:28Z
+== 0. the tests of both packages on this server
+Ran 26 tests in 27.075s  OK 
+Ran 23 tests in 4.816s  OK 
+== 1. a temporary portal with an outbox, sample pictures, the accounts armen and test
+sample-0.jpg: 4000x3000 JPEG, 5.7 MiB
+sample-1.jpg: 4000x3000 JPEG, 5.7 MiB
+sample-2.jpg: 4000x3000 JPEG, 5.7 MiB
+== 2. uploads over HTTP: armen (two pictures, the first twice, one answer) and the test account (one picture, one answer)
+armen uploads sample-0.jpg: 201 {"duplicate":false,"id":"e79ff7b3cb094ffe938180cf0d611f23","publishing_enabled":false,"saved":true}
+armen uploads sample-1.jpg: 201 {"duplicate":false,"id":"68807891f7ca46f8bbe574ac5e78853b","publishing_enabled":false,"saved":true}
+armen uploads sample-0.jpg: 201 {"duplicate":true,"id":"e79ff7b3cb094ffe938180cf0d611f23","publishing_enabled":false,"saved":true}
+armen answers one question: 200
+armen sees: 2 photos, 1 answers, test account: False, trust: ARMEN_REPORTED
+test uploads sample-2.jpg: 201 {"duplicate":false,"id":"dec981db33fc4c6dadf7f8d5991fca82","publishing_enabled":false,"saved":true}
+test answers one question: 200
+test sees: 1 photos, 1 answers, test account: True, trust: TEST_NOT_COUNTED
+the portal's own folder: 6 files (three originals and three previews: armen's two and the test account's one)
+== 3. the outbox: all that leaves the portal (owner:group mode size name)
+kryuk-armen:kryuk-rehearsal-in 2750 4096 outbox
+kryuk-armen:kryuk-rehearsal-in 640 6000417 outbox/68807891f7ca46f8bbe574ac5e78853b.jpg
+kryuk-armen:kryuk-rehearsal-in 640 258 outbox/68807891f7ca46f8bbe574ac5e78853b.json
+kryuk-armen:kryuk-rehearsal-in 640 5999287 outbox/e79ff7b3cb094ffe938180cf0d611f23.jpg
+kryuk-armen:kryuk-rehearsal-in 640 258 outbox/e79ff7b3cb094ffe938180cf0d611f23.json
+one file on the disk under two names (same inode in the portal's folder and in the outbox):
+  68807891f7ca46f8bbe574ac5e78853b.jpg: portal inode 546986, outbox inode 546988, links 1
+  e79ff7b3cb094ffe938180cf0d611f23.jpg: portal inode 546982, outbox inode 546984, links 1
+the facts of one photo:
+{"actor":"armen","file":"68807891f7ca46f8bbe574ac5e78853b.jpg","format":"JPEG","id":"68807891f7ca46f8bbe574ac5e78853b","purpose":"WORK","sha256":"97e2eb1f7dd60b1786c94d730121bed35c9632438c61530c9b9d65b1cb7e046d","uploaded":"2026-10-08T11:36:03.991679+00:00"}
+== 4. what the runtime user can and cannot reach
+reads an outbox photo: yes
+reads the portal's database: no, refused
+lists the portal's photo folder: no, refused
+reads a preview or the test account's photo by its path: no, refused
+writes into the outbox: no, refused
+removes an outbox file: no, refused
+sees the live runtime data folder: no, hidden for this rehearsal
+== 5. the temporary runtime: today's tasks, a snapshot and a backup BEFORE the pipeline
+{"day": "2026-10-08", "added": 10, "external_execution": false}
+{"bytes": 143360, "integrity": "ok", "sha256": "374eb30e59deed6ce5d0866819e9ee8bfd098606f6b80cb48dd5beaf4f574bf7"}
+tables before: 14
+== 6. intake: first cut off in the middle of a copy, then run, then run again
+left by the cut-off run: 1000 bytes under the name of a 6000417-byte photo
+{"duplicates":0,"imported":2,"known":0,"mismatched":0,"refused_storage":0,"repaired":1,"seen":2,"withdrawn":0}
+{"duplicates":0,"imported":0,"known":2,"mismatched":0,"refused_storage":0,"repaired":0,"seen":2,"withdrawn":0}
+originals in the inbox, each checked against its name:
+  5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377 whole
+  97e2eb1f7dd60b1786c94d730121bed35c9632438c61530c9b9d65b1cb7e046d whole
+  MEDIA-8b7439b7 NEW attempts 0 actor armen sha256 97e2eb1f7dd6 variants []
+  MEDIA-690e44cc NEW attempts 0 actor armen sha256 5bc408bbcfe1 variants []
+  MEDIA-8b7439b7 PREPARED attempts 1 actor armen sha256 97e2eb1f7dd6 variants ['FULL', 'WEB']
+  MEDIA-690e44cc NEW attempts 0 actor armen sha256 5bc408bbcfe1 variants []
+== 7. rollback: the history is kept, the photos are whole in the outbox, the other tables are as before
+{"done": true, "history_rows": {"media_work": 2, "media_work_assets": 2, "media_work_events": 4, "media_work_sources": 2, "ops_assets": 2, "ops_originals": 2}, "originals_removed": ["97e2eb1f7dd60b1786c94d730121bed35c9632438c61530c9b9d65b1cb7e046d", "5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377"], "originals_kept_only_copy": [], "variants_removed": 2, "kept_published": []}
+archive: 600 5726 bytes; events in it: ['TAKEN_IN', 'TAKEN_IN', 'CLAIMED', 'PREPARED']
+tables in the first: 14, in the second: 14; tables that differ: none
+files left in the temporary media folder: 0; outbox photos still whole: 97e2eb1f7dd6 5bc408bbcfe1 
+a second rollback:
+{"done":false,"reason":"thepipelinetablesarenotthere:nothingtorollback"}
+== 8. restore from the backup of step 5: a copy of it has the same content as the snapshot taken before
+tables in the first: 14, in the second: 14; tables that differ: none
+== 9. put in again, then the only-copy case: one photo is no longer in the outbox when the rollback runs
+{"duplicates":0,"imported":2,"known":0,"mismatched":0,"refused_storage":0,"repaired":0,"seen":2,"withdrawn":0}
+{"done": true, "originals_removed": ["5bc408bbcfe16e2f2ae4c6e0e36bd7a8a2eab9c860a7aa66b8c377816debe377"], "originals_kept_only_copy": ["97e2eb1f7dd60b1786c94d730121bed35c9632438c61530c9b9d65b1cb7e046d"]}
+the original that had no other copy is still in the inbox: yes, whole
+2026-10-08T11:36:08Z
+== rehearsal done
+temporary portal stopped; temporary folder removed: yes; temporary group removed: yes
