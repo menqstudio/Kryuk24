@@ -1,0 +1,113 @@
+/* KRYUK24 component layer.
+   Load order: design/tokens/kryuk.tokens.css → vendor/menq-components/bundle.css → vendor/menq-components/bro.css → this file → site/assets/fonts.css.
+   Part 1 adapts the shared library to KRYUK24 (solid orange, navy text on orange, 8 / 12 px corners, no glow).
+   Part 2 holds KRYUK24's own components (prefix kr-). Every value resolves through a token. */
+
+/* ── Part 1. The shared library in KRYUK24 colours ── */
+:root, [data-theme], .section-contrast {
+  /* KRYUK24 uses flat colour: no gradient on buttons, avatars, bars or panels. */
+  --gradient-brand: linear-gradient(var(--color-action-primary), var(--color-action-primary));
+  --gradient-brand-soft: linear-gradient(var(--color-accent-soft), var(--color-accent-soft));
+  --gradient-panel: linear-gradient(var(--color-surface-primary), var(--color-surface-primary));
+}
+body { font-size: 1rem; line-height: 1.6; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.08; letter-spacing: -0.01em; }
+
+/* Buttons: the call to action is orange with navy text (contrast 4.7:1); white on orange is never used for text. */
+.btn { font-family: var(--font-display); font-weight: 700; font-size: 1.0625rem; letter-spacing: 0.01em; border-radius: var(--radius-button); }
+.btn:hover { transform: none; }
+.btn--primary, .btn--primary:hover { background: var(--color-action-primary); color: var(--color-action-on); border-color: var(--color-action-primary); box-shadow: none; }
+.btn--primary:hover { background: var(--color-action-primary-hover); border-color: var(--color-action-primary-hover); }
+.btn--primary:active { background: var(--color-action-primary-pressed); box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.18); }
+.btn--outline { border-color: var(--color-action-secondary); color: var(--color-action-secondary); }
+.btn--outline:hover { background: var(--color-action-secondary); color: var(--color-content-inverse); }
+.btn--lg { height: var(--button-height-lg); font-size: 1.125rem; }
+:focus-visible { outline: 3px solid var(--color-focus-ring); outline-offset: 3px; }
+
+/* Selected and active states are navy, not orange (the orange is kept for the one action). */
+.mq-seg-btn[aria-pressed="true"], .mq-tab[aria-selected="true"] { background: var(--color-action-secondary); color: var(--color-content-inverse); }
+.mq-avatar--bro { color: var(--color-action-on); box-shadow: none; }
+
+/* The contrast scope: the library mixes its own primitives here; KRYUK24 states its navy values directly. */
+.section-contrast {
+  --color-page-bg: var(--navy-950);
+  --color-surface-primary: var(--navy-900);
+  --color-surface-secondary: var(--navy-800);
+  --color-surface-muted: var(--navy-750);
+  border-radius: var(--radius-3xl);
+}
+.section-spotlight { background-image: radial-gradient(80% 120% at 100% 0%, var(--color-accent-soft) 0%, transparent 60%); }
+.section-contrast .card--premium { box-shadow: var(--shadow-premium); }
+
+/* ── Part 2. KRYUK24 components ── */
+
+/* KryukMark: the official lockup artwork (lockup.generated.js), sized by its hook height: sm 33, md 44 (site header), lg 66 px.
+   Only the three logo colours are set here, exactly as in tools/brand.py: hook orange; name and «+» navy on light,
+   white on dark; «ЭВАКУАТОР» orange on light, soft orange on dark. */
+.kr-mark { --kr-h: 44px; --kr-main: var(--navy-900); --kr-sub: var(--orange-500); display: inline-flex; line-height: 0; text-decoration: none; }
+.kr-mark--sm { --kr-h: 33px; }
+.kr-mark--lg { --kr-h: 66px; }
+.kr-mark-art { display: block; height: var(--kr-h); width: auto; overflow: visible; }
+.kr-l-hook { fill: var(--orange-500); }
+.kr-l-main { fill: var(--kr-main); }
+.kr-l-sub { fill: var(--kr-sub); }
+[data-theme="dark"] .kr-mark, .section-contrast .kr-mark { --kr-main: var(--grey-0); --kr-sub: var(--orange-300); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .kr-mark { --kr-main: var(--grey-0); --kr-sub: var(--orange-300); } }
+
+/* Contact buttons: call first, then WhatsApp and Telegram. Big targets (min 48 px). */
+.kr-contact { display: grid; grid-template-columns: repeat(var(--kr-cols, 3), minmax(0, 1fr)); gap: var(--space-2); }
+.kr-contact--stack { --kr-cols: 1; }
+.kr-contact .btn { min-height: 48px; height: auto; padding: var(--space-2) var(--space-3); white-space: normal; text-align: center; line-height: 1.2; }
+.kr-contact-call-txt { display: inline-flex; flex-direction: column; align-items: flex-start; text-align: left; }
+.kr-contact-call-txt small { font: 500 0.8125rem/1.2 var(--font-sans); letter-spacing: 0; }
+
+/* Call bar: fixed bottom bar on phones, the same three actions. */
+.kr-callbar { position: fixed; inset: auto 0 0 0; z-index: var(--z-callbar); padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom)); background: var(--color-surface-primary); border-top: 1px solid var(--color-border-subtle); box-shadow: var(--shadow-lg); }
+.kr-callbar--static { position: static; box-shadow: none; border: 1px solid var(--color-border-subtle); border-radius: var(--radius-card); }
+@media (min-width: 1024px) { .kr-callbar:not(.kr-callbar--static) { display: none; } }
+
+/* Price: «от 4 000 ₽» — the number in the display face, the ruble sign after it, a non-breaking space. */
+.kr-price { display: inline-flex; flex-direction: column; gap: 2px; }
+.kr-price-value { font: 700 1.75rem/1.1 var(--font-display); font-variant-numeric: tabular-nums; color: var(--color-content-primary); white-space: nowrap; }
+.kr-price-value small { font-size: 0.6em; font-weight: 700; margin-right: 0.15em; }
+.kr-price--lg .kr-price-value { font-size: 2.5rem; }
+.kr-price-note { font-size: 0.8125rem; color: var(--color-content-muted); }
+
+/* Tariff list rows. */
+.kr-tariffs { display: flex; flex-direction: column; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.kr-tariff { display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-3) var(--space-4); background: var(--color-surface-primary); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); }
+.kr-tariff-name { font-size: 0.875rem; color: var(--color-content-secondary); }
+.kr-tariff-price { text-align: right; }
+.kr-tariff-price b { display: block; font: 700 1.125rem/1.2 var(--font-display); color: var(--color-content-primary); white-space: nowrap; }
+.kr-tariff-price span { font-size: 0.75rem; color: var(--color-content-muted); white-space: nowrap; }
+
+/* Choice tiles: one choice from a few (transport type). Native radios, the whole tile is the target. */
+.kr-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: var(--space-2); margin: 0; padding: 0; border: 0; }
+.kr-choice legend { padding: 0; margin-bottom: var(--space-2); font-weight: 600; font-size: 0.875rem; color: var(--color-content-primary); }
+.kr-choice-tile { position: relative; display: flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: 48px; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-surface-primary); font-weight: 600; font-size: 0.875rem; text-align: center; cursor: pointer; transition: background var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard); }
+.kr-choice-tile:hover { background: var(--color-hover); }
+.kr-choice-tile input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.kr-choice-tile:has(input:checked) { background: var(--color-action-secondary); border-color: var(--color-action-secondary); color: var(--color-content-inverse); }
+.kr-choice-tile:has(input:focus-visible) { outline: 3px solid var(--color-focus-ring); outline-offset: 3px; }
+
+/* Order status: the steps of the order flow (runtime/order_flow). Done = navy check, current = orange ring. */
+.kr-steps { display: flex; gap: 0; margin: 0; padding: 0; list-style: none; counter-reset: kr-step; }
+.kr-step { position: relative; flex: 1 1 0; min-width: 0; padding: 28px 2px 0; overflow-wrap: anywhere; font-size: 0.75rem; line-height: 1.3; color: var(--color-content-muted); text-align: center; }
+.kr-step::before { content: ""; position: absolute; top: 9px; left: -50%; right: 50%; height: 2px; background: var(--color-border-subtle); }
+.kr-step:first-child::before { display: none; }
+.kr-step-dot { position: absolute; top: 0; left: 50%; width: 20px; height: 20px; margin-left: -10px; border-radius: var(--radius-pill); border: 2px solid var(--color-border-strong); background: var(--color-surface-primary); display: flex; align-items: center; justify-content: center; }
+.kr-step--done { color: var(--color-content-secondary); }
+.kr-step--done::before, .kr-step--current::before { background: var(--color-action-secondary); }
+.kr-step--done .kr-step-dot { background: var(--color-action-secondary); border-color: var(--color-action-secondary); color: var(--color-content-inverse); }
+.kr-step--current { color: var(--color-content-primary); font-weight: 600; }
+.kr-step--current .kr-step-dot { border-color: var(--color-action-primary); box-shadow: 0 0 0 4px var(--color-accent-soft); }
+.kr-step--current .kr-step-dot::after { content: ""; width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--color-action-primary); }
+@media (max-width: 560px) { .kr-step-label { display: none; } .kr-step--current .kr-step-label { display: block; position: absolute; left: 0; right: 0; } }
+
+/* Order card: the dispatcher's view of one order. */
+.kr-order { display: flex; flex-direction: column; gap: var(--space-3); }
+.kr-order-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.kr-order-id { font: 600 0.75rem/1.2 var(--font-mono); color: var(--color-content-muted); }
+.kr-order-route { display: grid; grid-template-columns: auto 1fr; gap: 2px var(--space-2); font-size: 0.875rem; }
+.kr-order-route dt { color: var(--color-content-muted); }
+.kr-order-route dd { margin: 0; color: var(--color-content-primary); }
