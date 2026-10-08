@@ -168,8 +168,13 @@ case "$1" in
          if new; then echo "start $u: STARTED with the new files on the disk" >> "$S/log"; else echo "start $u: STARTED with the original files on the disk" >> "$S/log"; fi;;
     esac;;
   restart) [ -e "$S/restart-fails" ] && exit 1
+    if [ -e "$S/kill-in-restart" ]; then kill -9 "$PPID"; exit 1; fi   # the install script dies while it restarts the service
     grep -vx "$u" "$S/active" > "$S/active.next" || true; mv "$S/active.next" "$S/active"
     come_up "$u";;
+  crash) # not a systemctl verb: the service's process dies; systemd restarts it (Restart=on-failure) unless a loaded drop-in says Restart=no
+    grep -vx "$u" "$S/active" > "$S/active.next" || true; mv "$S/active.next" "$S/active"
+    if grep -qx 'Restart=no' "$S/loaded.d/$u" 2>/dev/null; then echo "crash $u: stays down (Restart=no)" >> "$S/log"; exit 0; fi
+    come_up "$u"; if listed active "$u"; then echo "crash $u: restarted by systemd" >> "$S/log"; else echo "crash $u: not restarted" >> "$S/log"; fi;;
   *) echo "stand-in: unexpected systemctl $*" >&2; exit 64;;
 esac
 """,
@@ -236,7 +241,7 @@ class RealModeWithStandIns(Install):
     def normal(self):           # every answer as on an ordinary day; what systemd has loaded is left as it is
         self.answer(active='kryuk-capture.service\n', user='kryuk-run\n', uid='0\n', owner='root:root 644\n', running='', stale='',
                     processes='101 kryuk-capture.service\n102 kryuk-bro-api.service\n', install_fails='')
-        for name in ('silent-with-new', 'silent-always', 'dies-with-new', 'restart-fails', 'reload-fails', 'try-start', 'kill-script', 'next-kryuk-backup.timer'):
+        for name in ('silent-with-new', 'silent-always', 'dies-with-new', 'restart-fails', 'reload-fails', 'try-start', 'kill-script', 'kill-in-restart', 'next-kryuk-backup.timer'):
             (self.standin / name).unlink(missing_ok=True)
 
     def answer(self, **files):
@@ -474,23 +479,69 @@ class RealModeWithStandIns(Install):
         self.assertEqual((self.held(), self.state(), (self.standin / 'active').read_text()), (self.HELD, MIXED, ''))
         code, out = self.run_script('release')
         self.assertEqual((code, 'are not a pair' in out, self.held()), (2, True, self.HELD), out)
-        code, out = self.run_script('rollback')     # the way out: the originals, then everything is let go
+        code, out = self.run_script('rollback')     # the way out: the originals, the service started with them, then everything is let go
         self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
-        self.assertIn('kryuk-capture.service was not running', out)
-        self.assertEqual(self.outside_start('kryuk-capture.service'), ['start kryuk-capture.service: STARTED with the original files on the disk'])
+        self.assertIn('an earlier run of this script had left it guarded: starting it with the originals', out)
+        self.assertEqual(self.log('start kryuk-capture')[-1], 'start kryuk-capture.service: STARTED with the original files on the disk')
+        self.assertEqual((self.standin / 'active').read_text().split(), ['kryuk-capture.service'])
 
     def test_a_server_restart_in_the_middle_of_an_install_leaves_everything_held(self):
         """The script is killed (kill -9, no clean-up runs) after both new files were put in place."""
         self.answer(kill_script='')
         code, out = self.run_script()
         self.assertNotEqual(code, 0, out)
-        self.assertEqual((self.state(), self.held()[0]), (NEW, GUARDED), 'killed with both new files in place; the drop-ins are on the disk')
+        self.assertEqual((self.state(), self.held()), (NEW, self.HELD), 'killed with both new files in place; the drop-ins are on the disk, no marker')
         self.normal()
         self.assertEqual(self.server_restarts(), ['start kryuk-capture.service' + SKIPPED, 'start kryuk-operations.service' + SKIPPED])
         code, out = self.run_script('status')
         self.assertEqual((out.count(', HELD'), out.count('GUARDED (cannot start)')), (3, 1), out)
+        # GPT's review of ef2c9e4: both new files, the service down, nothing ever showed that it works with them
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'not confirmed: kryuk-capture.service is not running' in out, self.held(), self.state()), (2, True, self.HELD, NEW), out)
+        code, out = self.run_script()
+        self.assertEqual((code, 'an earlier run did not finish' in out, 'ALREADY INSTALLED' in out, self.held()), (1, True, False, self.HELD), out)
         code, out = self.run_script('rollback')
         self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+        self.assertEqual((self.standin / 'active').read_text().split(), ['kryuk-capture.service'], 'running again, with the originals')
+
+    def test_release_is_refused_for_the_originals_too_while_the_service_is_down(self):
+        self.answer(restart_fails='')
+        self.assertEqual(self.run_script()[0], 2)           # the originals are back, the service did not restart
+        self.normal()
+        self.server_restarts()
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'not confirmed: kryuk-capture.service is not running' in out, self.held(), self.state()), (2, True, self.HELD, ORIGINALS), out)
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+        self.assertEqual((self.standin / 'active').read_text().split(), ['kryuk-capture.service'])
+
+    def test_a_service_that_crashes_while_it_is_guarded_is_not_restarted_by_systemd(self):
+        """GPT's review of ef2c9e4: Restart=on-failure must not bring the service up on files that were not confirmed."""
+        self.systemctl('crash', 'kryuk-capture.service')
+        self.assertEqual(self.log('crash ')[-1], 'crash kryuk-capture.service: restarted by systemd', 'on an ordinary day it comes back by itself')
+        for answers, state in (({'kill_script': ''}, NEW), ({'kill_in_restart': ''}, NEW)):
+            self.normal()
+            self.answer(**answers)
+            code, out = self.run_script()
+            self.assertNotEqual(code, 0, out)
+            self.assertEqual((self.state(), self.held()[:2]), (state, (GUARDED, GUARDED)), out)
+            self.normal()
+            self.systemctl('crash', 'kryuk-capture.service')
+            self.assertEqual(self.log('crash ')[-1], 'crash kryuk-capture.service: stays down (Restart=no)')
+            self.assertEqual((self.standin / 'active').read_text().split(), [])
+            code, out = self.run_script('status')
+            self.assertEqual('marker of a run: LEFT' in out, 'kill_in_restart' in answers, out)
+            code, out = self.run_script('rollback')
+            self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+            self.assertEqual((self.standin / 'active').read_text().split(), ['kryuk-capture.service'])
+        self.systemctl('crash', 'kryuk-capture.service')
+        self.assertEqual(self.log('crash ')[-1], 'crash kryuk-capture.service: restarted by systemd', 'and again after the hold is gone')
+
+    def test_the_marker_exists_only_while_the_script_itself_restarts_the_service(self):
+        (self.standin / 'runuser').write_text(STANDINS['runuser'].replace('outside\n', 'outside\nls "$KRYUK_RUN_DIR" | wc -l | sed "s/^/marker files at the self-test: /" >> "$S/log"\n', 1), encoding='utf-8', newline='\n')
+        code, out = self.run_script()
+        self.assertEqual((code, self.held()), (0, self.FREE), out)
+        self.assertEqual([line.split(': ')[1].strip() for line in self.log('marker files')], ['0'], 'between the hold and the restart nothing could start the service')
 
     def test_rollback_refuses_a_kept_copy_that_is_not_the_original(self):
         self.assertEqual(self.run_script()[0], 0)
