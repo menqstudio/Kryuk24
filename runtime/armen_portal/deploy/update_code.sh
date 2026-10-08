@@ -7,7 +7,7 @@ umask 022
 SRC=${1:?package folder required}
 CODE=/opt/kryuk24-armen
 NAME=kryuk-armen
-FILES="portal.py provision.py app.js login.js theme.js index.html login.html style.css tokens.css fonts.css logo-light.webp logo-dark.webp font-golos-cyrillic.woff2 font-golos-latin.woff2 font-robotocond-700-cyrillic.woff2 font-robotocond-700-latin.woff2 requirements.txt"
+FILES="portal.py provision.py exclude.py app.js login.js theme.js index.html login.html style.css tokens.css fonts.css logo-light.webp logo-dark.webp font-golos-cyrillic.woff2 font-golos-latin.woff2 font-robotocond-700-cyrillic.woff2 font-robotocond-700-latin.woff2 requirements.txt"
 stop() { echo "STOP: $1"; exit 1; }
 echo "== time"; date -u +"%FT%TZ"
 [ "$(id -u)" = 0 ] || stop "run with sudo"

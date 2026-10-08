@@ -271,4 +271,22 @@ print(len(saved),round(peak()))
   for name in (b'tokens.css',b'fonts.css',b'style.css',b'theme.js',b'logo-light.webp',b'logo-dark.webp'):self.assertIn(name,raw)
   page=self.request()[1]
   for part in (b'id="send"',b'id="save"',b'id="pending"',b'tokens.css'):self.assertIn(part,page)
+ def test_rows_marked_as_a_test_are_out_of_every_state_and_preview(self):
+  # Gev tried the portal under Armen's account; his rows are marked and must not count as Armen's.
+  photo=self.store.photo('armen',self.png(),'WORK')['id']
+  answer=self.store.answer('armen',uuid.uuid4().hex,dict(question='inquiries',answer='YES',day=day()))['id']
+  for owner in (False,True):
+   s=self.store.state('armen',owner);self.assertEqual((len(s['answers']),len(s['photos'])),(1,1))
+  self.assertEqual(self.store.exclude('photo',photo,'SAMPLE test','GEV')['marked_by'],'GEV')
+  self.store.exclude('answer',answer,'SAMPLE test','GEV');self.store.exclude('answer',answer,'SAMPLE test again','GEV')
+  for owner in (False,True):
+   s=self.store.state('armen',owner);self.assertEqual((s['answers'],s['photos']),([],[]))
+  with self.assertRaises(LookupError):self.store.preview('armen',photo)
+  with self.assertRaises(LookupError):self.store.preview('gev',photo,True)
+  with self.assertRaises(LookupError):self.store.exclude('photo',uuid.uuid4().hex,'SAMPLE','GEV')
+  with self.assertRaises(ValueError):self.store.exclude('photo',photo,'','GEV')
+  with self.store.db() as c:self.assertEqual([r[0] for r in c.execute('SELECT count(*) FROM armen_photos UNION ALL SELECT count(*) FROM armen_answers UNION ALL SELECT count(*) FROM armen_excluded')],[1,1,2])
+  # A new answer to the same question is Armen's own and is the one shown.
+  self.store.answer('armen',uuid.uuid4().hex,dict(question='inquiries',answer='NO',day=day()))
+  self.assertEqual([a['answer'] for a in self.store.state('armen')['answers']],['NO'])
 if __name__=='__main__':unittest.main()

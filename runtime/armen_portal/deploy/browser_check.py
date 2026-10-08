@@ -122,6 +122,11 @@ def run(width, theme, pw, base):
     for q in (1, 2, 3):
         page.click('#questions .question:nth-child(%d) .choices button:nth-child(1)' % q)
     check('%s picking answers saves nothing' % tag, rows('SELECT count(*) FROM armen_answers')[0][0] == 0)
+    page.evaluate("document.querySelector('#questions .question').scrollIntoView()")
+    box = page.locator('#save').bounding_box()
+    check('%s with unsaved choices the save button is on the screen while the first question is at the top' % tag, box and box['y'] >= 0 and box['y'] + box['height'] <= 800, box)
+    check('%s every choice is at least 44 px high' % tag, page.evaluate("Math.min(...[...document.querySelectorAll('.choices button')].map(b => b.getBoundingClientRect().height))") >= 44)
+    print('     %s height of the questions card: %d px' % (tag, page.evaluate("document.getElementById('questions').parentElement.getBoundingClientRect().height")))
     check('%s each picked answer says it is not saved yet' % tag, page.locator('#questions .note.warn').count() == 3)
     shot('5-answers-picked')
     refused = []
@@ -137,7 +142,7 @@ def run(width, theme, pw, base):
     wait('#save-status', 'Сохранено 2 из 3')
     check('%s two saved, one refused: not shown as all saved' % tag, rows('SELECT count(*) FROM armen_answers')[0][0] == 2 and page.locator('#save-status.error').count() == 1)
     check('%s the refused answer keeps its choice and its own message' % tag, page.get_attribute('#questions .question:nth-child(2) .choices button:nth-child(1)', 'aria-pressed') == 'true'
-          and 'Не сохранено' in page.inner_text('#questions .question:nth-child(2) .note') and page.inner_text('#save') == 'Сохранить ответы (1)')
+          and 'Не сохранилось' in page.inner_text('#questions .question:nth-child(2) p.note.error') and page.inner_text('#save') == 'Сохранить ответы (1)')
     shot('6-answers-partly-saved')
     page.dblclick('#save')
     wait('#save-status', 'Сохранено: 1 из 1')

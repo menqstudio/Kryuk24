@@ -85,7 +85,7 @@ class Tests(unittest.TestCase):
     def test_upload_becomes_one_original_and_one_work_with_its_facts(self):
         raw = photo(plate=PLATE)
         ident = self.upload(raw, purpose='EQUIPMENT')
-        self.assertEqual(self.take_in(), {'seen': 1, 'imported': 1, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0})
+        self.assertEqual(self.take_in(), {'seen': 1, 'imported': 1, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'excluded': 0})
         (work,) = self.pipe.queue()
         self.assertEqual((work['status'], work['actor'], work['purpose'], work['format'], work['attempts']), ('NEW', 'armen', 'EQUIPMENT', 'JPEG', 0))
         self.assertEqual(work['sha256'], __import__('hashlib').sha256(raw).hexdigest())
@@ -110,6 +110,16 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(self.pipe.queue()), 1)
         self.assertEqual(len(self.files('originals')), 1)
         self.assertEqual(self.take_in()['known'], 2)
+
+    def test_a_photo_marked_as_a_test_in_the_portal_never_enters_the_inbox(self):
+        test = self.upload(photo(colour=(9, 9, 9)))
+        real = self.upload(photo(plate=PLATE))
+        self.portal.exclude('photo', test, 'SAMPLE: a test under the account', 'GEV')
+        result = self.take_in()
+        self.assertEqual((result['seen'], result['imported'], result['excluded']), (2, 1, 1))
+        self.assertEqual(len(self.pipe.queue()), 1)
+        self.assertEqual(self.rows('SELECT source_id FROM media_work_sources'), [(real,)])
+        self.assertEqual(len(self.files('originals')), 1)
 
     def test_a_portal_file_that_is_not_what_was_recorded_is_not_taken_in(self):
         self.upload()

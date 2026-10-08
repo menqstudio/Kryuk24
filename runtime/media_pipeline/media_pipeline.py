@@ -129,10 +129,16 @@ CREATE TABLE IF NOT EXISTS media_work_events(id INTEGER PRIMARY KEY, work_id TEX
         source.row_factory = sqlite3.Row
         try:
             rows = source.execute('SELECT id,actor,digest,format,original,purpose,created FROM armen_photos ORDER BY rowid').fetchall()
+            # Photos the portal marks as somebody's test (armen_excluded) are not Armen's and never enter the inbox.
+            marked = source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='armen_excluded'").fetchone()
+            excluded = {r['id'] for r in source.execute("SELECT id FROM armen_excluded WHERE kind='photo'")} if marked else set()
         finally:
             source.close()
-        result = {'seen': len(rows), 'imported': 0, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0}
+        result = {'seen': len(rows), 'imported': 0, 'known': 0, 'duplicates': 0, 'mismatched': 0, 'refused_storage': 0, 'excluded': 0}
         for p in rows:
+            if p['id'] in excluded:
+                result['excluded'] += 1
+                continue
             with self.runtime.db() as c:
                 if c.execute('SELECT 1 FROM media_work_sources WHERE source=? AND source_id=?', (SOURCE, p['id'])).fetchone():
                     result['known'] += 1

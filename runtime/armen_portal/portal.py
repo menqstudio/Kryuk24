@@ -98,6 +98,7 @@ class Store:
 CREATE TABLE IF NOT EXISTS armen_answers(id TEXT PRIMARY KEY, actor TEXT, day TEXT, question TEXT, answer TEXT, created TEXT);
 CREATE TABLE IF NOT EXISTS armen_photos(id TEXT PRIMARY KEY, actor TEXT, digest TEXT, format TEXT, original TEXT, preview TEXT, purpose TEXT, created TEXT, UNIQUE(actor,digest));
 CREATE TABLE IF NOT EXISTS armen_commands(actor TEXT,key TEXT,digest TEXT,result TEXT,PRIMARY KEY(actor,key));
+CREATE TABLE IF NOT EXISTS armen_excluded(kind TEXT,id TEXT,reason TEXT,marked_by TEXT,created TEXT,PRIMARY KEY(kind,id));
 ''')
  @contextmanager
  def db(self):
@@ -155,14 +156,26 @@ CREATE TABLE IF NOT EXISTS armen_commands(actor TEXT,key TEXT,digest TEXT,result
     os.chmod(target,0o600)
    c.execute('INSERT INTO armen_photos VALUES(?,?,?,?,?,?,?,?)',(ident,actor,dg,fmt,original,preview,purpose,now()))
    return {'saved':True,'id':ident,'duplicate':False,'publishing_enabled':False}
+ def exclude(self,kind,ident,reason,marked_by):
+  """Mark one answer or photo as not Armen's own (a test by somebody else under his account). The row and the file
+  stay; from then on it is in no state, no count and no preview, and the media intake does not take it in."""
+  if kind not in ('answer','photo') or not isinstance(ident,str) or not re.fullmatch('[a-f0-9]{32}',ident):raise ValueError('kind and id required')
+  for value in (reason,marked_by):
+   if not isinstance(value,str) or not value.strip() or len(value)>500:raise ValueError('reason and who marked it required')
+  with self.db() as c:
+   c.execute('BEGIN IMMEDIATE')
+   if not c.execute('SELECT 1 FROM '+('armen_answers' if kind=='answer' else 'armen_photos')+' WHERE id=?',(ident,)).fetchone():raise LookupError('not found')
+   c.execute('INSERT OR IGNORE INTO armen_excluded VALUES(?,?,?,?,?)',(kind,ident,reason.strip(),marked_by.strip(),now()))
+   return dict(c.execute('SELECT * FROM armen_excluded WHERE kind=? AND id=?',(kind,ident)).fetchone())
  def state(self,actor,owner=False):
   today=day()
   with self.db() as c:
    args=() if owner else (actor,)
-   where='' if owner else ' WHERE actor=?'
+   # Rows marked as somebody's test are left out for everybody, the reviewer too.
+   where=" WHERE id NOT IN (SELECT id FROM armen_excluded WHERE kind='%s')"+('' if owner else ' AND actor=?')
    # In the order they were saved (rowid), not by clock text: two answers may carry the same time, and the id is random.
-   answers=[dict(r) for r in c.execute('SELECT * FROM armen_answers'+where+' ORDER BY rowid',args)]
-   photos=[dict(r) for r in c.execute('SELECT id,actor,purpose,created FROM armen_photos'+where+' ORDER BY rowid DESC LIMIT 100',args)]
+   answers=[dict(r) for r in c.execute('SELECT * FROM armen_answers'+where%'answer'+' ORDER BY rowid',args)]
+   photos=[dict(r) for r in c.execute('SELECT id,actor,purpose,created FROM armen_photos'+where%'photo'+' ORDER BY rowid DESC LIMIT 100',args)]
   # The day is read once for the whole answer: read twice, midnight between the two gave a new day with yesterday's answers.
   latest={}
   for r in answers:
@@ -171,7 +184,7 @@ CREATE TABLE IF NOT EXISTS armen_commands(actor TEXT,key TEXT,digest TEXT,result
           'trust':'ARMEN_REPORTED','publishing_enabled':False,'orders_created':False}
  def preview(self,actor,ident,owner=False):
   if not re.fullmatch('[a-f0-9]{32}',ident):raise LookupError('unavailable')
-  with self.db() as c:row=c.execute('SELECT * FROM armen_photos WHERE id=?',(ident,)).fetchone()
+  with self.db() as c:row=c.execute("SELECT * FROM armen_photos WHERE id=? AND id NOT IN (SELECT id FROM armen_excluded WHERE kind='photo')",(ident,)).fetchone()
   if not row or (row['actor']!=actor and not owner):raise LookupError('unavailable')
   p=self.root/row['preview']
   if p.is_symlink():raise LookupError('unavailable')

@@ -60,7 +60,9 @@ function renderQuestions() {
   area.replaceChildren();
   for (const q of state.questions) {
     const card = document.createElement('div'); card.className = 'question';
-    const title = document.createElement('h3'); title.textContent = q.title; card.append(title);
+    const head = document.createElement('div'); head.className = 'qhead';
+    const title = document.createElement('h3'); title.textContent = q.title; head.append(title);
+    const mark = document.createElement('span'); head.append(mark); card.append(head);
     const choices = document.createElement('div'); choices.className = 'choices';
     const current = chosen[q.id] ? chosen[q.id].value : saved[q.id];
     for (const [value, label] of q.options) {
@@ -77,17 +79,19 @@ function renderQuestions() {
       choices.append(b);
     }
     card.append(choices);
-    const line = document.createElement('p');
-    if (results[q.id]) note(line, results[q.id].text, results[q.id].ok ? 'ok' : 'error');
-    else if (chosen[q.id]) note(line, 'Выбрано, еще не сохранено', 'warn');
-    else if (saved[q.id] !== undefined) note(line, 'Сохранено', 'ok');
-    else note(line, '');
-    card.append(line);
+    // The state of each answer sits in its own heading line; only a refusal takes a line of its own, with the reason.
+    if (results[q.id] && !results[q.id].ok) {
+      note(mark, 'Не сохранено', 'error');
+      const line = document.createElement('p'); note(line, results[q.id].text, 'error'); card.append(line);
+    } else if (chosen[q.id]) note(mark, 'Не сохранено', 'warn');
+    else if (saved[q.id] !== undefined) note(mark, 'Сохранено', 'ok');
+    else note(mark, '');
     area.append(card);
   }
   const count = Object.keys(chosen).length;
   $('save').textContent = count ? 'Сохранить ответы (' + count + ')' : 'Сохранить ответы';
   $('save').disabled = readOnly || saving || !count;
+  $('savebar').classList.toggle('waiting', count > 0);  // with unsaved choices the button stays at the bottom of the screen
 }
 async function saveAnswers() {
   if (saving || readOnly) return;
@@ -102,7 +106,7 @@ async function saveAnswers() {
         body: JSON.stringify({ question: id, answer: pick.value, day: state.day }) });
       saved[id] = pick.value; delete chosen[id]; results[id] = { ok: true, text: 'Сохранено' };
     } catch (e) {
-      results[id] = { ok: false, text: 'Не сохранено: ' + e.message };
+      results[id] = { ok: false, text: e.message };
       failed.push('«' + state.questions.find(q => q.id === id).title + '»');
     }
   }
