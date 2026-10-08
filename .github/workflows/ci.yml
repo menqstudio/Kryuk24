@@ -100,6 +100,10 @@ jobs:
         run: |
           python runtime/media_pipeline/store_patch/make_patch.py --check
           python runtime/media_pipeline/store_patch/make_patch.py --server-tests
+      - name: Media store install script (a rehearsal folder and stand-ins for systemctl, curl and runuser; nothing is installed anywhere)
+        run: |
+          bash -n runtime/media_pipeline/store_patch/install.sh
+          python -m unittest discover -s runtime/media_pipeline/store_patch -p "test_*.py"
       - name: README visuals hold nothing GitHub would block or that loads from outside
         run: |
           ! grep -l -E "<script|foreignObject|@font-face|<image|href=|url\(http" docs/assets/readme/*.svg
@@ -159,6 +163,8 @@ jobs:
         env:
           PYTHONPATH: "runtime/media_pipeline/store_patch;runtime/server;runtime/armen_portal"
         run: python -m unittest discover -s runtime/media_pipeline -p "test_*.py"
+      - name: Media store self-test and order of replacement (the install script itself is a Linux script and is skipped here)
+        run: python -m unittest discover -s runtime/media_pipeline/store_patch -p "test_*.py"
       - name: Design system (same check as on Linux; Windows encoding and line endings)
         run: python design/scripts/validate_design.py
       - name: WIP, Chrome proxy (stand-in upstream, no browser)
