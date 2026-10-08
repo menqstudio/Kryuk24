@@ -88,6 +88,10 @@ jobs:
         run: python -m unittest discover -s runtime/business_service -p "test_*.py"
       - name: Deterministic monitor (offline evaluation of supplied observations; no collector, no timer, no alert)
         run: python -m unittest discover -s runtime/deterministic_monitor -p "test_*.py"
+      - name: Media pipeline (portal uploads to the shared inbox, agent queue, covered variants, Gev's review; not installed, publishes nothing)
+        env:
+          PYTHONPATH: "runtime/server:runtime/armen_portal"
+        run: python -m unittest discover -s runtime/media_pipeline -p "test_*.py"
       - name: README visuals hold nothing GitHub would block or that loads from outside
         run: |
           ! grep -l -E "<script|foreignObject|@font-face|<image|href=|url\(http" docs/assets/readme/*.svg
@@ -143,6 +147,10 @@ jobs:
         run: python -m unittest discover -s runtime/business_service -p "test_*.py"
       - name: Deterministic monitor (offline evaluation of supplied observations; no collector, no timer, no alert)
         run: python -m unittest discover -s runtime/deterministic_monitor -p "test_*.py"
+      - name: Media pipeline (portal uploads to the shared inbox, agent queue, covered variants, Gev's review; not installed, publishes nothing)
+        env:
+          PYTHONPATH: "runtime/server;runtime/armen_portal"
+        run: python -m unittest discover -s runtime/media_pipeline -p "test_*.py"
       - name: Design system (same check as on Linux; Windows encoding and line endings)
         run: python design/scripts/validate_design.py
       - name: WIP, Chrome proxy (stand-in upstream, no browser)

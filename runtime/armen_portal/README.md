@@ -6,6 +6,10 @@ Requested by Gev 08.10.2026: separate Armen login on the existing runtime host, 
 
 Target URL: `https://runtime.kryuk24.ru/operator/work/armen/`. Existing `/operator/work` stays Gev's dashboard. Read sources: current GitHub runtime/server/secure_server.py, ops_media.py, ops_views.py, MANIFEST.md and Nginx example. The installed dashboard is protected, so this package creates a separate scoped route/service and never patches ops_views.py or runtime/server's recorded snapshot. It does not replace the installed Nginx config; actual VPS config must be read and reconciled by Claude.
 
+### Install state, 08.10.2026 (Claude)
+
+Installed on the server on Gev's yes of 08.10.2026 (portal only, STAGING, no timer, no autostart) and reachable at the target URL since 10:18 UTC. Steps 1 to 4 below are done with the scripts in `deploy/`; the server's outputs are in `evidence/`. Differences from the text below: the password minimum is 8 (Gev's decision at the install); the Nginx fragment keeps the operator zone for the login address and uses the existing preview zone for the rest, and does not pass the browser's Basic header on. Not done: step 5 with a real phone and a real login (Gev's), step 6's backup of the portal's data. Where the paragraphs below say "not deployed" or "not verified" about the VPS, `docs/CURRENT_STATE.md` section 6 is the current word.
+
 ### Implemented
 
 - Separate backend login (`armen`) through the portal's own Russian login form, optional separate `gev` review credential. Since session fix r1 (08.10.2026) the password is checked once, at login; after that an 8-hour session cookie carries the identity, and a Basic `Authorization` header alone grants nothing. Username/role is determined by the verified credential at login, never by a later request body. Gev review account is read-only in this portal. Armen cannot call owner approval/payment/publication routes; those routes are not implemented and existing backend credentials remain separate.
@@ -40,6 +44,8 @@ Known limitations: sessions live in memory only (a restart signs everyone out); 
 ## HY
 
 Գևի պահանջը՝ Արմենի առանձին մուտք, հեռախոսից հեշտ նկարների վերբեռնում և պարզ մեկ-հպումով հարցեր։
+
+Տեղադրման վիճակը, 08.10.2026 (Claude). դրված ա սերվերում Գևի 08.10.2026-ի «հա»-ով (միայն կաբինետ, STAGING, առանց timer-ի ու autostart-ի) ու 10:18 UTC-ից բացվում ա իր հասցեով։ Սկրիպտները `deploy/`-ում են, սերվերի ելքերը՝ `evidence/`-ում։ Տարբերությունները ներքևի տեքստից. գաղտնաբառի նվազագույնը 8 ա (Գևի որոշումը տեղադրման պահին). Nginx-ի հատվածում մուտքի հասցեն մնում ա operator zone-ում, մնացածը եղած preview zone-ում ա, զննարկչի Basic header-ը չի փոխանցվում։ Արված չի. իրական հեռախոսով ու իրական մուտքով ստուգումը (Գևինն ա), կաբինետի տվյալների պահուստը։ Այսօրվա վիճակի համար աղբյուրը `docs/CURRENT_STATE.md`-ի 6-րդ բաժինն ա։
 
 Նոր հասցեն նույն runtime-ի տակ է՝ `/operator/work/armen/`։ Գևի `/operator/work` վահանակը չի փոխարինվում, դրա գաղտնաբառը Արմենին չի տրվում։ Առանձին backend-ը թույլ է տալիս միայն նկարներ և իր պատասխանները. հաստատում/վճարում/հրապարակում չի անում։ Գևի առանձին review մուտքը միայն կարդալու է։
 

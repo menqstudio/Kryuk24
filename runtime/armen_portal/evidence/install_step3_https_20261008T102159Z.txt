@@ -1,0 +1,161 @@
+Armen portal, server install: step 3 of 3 (Nginx) and the checks from outside over HTTPS.
+Gev's yes for the Nginx change, for /operator/work/armen/ only: 08.10.2026, before 10:18 UTC.
+An earlier attempt of this session to write deploy/nginx_insert.py was refused by the session permission check
+("judged this action dangerous", no explanation given); no other route was taken until Gev gave his word.
+No real password was used in any check. Not in this file: a login with the real password, a phone.
+
+# 1. deploy/install_3_nginx.sh on the server
+== time
+2026-10-08T10:18:38Z
+== insert, test
+installed file before: 3485b6743c8ac5b9dbdd2ce70605ed2cc97176144270f22e97425d9f44db3a17
+private copy: /root/kryuk24-config-backups/kryuk24.conf.before-armen-insert-20261008T101838Z mode 600, sha256 equal to the installed file
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+installed file after: 74d8e973020f7eb5c8cd269ca6ebf783f8318883f90fd49fdc7381b01f147310 ; lines added or removed: 36
+== reload (the test passed)
+nginx: active
+== what the installed file says about access now (every auth, limit and location line)
+10: location /.well-known/acme-challenge/ { root /var/www/acme; }
+11: location / { return 301 https://$host$request_uri; }
+20: auth_basic "KRYUK24 operator";
+21: auth_basic_user_file /etc/nginx/kryuk-staging.htpasswd;
+24: client_max_body_size 8k;
+30: location = /capture {
+31:  limit_req zone=kryuk_capture burst=5 nodelay;
+35: location = /contact-click {
+36:  limit_req zone=kryuk_capture burst=5 nodelay;
+40: location = /health { proxy_pass http://127.0.0.1:8788; }
+41: location /operator/site/ {
+42:  limit_req zone=kryuk_preview burst=30 nodelay;
+46: location /operator {
+47:  limit_req zone=kryuk_operator burst=10 nodelay;
+52: location ^~ /bro/v1/ {
+53:  auth_basic "KRYUK24 operator";
+54:  auth_basic_user_file /etc/nginx/kryuk-bro.htpasswd;
+56:  client_max_body_size 32k;
+67: # before its catch-all `location / { return 404; }`; it never replaces the server block.
+70: # Never turn off auth_basic for /operator or the whole host.
+78: location = /operator/work/armen { return 301 /operator/work/armen/; }
+79: location = /operator/work/armen/api/login {
+80:  auth_basic off;
+81:  client_max_body_size 32k;
+82:  limit_req zone=kryuk_operator burst=10 nodelay;
+89: location ^~ /operator/work/armen/ {
+90:  auth_basic off;
+91:  client_max_body_size 20m;
+93:  limit_req zone=kryuk_preview burst=30 nodelay;
+102: location / { return 404; }
+== private copies
+-rw------- root 2351 kryuk24.conf.before-armen-insert-20261008T101838Z
+== the other services
+kryuk-capture.service: active
+kryuk-bro-api.service: active
+kryuk-armen.service: active
+2026-10-08T10:18:41Z
+== step 3 done
+
+# 2. deploy/https_checks.sh from a Windows computer outside the server, first run
+# One expectation of the script was wrong: "/" answers 404 from the catch-all line, which this install did not touch,
+# before any password is asked. The script was corrected and run again (part 3).
+== time
+2026-10-08T10:19:18Z
+== the login form is open, the rest of the portal needs a session
+ok   login form: 200
+ok   login form is the Russian form: 1
+ok   address without the last slash: 301
+ok   login script: 200
+ok   style sheet: 200
+ok   state without a session: 401
+ok   a photo preview without a session: 401
+ok   the page script without a session: 401
+ok   an answer without a session: 401
+ok   a photo upload without a session: 401
+ok   sign-out without a session: 401
+== no Basic prompt on the portal, the security headers arrive
+HTTP/1.1 200 OK
+Cache-Control: no-store
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+X-Robots-Tag: noindex, nofollow
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'
+== wrong password, wrong origin
+ok   login with a wrong password: 401
+ok   login from another origin: 403
+ok   a Basic header instead of a session: 401
+== body limits: 6 MiB reaches the portal on the photo address, 40 KiB is refused on the login address
+ok   6 MiB to the photo address, no session: 401
+ok   40 KiB to the login address: 413
+== the other STAGING addresses still ask for the STAGING password (3 s apart: the operator limit is 20 a minute)
+ok   /operator/work: 401
+ok   /operator/work/approve: 401
+ok   /operator/work/armenx: 401
+ok   /operator/site/: 401
+ok   /health: 401
+ok   /bro/v1/queue: 401
+FAIL /: got 404, expected 401
+ok   /operator/work/armen/../: 401
+== request budget of the portal's pages: 28 requests as fast as they go (a page with many previews)
+passed to the portal: 28, refused with 429: 0, other: 0
+ok   none of the 28 refused by the limit: 0
+== the login address keeps the strict limit: 16 wrong logins as fast as they go
+answered 401 by the portal: 13, refused with 429: 3, other: 0
+ok   the login limit holds
+== the portal's own port from outside
+ok   port 8790 (000 means no connection): 000
+ok   plain http is sent to https: 301
+2026-10-08T10:20:31Z
+== SOME CHECKS FAILED
+
+# 3. deploy/https_checks.sh, second run with the corrected expectation
+== time
+2026-10-08T10:20:44Z
+== the login form is open, the rest of the portal needs a session
+ok   login form: 200
+ok   login form is the Russian form: 1
+ok   address without the last slash: 301
+ok   login script: 200
+ok   style sheet: 200
+ok   state without a session: 401
+ok   a photo preview without a session: 401
+ok   the page script without a session: 401
+ok   an answer without a session: 401
+ok   a photo upload without a session: 401
+ok   sign-out without a session: 401
+== no Basic prompt on the portal, the security headers arrive
+HTTP/1.1 200 OK
+Cache-Control: no-store
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: no-referrer
+X-Robots-Tag: noindex, nofollow
+Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'
+== wrong password, wrong origin
+ok   login with a wrong password: 401
+ok   login from another origin: 403
+ok   a Basic header instead of a session: 401
+== body limits: 6 MiB reaches the portal on the photo address, 40 KiB is refused on the login address
+ok   6 MiB to the photo address, no session: 401
+ok   40 KiB to the login address: 413
+== the other STAGING addresses still ask for the STAGING password (3 s apart: the operator limit is 20 a minute)
+ok   /operator/work: 401
+ok   /operator/work/approve: 401
+ok   /operator/work/armenx: 401
+ok   /operator/site/: 401
+ok   /health: 401
+ok   /bro/v1/queue: 401
+ok   /operator/work/armen/../: 401
+ok   / (the catch-all, nothing served): 404
+ok   /anything-else: 404
+== request budget of the portal's pages: 28 requests as fast as they go (a page with many previews)
+passed to the portal: 28, refused with 429: 0, other: 0
+ok   none of the 28 refused by the limit: 0
+== the login address keeps the strict limit: 16 wrong logins as fast as they go
+answered 401 by the portal: 13, refused with 429: 3, other: 0
+ok   the login limit holds
+== the portal's own port from outside
+ok   port 8790 (000 means no connection): 000
+ok   plain http is sent to https: 301
+2026-10-08T10:21:59Z
+== all checks passed
