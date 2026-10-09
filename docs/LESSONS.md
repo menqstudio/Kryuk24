@@ -182,3 +182,13 @@
 - **What happened (07.10):** ended a report with "it is late, enough for today".
   **Why:** assumed the time and assumed he wanted to stop.
   **Do instead:** do not decide for Gev when the session ends; report and keep going.
+
+- **What happened (08.10.2026):** an inline `python -c` with a Windows path (`C:\Users…`) died on the unicode escape again while editing the handover file. The lesson above already existed, twice.
+  **Why:** "a two-line replace" felt too small for a script file.
+  **Do instead:** for a text replacement in a document use the Edit tool; inline Python never holds a Windows path, whatever its length.
+- **What happened (08.10.2026):** wrote "Update 08.10.2026 00:55 UTC" into a public PR text; the clock said 07:25. The session had been idle for hours between two of Gev's messages and I continued from the last time I remembered. The lesson about times already existed, twice.
+  **Why:** a new message feels like the next minute; it may be the next morning.
+  **Do instead:** at the first command after every new message from Gev, print `date -u`. A time goes into a document only from the output of the command that ran last.
+- **What happened (08.10.2026):** ran `tools/make_signage.py --help` to see its options; the script has no argument parser, so it ran in full and rewrote seven PDFs in the working tree (same content, new timestamps). Caught by `git status`, put back with `git checkout`.
+  **Why:** assumed every script answers `--help`.
+  **Do instead:** read a generator's top of file (docstring, `argparse` or not) before running it with any argument; a script without a parser is run only when its output is wanted.
