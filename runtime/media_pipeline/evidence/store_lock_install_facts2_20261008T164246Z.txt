@@ -1,0 +1,69 @@
+time: 2026-10-08T16:42:46Z
+--- unit files that name /opt/kryuk24 (path only, and the lines that start something)
+/etc/systemd/system/kryuk-api-read.service
+    7:Type=oneshot
+    11:User=kryuk-api-read
+    16:ExecStart=/usr/bin/python3 /opt/kryuk24/ops_api.py --db /var/lib/kryuk24/runtime.sqlite --secrets /etc/kryuk24-api-read/beget-read.json --secrets /etc/kryuk24-api-read/yandex-read.json --write
+/etc/systemd/system/kryuk-backup.service
+    5:Type=oneshot
+    6:User=kryuk-run
+    8:ExecStart=/usr/bin/python3 /opt/kryuk24/deploy/backup_daily.py --db /var/lib/kryuk24/runtime.sqlite --directory /var/lib/kryuk24/backups
+/etc/systemd/system/kryuk-bro-api.service
+    5:Type=simple
+    6:User=kryuk-run
+    9:ExecStart=/usr/bin/python3 /opt/kryuk24/bro_api.py --db /var/lib/kryuk24/runtime.sqlite --credentials /etc/kryuk24-bro/bro-server.json --port 8789
+/etc/systemd/system/kryuk-capture.service
+    6:Type=simple
+    7:User=kryuk-run
+    11:ExecStart=/usr/bin/python3 /opt/kryuk24/secure_server.py --db /var/lib/kryuk24/runtime.sqlite --port 8788
+/etc/systemd/system/kryuk-operations.service
+    5:Type=oneshot
+    6:User=kryuk-run
+    9:ExecStart=/usr/bin/python3 /opt/kryuk24/ops_daily.py --db /var/lib/kryuk24/runtime.sqlite --reports /var/lib/kryuk24/operations-reports --backup-directory /var/lib/kryuk24/operations-backups
+--- drop-ins of the kryuk units
+kryuk-capture: fragment=/etc/systemd/system/kryuk-capture.service dropins=[] state=active/running triggeredby=[]
+kryuk-operations: fragment=/etc/systemd/system/kryuk-operations.service dropins=[] state=inactive/dead triggeredby=[kryuk-operations.timer]
+kryuk-backup: fragment=/etc/systemd/system/kryuk-backup.service dropins=[] state=inactive/dead triggeredby=[kryuk-backup.timer]
+kryuk-api-read: fragment=/etc/systemd/system/kryuk-api-read.service dropins=[] state=inactive/dead triggeredby=[]
+kryuk-bro-api: fragment=/etc/systemd/system/kryuk-bro-api.service dropins=[] state=active/running triggeredby=[]
+--- timers
+kryuk-backup.timer: active=active enabled=enabled next=[Fri 2026-10-09 00:04:57 UTC] persistent=yes
+kryuk-operations.timer: active=active enabled=enabled next=[Fri 2026-10-09 06:00:32 UTC] persistent=yes
+--- processes running from /opt/kryuk24/ and their units (no arguments shown beyond the script path)
+pid 50227 unit=kryuk-bro-api.service user=kryuk-run script=/usr/bin/python3 /opt/kryuk24/bro_api.py
+pid 68640 unit=kryuk-capture.service user=kryuk-run script=/usr/bin/python3 /opt/kryuk24/secure_server.py
+--- cron entries that name /opt/kryuk24 (file names only)
+none
+--- capture unit as installed, without the environment file's contents
+[Unit]
+Description=KRYUK24 capture staging service
+After=network.target
+[Service]
+Type=simple
+User=kryuk-run
+Group=kryuk-run
+WorkingDirectory=/opt/kryuk24
+EnvironmentFile=/etc/kryuk24/capture.env
+ExecStart=/usr/bin/python3 /opt/kryuk24/secure_server.py --db /var/lib/kryuk24/runtime.sqlite --port 8788
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/kryuk24
+[Install]
+WantedBy=multi-user.target
+environment file: /etc/kryuk24/capture.env root:root 600
+names of the variables it sets (values not read):
+    KRYUK_OPERATOR_PASSWORD
+    KRYUK_ALLOWED_ORIGINS
+--- tools
+pgrep: /usr/bin/pgrep
+ps: /usr/bin/ps
+systemd-run: /usr/bin/systemd-run
+date: /usr/bin/date
+systemd 259 (259.5-0ubuntu3.4)
+port 18788 in use: 0
+--- end

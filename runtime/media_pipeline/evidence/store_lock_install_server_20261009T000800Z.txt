@@ -1,0 +1,66 @@
+Lock-aware media store, the install on the server, 09.10.2026. Outputs as printed.
+
+# 1. before: the package of commit 14e28b8 on the server and the read-only status (08.10.2026 23:46 UTC)
+ce1afa9ff540f3d8f9e58a860f8b7b7024b54019b515ab7243b0dde68d83bcaf  install.sh
+9c1b02b88a3350987fb13862b2d85913957dc95cfc2cfff54f49ace1a0e85cc0  selftest.py
+0f877f7703279ec984da924f5f34965b99ac0d9488b428facae6d9fa1c897df4  ops_media.py
+69aa0809da3b8dd5c894b1abe2c2e9feb735785184bf8bc79fe979a3495da251  ops_work.py
+--- status (changes nothing)
+time: 2026-10-08T23:46:24Z; code folder: /opt/kryuk24; rehearsal: 0
+installed ops_media.py: original
+installed ops_work.py: original
+kept copy of ops_media.py: none
+kept copy of ops_work.py: none
+kryuk-operations.service: inactive, not held
+kryuk-api-read.service: inactive, not held
+kryuk-backup.service: inactive, not held
+kryuk-capture.service: active, not guarded
+exit: 0
+--- timers
+Fri 2026-10-09 00:03:05 UTC    16min Thu 2026-10-08 00:00:31 UTC      23h ago kryuk-backup.timer             kryuk-backup.service
+Fri 2026-10-09 06:00:32 UTC       6h Thu 2026-10-08 06:01:21 UTC      17h ago kryuk-operations.timer         kryuk-operations.service
+2026-10-08T23:46:24Z
+
+# 2. the install, run by Gev in his own terminal on his word of 08.10.2026 ~23:42 UTC (Claude's own run of the same command was refused by Claude Code's permission check and was not repeated)
+PS C:\Users\Admin> ssh -i ~/.ssh/kryuk24_vps_ed25519 kryuk@155.212.223.79 "cd /tmp/store-lock-install && sudo bash install.sh"
+time: 2026-10-09T00:08:00Z; code folder: /opt/kryuk24; rehearsal: 0
+installed ops_media.py: original
+installed ops_work.py: original
+the self-test will run as: kryuk-run
+kryuk-operations.timer: next run in 21152 s
+kryuk-backup.timer: next run in 85998 s
+held (cannot start until this script has finished): kryuk-operations.service kryuk-api-read.service kryuk-backup.service
+guarded (not restarted by systemd; started only by this script): kryuk-capture.service
+kryuk-capture.service before: active / enabled
+health: OK {"mode":"STAGING","ok":true,"sending_enabled":false}
+SELFTEST OK: python 3.14.4; one original for the same bytes, a variant, a refused variant for a missing original, the lock held and re-entered, a draft with an asset; temporary folder removed: True
+kryuk-capture.service: active
+health: OK {"mode":"STAGING","ok":true,"sending_enabled":false}
+installed ops_media.py: new 0f877f7703279ec984da924f5f34965b99ac0d9488b428facae6d9fa1c897df4
+installed ops_work.py: new 69aa0809da3b8dd5c894b1abe2c2e9feb735785184bf8bc79fe979a3495da251
+kept original: /opt/kryuk24/ops_media.py.before-store-lock
+kept original: /opt/kryuk24/ops_work.py.before-store-lock
+INSTALLED at 2026-10-09T00:08:03Z. Way back: sudo bash install.sh rollback
+released (can start again): kryuk-operations.service kryuk-api-read.service kryuk-backup.service kryuk-capture.service
+
+# 3. after: read-only, by Claude
+portal helpers left in /tmp: 0
+=== store-lock: status after the install (read-only)
+time: 2026-10-09T00:14:08Z; code folder: /opt/kryuk24; rehearsal: 0
+installed ops_media.py: new
+installed ops_work.py: new
+kept copy of ops_media.py: 5ca3e4dea8b0b11040a4a85ff0985c4c881ac80348abfaf7c8058cca2dbbda4c
+kept copy of ops_work.py: d1e6a2dfa653f40ddbf886c170e8c0d143b1750ad59c1703c647313f7e8818d6
+kryuk-operations.service: inactive, not held
+kryuk-api-read.service: inactive, not held
+kryuk-backup.service: inactive, not held
+kryuk-capture.service: active, not guarded
+exit: 0
+capture: pid 331030, since Fri 2026-10-09 00:08:01 UTC, restart policy on-failure, drop-ins []
+files: /opt/kryuk24/ops_media.py root:root 644;/opt/kryuk24/ops_work.py root:root 644;/opt/kryuk24/ops_media.py.before-store-lock root:root 644;/opt/kryuk24/ops_work.py.before-store-lock root:root 644;
+hold files on the disk: 0; marker: 0
+health: {"mode":"STAGING","ok":true,"sending_enabled":false}
+media folder: 0
+Fri 2026-10-09 06:00:10 UTC 5h 46min Thu 2026-10-08 06:01:21 UTC      18h ago kryuk-operations.timer         kryuk-operations.service
+Sat 2026-10-10 00:02:46 UTC      23h Fri 2026-10-09 00:03:19 UTC    10min ago kryuk-backup.timer             kryuk-backup.service
+2026-10-09T00:14:09Z

@@ -1,0 +1,699 @@
+"""install.sh in its rehearsal mode: a temporary code folder, no services, no ownership. Linux (bash, coreutils).
+
+What it shows: the checksum gates, both files changing together, the kept copies, the way back, a second run, a
+failed self-test putting both originals back.
+
+The second class runs the script in its real mode with stand-ins for systemctl, curl, runuser, id, stat, install,
+pgrep, ps and sleep put first in PATH. It shows what the script ASKS for and what it does with each answer: which
+unit it restarts, as whom the self-test runs, that a one-shot unit started from outside at any moment of the install
+does not start, what happens when the service dies or stops answering with the new files, and what happens when a
+step of putting the originals back fails. It does not show that the real systemd or the real service behave like
+the stand-ins: that is tried on the server by trial_on_server.sh, in a temporary place.
+"""
+import hashlib
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import unittest
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+SERVER = HERE.parents[1] / 'server'
+OLD = {'ops_media.py': '5ca3e4dea8b0b11040a4a85ff0985c4c881ac80348abfaf7c8058cca2dbbda4c', 'ops_work.py': 'd1e6a2dfa653f40ddbf886c170e8c0d143b1750ad59c1703c647313f7e8818d6'}
+
+
+def sha(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+@unittest.skipIf(os.name == 'nt' and not os.environ.get('KRYUK_TEST_INSTALL_ON_WINDOWS'), 'the install script is a Linux script')
+class Install(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.code = Path(self.tmp.name) / 'code'
+        self.code.mkdir()
+        for name in ('ops_media.py', 'ops_work.py', 'runtime.py', 'contact_metrics.py'):
+            shutil.copyfile(SERVER / name, self.code / name)
+        self.package = Path(self.tmp.name) / 'package'
+        shutil.copytree(HERE, self.package, ignore=shutil.ignore_patterns('__pycache__'))
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def run_script(self, *args, package=None, code=None):
+        env = {**os.environ, 'KRYUK_CODE_DIR': str(code or self.code), 'KRYUK_INSTALL_REHEARSAL': '1', 'KRYUK_PYTHON': sys.executable}
+        done = subprocess.run([os.environ.get('KRYUK_BASH', 'bash'), str((package or self.package) / 'install.sh'), *args], env=env, capture_output=True, text=True, timeout=180)
+        return done.returncode, done.stdout + done.stderr
+
+    def state(self):
+        return {name: ('original' if sha(self.code / name) == OLD[name] else 'new' if sha(self.code / name) == sha(HERE / name) else 'other') for name in OLD}
+
+    def kept(self):
+        return sorted(f.name for f in self.code.glob('*.before-store-lock'))
+
+    def test_the_recorded_files_are_the_ones_the_script_expects(self):
+        self.assertEqual({name: sha(SERVER / name) for name in OLD}, OLD)
+        text = (HERE / 'install.sh').read_text(encoding='utf-8')
+        for name in OLD:
+            self.assertIn(OLD[name], text)
+            self.assertIn(sha(HERE / name), text, 'install.sh names the checksum of the ' + name + ' beside it')
+
+    def test_install_status_second_run_rollback_and_install_again(self):
+        code, out = self.run_script('status')
+        self.assertEqual((code, self.state()), (0, {'ops_media.py': 'original', 'ops_work.py': 'original'}), out)
+        code, out = self.run_script()
+        self.assertEqual(code, 0, out)
+        self.assertIn('SELFTEST OK', out)
+        self.assertIn('INSTALLED at', out)
+        self.assertEqual((self.state(), self.kept()), ({'ops_media.py': 'new', 'ops_work.py': 'new'}, ['ops_media.py.before-store-lock', 'ops_work.py.before-store-lock']))
+        self.assertEqual({name: sha(self.code / (name + '.before-store-lock')) for name in OLD}, OLD, 'the kept copies are the originals')
+        code, out = self.run_script()
+        self.assertEqual((code, 'ALREADY INSTALLED' in out), (0, True), out)
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, 'ROLLED BACK' in out), (0, True), out)
+        self.assertEqual((self.state(), self.kept()), ({'ops_media.py': 'original', 'ops_work.py': 'original'}, []))
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, 'no kept copy' in out), (1, True), out)
+        code, out = self.run_script()
+        self.assertEqual((code, self.state()['ops_work.py']), (0, 'new'), out)
+
+    def test_it_refuses_installed_files_it_was_not_made_from(self):
+        shutil.copyfile(HERE / 'ops_media.py', self.code / 'ops_media.py')            # one new, one original
+        code, out = self.run_script()
+        self.assertEqual((code, 'not both the originals' in out, self.kept()), (1, True, []), out)
+        self.assertEqual(self.state(), {'ops_media.py': 'new', 'ops_work.py': 'original'}, 'nothing was changed')
+        shutil.copyfile(SERVER / 'ops_media.py', self.code / 'ops_media.py')
+        with (self.code / 'ops_work.py').open('ab') as f:
+            f.write(b'\n# changed on the server by somebody\n')
+        before = sha(self.code / 'ops_work.py')
+        code, out = self.run_script()
+        self.assertEqual((code, sha(self.code / 'ops_work.py'), self.kept()), (1, before, []), out)
+
+    def test_it_refuses_new_files_that_are_not_the_reviewed_ones(self):
+        with (self.package / 'ops_work.py').open('ab') as f:
+            f.write(b'\n# not what was reviewed\n')
+        code, out = self.run_script()
+        self.assertEqual((code, 'not the reviewed one' in out), (1, True), out)
+        self.assertEqual((self.state(), self.kept()), ({'ops_media.py': 'original', 'ops_work.py': 'original'}, []))
+
+    def test_a_failed_self_test_puts_both_originals_back(self):
+        (self.package / 'selftest.py').write_text("import sys\nprint('SELFTEST FAILED: on purpose')\nsys.exit(1)\n")
+        code, out = self.run_script()
+        self.assertEqual((code, 'Putting both originals back' in out), (1, True), out)
+        self.assertEqual((self.state(), self.kept()), ({'ops_media.py': 'original', 'ops_work.py': 'original'}, []), out)
+
+    def test_a_kept_copy_in_the_way_stops_it_and_a_rehearsal_is_refused_on_the_real_folder(self):
+        (self.code / 'ops_media.py.before-store-lock').write_text('left by something else')
+        code, out = self.run_script()
+        self.assertEqual((code, 'already exists' in out, self.state()['ops_media.py']), (1, True, 'original'), out)
+        code, out = self.run_script(code='/opt/kryuk24')
+        self.assertEqual((code, 'not run on the real code folder' in out), (1, True), out)
+
+
+HOLD = '90-kryuk-store-lock-install.conf'
+ONESHOTS = ['kryuk-api-read.service', 'kryuk-backup.service', 'kryuk-operations.service']
+GUARDED = sorted(ONESHOTS + ['kryuk-capture.service'])
+STANDINS = {
+    'systemctl': r"""#!/usr/bin/env bash
+# A stand-in for systemd: answers from files in $KRYUK_STANDIN and writes every call into its log.
+# A one-shot unit that is running is "activating". Drop-ins count only after daemon-reload (a copy is kept, as
+# systemd keeps what it loaded). A unit with a loaded drop-in starts only when its conditions hold, read from the
+# drop-in itself: "ConditionPathExists=!P" fails while P exists, "ConditionPathExists=P" fails while P is missing.
+S="$KRYUK_STANDIN"; echo "systemctl $*" >> "$S/log"
+NAME=90-kryuk-store-lock-install.conf
+new() { grep -q 'LOCKING=1' "$KRYUK_CODE_DIR/ops_media.py"; }
+listed() { grep -qx "$2" "$S/$1" 2>/dev/null; }
+blocked() {
+  local line p
+  [ -e "$S/loaded.d/$1" ] || return 1
+  while IFS= read -r line; do
+    case "$line" in
+      'ConditionPathExists=!'*) p="${line#ConditionPathExists=!}"; if [ -e "$p" ]; then return 0; fi;;
+      ConditionPathExists=*) p="${line#ConditionPathExists=}"; if [ ! -e "$p" ]; then return 0; fi;;
+    esac
+  done < "$S/loaded.d/$1"
+  return 1
+}
+come_up() {   # the service starts, unless a condition says no or it dies with the new files
+  if blocked "$1"; then echo "start $1: skipped by its condition" >> "$S/log"; return 0; fi
+  if [ -e "$S/dies-with-new" ] && new; then return 0; fi
+  echo "$1" >> "$S/active"; date -u '+%a %Y-%m-%d %H:%M:%S UTC' > "$S/started"
+  if new; then echo "start $1: STARTED with the new files on the disk" >> "$S/log"; else echo "start $1: STARTED with the original files on the disk" >> "$S/log"; fi
+}
+u="${@: -1}"
+case "$1" in
+  is-active) if listed active "$u"; then [ "$2" = --quiet ] || echo active; exit 0; else [ "$2" = --quiet ] || echo inactive; exit 3; fi;;
+  is-enabled) echo enabled;;
+  show) case "$3" in
+      User) cat "$S/user";;
+      ActiveState) if listed running "$u"; then echo activating; elif listed active "$u"; then echo active; else echo inactive; fi;;
+      DropInPaths) if [ -e "$S/loaded.d/$u" ]; then echo "$KRYUK_HOLD_DIR/$u.d/$NAME"; fi;;
+      NeedDaemonReload) if listed stale "$u"; then echo yes; else echo no; fi;;
+      TriggeredBy) case "$u" in kryuk-operations.service) echo kryuk-operations.timer;; kryuk-backup.service) echo kryuk-backup.timer;; esac;;
+      NextElapseUSecRealtime) cat "$S/next-$u" 2>/dev/null || echo "Fri 2036-01-04 00:04:57 UTC";;
+      ExecMainStartTimestamp) cat "$S/started";;
+      *) echo "stand-in: unexpected systemctl $*" >&2; exit 64;;
+    esac;;
+  daemon-reload) [ -e "$S/reload-fails" ] && exit 1
+    rm -rf "$S/loaded.d"; mkdir "$S/loaded.d"
+    for d in "$KRYUK_HOLD_DIR"/*.d; do if [ -e "$d/$NAME" ]; then cp "$d/$NAME" "$S/loaded.d/$(basename "$d" .d)"; fi; done
+    exit 0;;
+  start) case "$u" in
+      kryuk-capture.service) come_up "$u";;
+      *) if blocked "$u"; then echo "start $u: skipped by its condition" >> "$S/log"; exit 0; fi
+         echo "$u" >> "$S/running"
+         if new; then echo "start $u: STARTED with the new files on the disk" >> "$S/log"; else echo "start $u: STARTED with the original files on the disk" >> "$S/log"; fi;;
+    esac;;
+  restart) [ -e "$S/restart-fails" ] && exit 1
+    if [ -e "$S/kill-in-restart" ]; then kill -9 "$PPID"; exit 1; fi   # the install script dies while it restarts the service
+    grep -vx "$u" "$S/active" > "$S/active.next" || true; mv "$S/active.next" "$S/active"
+    come_up "$u";;
+  crash) # not a systemctl verb: the service's process dies; systemd restarts it (Restart=on-failure) unless a loaded drop-in says Restart=no
+    grep -vx "$u" "$S/active" > "$S/active.next" || true; mv "$S/active.next" "$S/active"
+    if grep -qx 'Restart=no' "$S/loaded.d/$u" 2>/dev/null; then echo "crash $u: stays down (Restart=no)" >> "$S/log"; exit 0; fi
+    come_up "$u"; if listed active "$u"; then echo "crash $u: restarted by systemd" >> "$S/log"; else echo "crash $u: not restarted" >> "$S/log"; fi;;
+  *) echo "stand-in: unexpected systemctl $*" >&2; exit 64;;
+esac
+""",
+    # something outside tries to start a one-shot unit at this moment (a timer, a person)
+    'outside': r"""#!/usr/bin/env bash
+if [ -e "$KRYUK_STANDIN/try-start" ]; then systemctl start kryuk-operations.service; fi
+""",
+    'curl': r"""#!/usr/bin/env bash
+S="$KRYUK_STANDIN"; echo "curl ${@: -1}" >> "$S/log"; outside
+grep -qx kryuk-capture.service "$S/active" 2>/dev/null || exit 7
+if [ -e "$S/silent-with-new" ] && grep -q 'LOCKING=1' "$KRYUK_CODE_DIR/ops_media.py"; then exit 22; fi
+if [ -e "$S/silent-always" ]; then exit 22; fi
+echo '{"ok":true,"stand-in":true}'
+""",
+    'runuser': r"""#!/usr/bin/env bash
+S="$KRYUK_STANDIN"; echo "runuser $1 $2" >> "$S/log"; outside
+if [ -e "$S/kill-script" ]; then kill -9 "$PPID"; exit 1; fi   # the install script dies here, as in a power cut
+shift 4   # -u USER -- /usr/bin/python3
+exec "$KRYUK_PYTHON" "$@"
+""",
+    'id': '#!/usr/bin/env bash\ncat "$KRYUK_STANDIN/uid"\n',
+    # the owner of a file is the stand-in's answer; the time of its last change is the real one
+    'stat': '#!/usr/bin/env bash\nif [ "$2" = "%Y" ]; then exec /usr/bin/stat "$@"; fi\ncat "$KRYUK_STANDIN/owner"\n',
+    'install': r"""#!/usr/bin/env bash
+# the real install without the owner; fails on purpose for a source named in the file install-fails
+S="$KRYUK_STANDIN"; outside
+args=(); while [ $# -gt 0 ]; do case "$1" in -o|-g) shift 2;; *) args+=("$1"); shift;; esac; done
+if [ -s "$S/install-fails" ]; then
+  case "${args[*]}" in *"$(cat "$S/install-fails")"*) echo "install ${args[*]: -2}: FAILED on purpose" >> "$S/log"; exit 1;; esac
+fi
+exec /usr/bin/install "${args[@]}"
+""",
+    'pgrep': '#!/usr/bin/env bash\n[ -s "$KRYUK_STANDIN/processes" ] || exit 1\ncut -d" " -f1 "$KRYUK_STANDIN/processes"\n',
+    'ps': r"""#!/usr/bin/env bash
+# ps -o unit= -p PID, ps -o args= -p PID: from the file "processes" (lines: PID UNIT)
+line="$(grep "^${@: -1} " "$KRYUK_STANDIN/processes")"
+case "$2" in unit=) echo "${line#* }";; *) echo "a stand-in process";; esac
+""",
+    'sleep': '#!/usr/bin/env bash\nexit 0\n',
+    # flock -n 9: refused while the file "locked" exists (another run holds the lock)
+    'flock': '#!/usr/bin/env bash\nif [ -e "$KRYUK_STANDIN/locked" ]; then exit 1; fi\nexit 0\n',
+}
+ORIGINALS = {'ops_media.py': 'original', 'ops_work.py': 'original'}
+NEW = {'ops_media.py': 'new', 'ops_work.py': 'new'}
+MIXED = {'ops_media.py': 'new', 'ops_work.py': 'original'}
+SKIPPED = ': skipped by its condition'
+
+
+@unittest.skipIf(os.name == 'nt' and not os.environ.get('KRYUK_TEST_INSTALL_ON_WINDOWS'), 'the install script is a Linux script')
+class RealModeWithStandIns(Install):
+    """The real branches of the script: units, users, the hold, restart, health. Every outside command is a stand-in."""
+
+    def setUp(self):
+        super().setUp()
+        self.standin = Path(self.tmp.name) / 'standin'
+        self.hold = Path(self.tmp.name) / 'etc-systemd-system'      # on the disk: outlives a restart of the server
+        self.run = Path(self.tmp.name) / 'run'                      # in memory: emptied by a restart of the server
+        for folder in (self.standin, self.hold, self.run, self.standin / 'loaded.d'):
+            folder.mkdir()
+        for name, text in STANDINS.items():
+            (self.standin / name).write_text(text, encoding='utf-8', newline='\n')
+            os.chmod(self.standin / name, 0o755)
+        self.normal()
+        # as on the server: the installed files are old, and the service was started after them and long before now
+        self.age_files(7200)
+        self.answer(log='', started=time.strftime('%a %Y-%m-%d %H:%M:%S UTC', time.gmtime(time.time() - 3600)))
+
+    def normal(self):           # every answer as on an ordinary day; what systemd has loaded is left as it is
+        self.answer(active='kryuk-capture.service\n', user='kryuk-run\n', uid='0\n', owner='root:root 644\n', running='', stale='',
+                    processes='101 kryuk-capture.service\n102 kryuk-bro-api.service\n', install_fails='')
+        for name in ('silent-with-new', 'silent-always', 'dies-with-new', 'restart-fails', 'reload-fails', 'try-start', 'kill-script', 'kill-in-restart', 'locked', 'next-kryuk-backup.timer'):
+            (self.standin / name).unlink(missing_ok=True)
+
+    def answer(self, **files):
+        for name, text in files.items():
+            (self.standin / name.replace('_', '-')).write_text(text, encoding='utf-8', newline='\n')
+
+    def environment(self, code=None):
+        env = {**os.environ, 'KRYUK_CODE_DIR': str(code or self.code), 'KRYUK_PYTHON': sys.executable, 'KRYUK_STANDIN': str(self.standin),
+               'KRYUK_HOLD_DIR': self.hold.as_posix(), 'KRYUK_RUN_DIR': self.run.as_posix(), 'PATH': str(self.standin) + os.pathsep + os.environ['PATH']}
+        env.pop('KRYUK_INSTALL_REHEARSAL', None)
+        return env
+
+    def run_script(self, *args, package=None, code=None):
+        done = subprocess.run([os.environ.get('KRYUK_BASH', 'bash'), str((package or self.package) / 'install.sh'), *args], env=self.environment(code),
+                              capture_output=True, text=True, timeout=180)
+        return done.returncode, done.stdout + done.stderr
+
+    def systemctl(self, *args):
+        subprocess.run([os.environ.get('KRYUK_BASH', 'bash'), str(self.standin / 'systemctl'), *args], env=self.environment(), check=True, timeout=60)
+
+    def outside_start(self, unit='kryuk-operations.service'):
+        """Somebody starts a unit now (a timer, a person, the boot); what the stand-in systemd did with it."""
+        before = len(self.log('start '))
+        self.systemctl('start', unit)
+        return self.log('start ')[before:]
+
+    def server_restarts(self):
+        """A restart of the server: /run is empty, nothing runs, systemd loads what is on the disk, enabled units start."""
+        for f in self.run.iterdir():
+            f.unlink()
+        self.answer(active='', running='')
+        self.systemctl('daemon-reload')
+        return self.outside_start('kryuk-capture.service') + self.outside_start('kryuk-operations.service')
+
+    def log(self, word):
+        return [line for line in (self.standin / 'log').read_text(encoding='utf-8').splitlines() if line.startswith(word)]
+
+    def verbs(self):            # what the script told systemd to do, questions left out
+        return [line.split()[1] for line in self.log('systemctl') if line.split()[1] not in ('is-active', 'is-enabled', 'show')]
+
+    def restarts(self):
+        return [line for line in self.log('systemctl restart')]
+
+    def age_files(self, seconds=60):    # the two installed files were last changed well before now
+        for name in OLD:
+            os.utime(self.code / name, (time.time() - seconds, time.time() - seconds))
+
+    def test_a_drop_in_of_the_same_name_that_the_script_did_not_write_is_never_overwritten_or_removed(self):
+        """GPT's review of 96b6a9b: hold() wrote to a fixed path without looking what was there."""
+        theirs = '[Unit]\n# put here by somebody else, for another reason\nConditionPathExists=/etc/hostname\n'
+        folder = self.hold / 'kryuk-backup.service.d'
+
+        def put():
+            folder.mkdir(exist_ok=True)
+            (folder / HOLD).write_text(theirs, encoding='utf-8', newline='\n')
+
+        def untouched(words):
+            self.assertEqual((folder / HOLD).read_text(encoding='utf-8'), theirs, words)
+            self.assertEqual((self.held()[0], self.held()[2]), (['kryuk-backup.service'], []), words + ': nothing of the script was written beside it')
+        put()
+        code, out = self.run_script()                # a fresh install
+        self.assertEqual((code, 'was not written by this script' in out, 'Nothing was changed' in out), (1, True, True), out)
+        self.assertEqual((self.state(), self.kept(), self.verbs()), (ORIGINALS, [], []), out)
+        untouched('install')
+        (folder / HOLD).unlink()
+        folder.rmdir()
+        self.assertEqual(self.run_script()[0], 0)
+        put()
+        for command in ('rollback', 'release'):
+            before = len(self.verbs())
+            code, out = self.run_script(command)
+            self.assertEqual((code, 'was not written by this script' in out, self.state(), len(self.kept())), (1, True, NEW, 2), out)
+            self.assertEqual(self.verbs()[before:], [], command + ' told systemd nothing')
+            untouched(command)
+        code, out = self.run_script('status')
+        self.assertEqual((code, 'was not written by this script' in out, 'kryuk-backup.service: inactive, not held' in out), (0, True, True), out)
+        untouched('status')
+        (folder / HOLD).unlink()
+        folder.rmdir()
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, self.state(), self.held()), (0, ORIGINALS, self.FREE), out)
+
+    def test_a_run_that_fails_to_release_leaves_a_foreign_file_alone(self):
+        """A file of the same name appears while the script runs (it was not there at the check): release must not remove it."""
+        theirs = '[Unit]\n# appeared in the middle\n'
+        folder = self.hold / 'kryuk-api-read.service.d'
+        (self.standin / 'runuser').write_text(STANDINS['runuser'].replace('outside\n', 'outside\nprintf \'%s\' "$THEIRS" > "$KRYUK_HOLD_DIR/kryuk-api-read.service.d/90-kryuk-store-lock-install.conf"\n', 1), encoding='utf-8', newline='\n')
+        os.environ['THEIRS'] = theirs
+        try:
+            code, out = self.run_script()
+        finally:
+            del os.environ['THEIRS']
+        self.assertEqual((code, 'not removed:' in out, 'could not be taken away completely' in out), (2, True, True), out)
+        self.assertEqual((folder / HOLD).read_text(encoding='utf-8'), theirs)
+        self.assertEqual(self.held()[0], ['kryuk-api-read.service'], 'its own three files are gone, the foreign one stays')
+
+    def test_a_file_that_differs_from_the_script_s_own_only_by_an_empty_line_at_the_end_is_not_its_own(self):
+        """GPT's review of 971c7c2: the comparison went through $(...), which drops the newlines at the end."""
+        self.answer(kill_script='')                 # a killed run leaves the script's own four files
+        self.assertNotEqual(self.run_script()[0], 0)
+        self.normal()
+        self.assertEqual((self.state(), self.held()), (NEW, self.HELD))
+        for unit in ('kryuk-backup.service', 'kryuk-capture.service'):
+            f = self.hold / (unit + '.d') / HOLD
+            own = f.read_bytes()
+            for theirs in (own + b'\n', own + b'\n\n\n', own.rstrip(b'\n'), b'\n' + own):
+                f.write_bytes(theirs)
+                for command in ('rollback', 'release', 'install'):
+                    before = len(self.verbs())
+                    code, out = self.run_script(*([] if command == 'install' else [command]))
+                    self.assertEqual((code, 'was not written by this script' in out, 'Nothing was changed' in out), (1, True, True), (command, theirs, out))
+                    self.assertEqual((f.read_bytes(), self.state(), len(self.kept()), self.verbs()[before:]), (theirs, NEW, 2, []), (command, theirs))
+                code, out = self.run_script('status')
+                self.assertIn('was not written by this script', out)
+            f.write_bytes(own)
+        code, out = self.run_script('rollback')      # with its own files, byte for byte, the way back works
+        self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+
+    def test_two_runs_do_not_overlap(self):
+        self.answer(locked='')
+        for command in ('install', 'rollback', 'release'):
+            code, out = self.run_script(*([] if command == 'install' else [command]))
+            self.assertEqual((code, 'another run of this script is working' in out), (1, True), out)
+            self.assertEqual((self.state(), self.kept(), self.verbs(), self.held()), (ORIGINALS, [], [], self.FREE), command)
+        code, out = self.run_script('status')        # looking is always allowed
+        self.assertEqual(code, 0, out)
+
+    def held(self):             # the hold as it is on the disk, as the stand-in systemd has it loaded, and the marker
+        return (sorted(f.parent.name[:-2] for f in self.hold.glob('*.d/' + HOLD)), sorted(f.name for f in (self.standin / 'loaded.d').iterdir()),
+                sorted(f.name for f in self.run.iterdir() if not f.name.endswith('.lock')))
+
+    FREE = ([], [], [])
+    HELD = (GUARDED, GUARDED, [])       # all four drop-ins on the disk and loaded; the marker of the run is gone
+
+    # ---- the ordinary way
+    def test_a_kept_copy_in_the_way_stops_it_and_a_rehearsal_is_refused_on_the_real_folder(self):
+        (self.code / 'ops_media.py.before-store-lock').write_text('left by something else')
+        code, out = self.run_script()
+        self.assertEqual((code, 'already exists' in out, self.verbs()), (1, True, []), out)
+
+    def test_it_restarts_one_service_and_runs_the_self_test_as_the_user_of_that_service(self):
+        code, out = self.run_script()
+        self.assertEqual((code, self.state()), (0, NEW), out)
+        self.assertEqual(self.verbs(), ['daemon-reload', 'restart', 'daemon-reload'], 'hold, one restart, release; nothing else')
+        self.assertEqual(self.restarts(), ['systemctl restart kryuk-capture.service'])
+        self.assertEqual(self.log('start '), ['start kryuk-capture.service: STARTED with the new files on the disk'], 'the guarded service does start while the script runs')
+        self.assertEqual(self.log('runuser'), ['runuser -u kryuk-run'])
+        self.assertIn('health: OK', out)
+        self.assertEqual(self.held(), self.FREE)
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+        self.assertEqual(self.restarts(), ['systemctl restart kryuk-capture.service'] * 2)
+
+    def test_a_service_that_stops_answering_with_the_new_files_gets_its_originals_back(self):
+        self.answer(silent_with_new='')
+        code, out = self.run_script()
+        self.assertEqual((code, 'does not answer with the new files. Putting both originals back' in out), (1, True), out)
+        self.assertEqual((self.state(), self.kept(), self.held()), (ORIGINALS, [], self.FREE), out)
+        self.assertEqual(self.restarts(), ['systemctl restart kryuk-capture.service'] * 2, 'with the new files, then with the originals')
+        self.assertIn('restore: both installed files are the originals', out)
+        self.assertIn('health: OK {"ok":true,"stand-in":true}', out.split('Putting both originals back')[1], 'it answers again with the originals')
+
+    def test_a_service_that_dies_with_the_new_files_gets_its_originals_back(self):
+        self.answer(dies_with_new='')
+        code, out = self.run_script()
+        self.assertEqual((code, 'did not restart with the new files. Putting both originals back' in out), (1, True), out)
+        self.assertEqual((self.state(), self.kept(), self.held()), (ORIGINALS, [], self.FREE), out)
+        self.assertEqual((self.standin / 'active').read_text().split(), ['kryuk-capture.service'], 'running again')
+
+    def test_it_changes_nothing_when_a_precondition_is_not_met(self):
+        soon = time.strftime('%a %Y-%m-%d %H:%M:%S UTC', time.gmtime(time.time() + 120))
+        for answers, words in (({'running': 'kryuk-operations.service\n'}, 'kryuk-operations.service is running now (state: activating)'),
+                               ({'active': ''}, 'kryuk-capture.service is not running'),
+                               ({'owner': 'kryuk:kryuk 664\n'}, 'is not root:root 644'),
+                               ({'user': '\n'}, 'has no user of its own'),
+                               ({'uid': '1000\n'}, 'run with sudo'),
+                               ({'processes': '101 kryuk-capture.service\n777 session-4.scope\n'}, 'process 777 runs code of'),
+                               ({'next_kryuk_backup.timer': soon + '\n'}, 'kryuk-backup.timer fires in'),
+                               ({'stale': 'kryuk-backup.service\n'}, 'was changed and not loaded'),
+                               ({'reload_fails': ''}, 'could not be held'),
+                               ({'silent_always': ''}, 'does not answer before anything was changed')):
+            self.normal()
+            self.answer(**answers)
+            code, out = self.run_script()
+            # a hold that could not be confirmed gone is the one case here that needs a person
+            self.assertEqual((code, words in out), (2 if 'reload_fails' in answers else 1, True), out)
+            self.assertEqual((self.state(), self.kept(), self.restarts()), (ORIGINALS, [], []), words)
+            self.assertEqual((self.held()[0], self.held()[2]), ([], []), words + ': no hold file and no marker is left')
+
+    # ---- the hold
+    def test_a_one_shot_unit_started_from_outside_at_any_moment_of_the_install_does_not_start(self):
+        """GPT's review of 195c896: a start after the check must not put the original importer beside the new code."""
+        self.assertEqual(self.outside_start(), ['start kryuk-operations.service: STARTED with the original files on the disk'], 'without a hold it starts')
+        self.answer(running='', try_start='')
+        code, out = self.run_script()
+        self.assertEqual((code, self.state()), (0, NEW), out)
+        tried = [line for line in self.log('start kryuk-operations')[1:]]
+        self.assertGreaterEqual(len(tried), 6, 'before the files, at each file, at the self-test, after the restart')
+        self.assertEqual(set(tried), {'start kryuk-operations.service' + SKIPPED})
+        self.assertEqual(self.held(), self.FREE)
+        (self.standin / 'try-start').unlink()
+        self.assertEqual(self.outside_start(), ['start kryuk-operations.service: STARTED with the new files on the disk'], 'after the install it starts again, with the new code')
+
+    def test_the_same_holds_while_an_install_fails_and_while_a_rollback_runs(self):
+        self.answer(try_start='', silent_with_new='')
+        code, out = self.run_script()
+        self.assertEqual((code, self.state(), self.held()), (1, ORIGINALS, self.FREE), out)
+        self.normal()
+        self.assertEqual(self.run_script()[0], 0)
+        self.answer(try_start='')
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, self.state(), self.held()), (0, ORIGINALS, self.FREE), out)
+        self.assertGreaterEqual(len(self.log('start kryuk-operations')), 8)
+        self.assertEqual(set(self.log('start kryuk-operations')), {'start kryuk-operations.service' + SKIPPED})
+
+    def test_rollback_waits_for_a_running_one_shot_unit(self):
+        self.assertEqual(self.run_script()[0], 0)
+        self.answer(running='kryuk-backup.service\n')
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, 'kryuk-backup.service is running now' in out, self.state(), self.held()), (1, True, NEW, self.FREE), out)
+        self.assertEqual(len(self.kept()), 2, 'the kept copies stay')
+
+    # ---- putting the originals back, one step failing (GPT's review of 195c896)
+    def unresolved(self, out, state, restarts):
+        self.assertIn('STOP: the originals could not be put back', out)
+        self.assertIn('was NOT restarted', out)
+        self.assertIn('STAY HELD', out)
+        self.assertEqual(self.state(), state, out)
+        self.assertEqual(self.kept(), ['ops_media.py.before-store-lock', 'ops_work.py.before-store-lock'], 'both kept copies stay')
+        self.assertEqual({name: sha(self.code / (name + '.before-store-lock')) for name in OLD}, OLD)
+        self.assertEqual(len(self.restarts()), restarts, 'no restart on a pair that was not confirmed')
+        self.assertEqual(self.held(), self.HELD, 'nothing that loads these files may start in this state')
+        self.assertEqual(sorted(f.name for f in self.code.glob('*.store-lock-part')), [])
+
+    def test_a_failed_install_whose_first_restore_step_fails_stops_with_both_new_files_and_touches_nothing_more(self):
+        self.answer(silent_with_new='', install_fails='ops_work.py.before-store-lock')
+        code, out = self.run_script()
+        self.assertEqual(code, 2, out)
+        self.assertIn('restore: ops_work.py could not be put back; the next file was not touched', out)
+        self.unresolved(out, NEW, restarts=1)
+        self.assertEqual(self.outside_start(), ['start kryuk-operations.service' + SKIPPED])
+        self.normal()
+        code, out = self.run_script('status')
+        self.assertEqual((code, out.count(', HELD'), out.count('GUARDED (cannot start)')), (0, 3, 1), out)
+        code, out = self.run_script('rollback')     # a person, after looking: the way back still works
+        self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+
+    def test_a_failed_install_whose_second_restore_step_fails_stops_with_a_pair_that_works(self):
+        self.answer(silent_with_new='', install_fails='ops_media.py.before-store-lock')
+        code, out = self.run_script()
+        self.assertEqual(code, 2, out)
+        self.assertIn('restore: ops_media.py could not be put back', out)
+        self.unresolved(out, MIXED, restarts=1)
+
+    def test_a_rollback_whose_first_or_second_step_fails_stops_the_same_way_and_can_be_run_again(self):
+        for source, state in (('ops_work.py.before-store-lock', NEW), ('ops_media.py.before-store-lock', MIXED)):
+            self.normal()
+            self.answer(log='')
+            self.assertEqual(self.run_script()[0], 0)
+            self.answer(install_fails=source)
+            code, out = self.run_script('rollback')
+            self.assertEqual(code, 2, out)
+            self.unresolved(out, state, restarts=1)     # the one restart is the install's
+            self.normal()
+            code, out = self.run_script('rollback')
+            self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+
+    def test_originals_back_but_a_service_that_does_not_come_up_is_left_to_a_person_with_the_copies_kept(self):
+        self.answer(restart_fails='')
+        code, out = self.run_script()
+        self.assertEqual((code, 'did not restart with the new files' in out, 'the originals are back, but the service did not restart' in out), (2, True, True), out)
+        self.assertEqual((self.state(), len(self.kept()), self.held()), (ORIGINALS, 2, self.HELD), out)
+
+    # ---- a state that is not confirmed stays closed (GPT's review of 4795423)
+    def test_release_is_refused_while_the_two_files_are_not_a_pair(self):
+        self.answer(silent_with_new='', install_fails='ops_media.py.before-store-lock')
+        self.assertEqual(self.run_script()[0], 2)
+        self.normal()
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'not confirmed: the two installed files are not a pair (new, original)' in out, 'STOP: the hold stays' in out), (2, True, True), out)
+        self.assertEqual((self.held(), self.state()), (self.HELD, MIXED), 'a refused release changes nothing')
+        self.assertEqual(self.outside_start(), ['start kryuk-operations.service' + SKIPPED])
+
+    def test_release_is_refused_while_the_service_runs_other_files_than_the_disk_holds_or_does_not_answer(self):
+        self.answer(silent_with_new='', install_fails='ops_work.py.before-store-lock')
+        self.assertEqual(self.run_script()[0], 2)           # both new on the disk, the service runs them and does not answer
+        self.age_files()
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'runs the files on the disk but does not answer' in out, self.held()), (2, True, self.HELD), out)
+        self.normal()                                       # it answers again, but a file was changed after it started
+        later = time.time() + 3600
+        os.utime(self.code / 'ops_work.py', (later, later))
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'was started before ops_work.py was last changed' in out, self.held()), (2, True, self.HELD), out)
+        for answers, words in (({'running': 'kryuk-backup.service\n'}, 'not confirmed: a one-shot unit is running'),
+                               ({'processes': '555 session-9.scope\n'}, 'not confirmed: something else runs code of this folder')):
+            self.normal()
+            self.answer(**answers)
+            code, out = self.run_script('release')
+            self.assertEqual((code, words in out, self.held()), (2, True, self.HELD), out)
+
+    def test_release_takes_a_left_hold_away_when_the_state_is_a_pair_the_service_runs_and_it_answers(self):
+        self.answer(kill_script='')                 # a run killed after both new files were in place leaves its own hold
+        self.assertNotEqual(self.run_script()[0], 0)
+        self.normal()
+        self.assertEqual((self.state(), self.held()), (NEW, self.HELD))
+        self.assertEqual(self.outside_start(), ['start kryuk-operations.service' + SKIPPED])
+        code, out = self.run_script('release')      # the service still runs what it loaded before the files changed
+        self.assertEqual((code, 'was started before ops_media.py was last changed' in out, self.held()), (2, True, self.HELD), out)
+        marker = self.run / 'kryuk-store-lock-install.running'
+        marker.write_text('')                       # a person restarts it the way the script does
+        self.systemctl('restart', 'kryuk-capture.service')
+        marker.unlink()
+        now = time.time()
+        for name in OLD:                            # GPT's review of 96b6a9b: the same second does not tell the order
+            os.utime(self.code / name, (now, now))
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'or in the same second' in out, self.held()), (2, True, self.HELD), out)
+        self.age_files()
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'confirmed: a pair (new)' in out, 'released (can start again)' in out, self.held()), (0, True, True, self.FREE), out)
+        self.assertEqual(sorted(p.name for p in self.hold.iterdir()), [], 'the empty folders are gone too')
+        self.assertEqual(self.outside_start(), ['start kryuk-operations.service: STARTED with the new files on the disk'])
+
+    def test_after_a_stop_the_hold_outlives_a_restart_of_the_server_and_the_service_does_not_start_by_itself(self):
+        self.answer(silent_with_new='', install_fails='ops_media.py.before-store-lock')
+        self.assertEqual(self.run_script()[0], 2)
+        self.normal()
+        self.assertEqual(self.server_restarts(), ['start kryuk-capture.service' + SKIPPED, 'start kryuk-operations.service' + SKIPPED],
+                         'the boot starts neither the service nor a one-shot unit on a pair that was not confirmed')
+        self.assertEqual((self.held(), self.state(), (self.standin / 'active').read_text()), (self.HELD, MIXED, ''))
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'are not a pair' in out, self.held()), (2, True, self.HELD), out)
+        code, out = self.run_script('rollback')     # the way out: the originals, the service started with them, then everything is let go
+        self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+        self.assertIn('an earlier run of this script had left it guarded: starting it with the originals', out)
+        self.assertEqual(self.log('start kryuk-capture')[-1], 'start kryuk-capture.service: STARTED with the original files on the disk')
+        self.assertEqual((self.standin / 'active').read_text().split(), ['kryuk-capture.service'])
+
+    def test_a_server_restart_in_the_middle_of_an_install_leaves_everything_held(self):
+        """The script is killed (kill -9, no clean-up runs) after both new files were put in place."""
+        self.answer(kill_script='')
+        code, out = self.run_script()
+        self.assertNotEqual(code, 0, out)
+        self.assertEqual((self.state(), self.held()), (NEW, self.HELD), 'killed with both new files in place; the drop-ins are on the disk, no marker')
+        self.normal()
+        self.assertEqual(self.server_restarts(), ['start kryuk-capture.service' + SKIPPED, 'start kryuk-operations.service' + SKIPPED])
+        code, out = self.run_script('status')
+        self.assertEqual((out.count(', HELD'), out.count('GUARDED (cannot start)')), (3, 1), out)
+        # GPT's review of ef2c9e4: both new files, the service down, nothing ever showed that it works with them
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'not confirmed: kryuk-capture.service is not running' in out, self.held(), self.state()), (2, True, self.HELD, NEW), out)
+        code, out = self.run_script()
+        self.assertEqual((code, 'an earlier run did not finish' in out, 'ALREADY INSTALLED' in out, self.held()), (1, True, False, self.HELD), out)
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+        self.assertEqual((self.standin / 'active').read_text().split(), ['kryuk-capture.service'], 'running again, with the originals')
+
+    def test_release_is_refused_for_the_originals_too_while_the_service_is_down(self):
+        self.answer(restart_fails='')
+        self.assertEqual(self.run_script()[0], 2)           # the originals are back, the service did not restart
+        self.normal()
+        self.server_restarts()
+        code, out = self.run_script('release')
+        self.assertEqual((code, 'not confirmed: kryuk-capture.service is not running' in out, self.held(), self.state()), (2, True, self.HELD, ORIGINALS), out)
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+        self.assertEqual((self.standin / 'active').read_text().split(), ['kryuk-capture.service'])
+
+    def test_a_service_that_crashes_while_it_is_guarded_is_not_restarted_by_systemd(self):
+        """GPT's review of ef2c9e4: Restart=on-failure must not bring the service up on files that were not confirmed."""
+        self.systemctl('crash', 'kryuk-capture.service')
+        self.assertEqual(self.log('crash ')[-1], 'crash kryuk-capture.service: restarted by systemd', 'on an ordinary day it comes back by itself')
+        for answers, state in (({'kill_script': ''}, NEW), ({'kill_in_restart': ''}, NEW)):
+            self.normal()
+            self.answer(**answers)
+            code, out = self.run_script()
+            self.assertNotEqual(code, 0, out)
+            self.assertEqual((self.state(), self.held()[:2]), (state, (GUARDED, GUARDED)), out)
+            self.normal()
+            self.systemctl('crash', 'kryuk-capture.service')
+            self.assertEqual(self.log('crash ')[-1], 'crash kryuk-capture.service: stays down (Restart=no)')
+            self.assertEqual((self.standin / 'active').read_text().split(), [])
+            code, out = self.run_script('status')
+            self.assertEqual('marker of a run: LEFT' in out, 'kill_in_restart' in answers, out)
+            code, out = self.run_script('rollback')
+            self.assertEqual((code, self.state(), self.kept(), self.held()), (0, ORIGINALS, [], self.FREE), out)
+            self.assertEqual((self.standin / 'active').read_text().split(), ['kryuk-capture.service'])
+        self.systemctl('crash', 'kryuk-capture.service')
+        self.assertEqual(self.log('crash ')[-1], 'crash kryuk-capture.service: restarted by systemd', 'and again after the hold is gone')
+
+    def test_the_marker_exists_only_while_the_script_itself_restarts_the_service(self):
+        count = 'ls "$KRYUK_RUN_DIR" | grep -v "[.]lock$" | wc -l | sed "s/^/marker files at %s: /" >> "$S/log"\n'
+        for name, anchor, moment in (('runuser', 'outside\n', 'the self-test'), ('curl', 'outside\n', 'a health check'),
+                                     ('systemctl', 'restart) [ -e "$S/restart-fails" ] && exit 1\n', 'the restart')):
+            self.assertEqual(STANDINS[name].count(anchor), 1)
+            (self.standin / name).write_text(STANDINS[name].replace(anchor, anchor + count % moment), encoding='utf-8', newline='\n')
+        code, out = self.run_script()
+        self.assertEqual((code, self.held()), (0, self.FREE), out)
+        seen = [(line.split(' at ')[1].split(':')[0], line.split(': ')[1].strip()) for line in self.log('marker files')]
+        self.assertEqual(seen, [('a health check', '0'), ('a health check', '0'), ('the self-test', '0'), ('the restart', '1'), ('a health check', '0'), ('a health check', '0')],
+                         'the service can be started in the seconds of the restart and at no other moment, before or after')
+        self.answer(log='', silent_with_new='')         # the same when the install fails and the originals are put back
+        self.assertEqual(self.run_script('rollback')[0], 0)
+        self.answer(log='')
+        code, out = self.run_script()
+        self.assertEqual((code, self.state(), self.held()), (1, ORIGINALS, self.FREE), out)
+        self.assertEqual(sorted(set(n for moment, n in [(line.split(' at ')[1].split(':')[0], line.split(': ')[1].strip()) for line in self.log('marker files')] if moment != 'the restart')), ['0'])
+
+    def test_rollback_refuses_a_kept_copy_that_is_not_the_original(self):
+        self.assertEqual(self.run_script()[0], 0)
+        with (self.code / 'ops_work.py.before-store-lock').open('ab') as f:
+            f.write(b'\n# not the original any more\n')
+        code, out = self.run_script('rollback')
+        self.assertEqual((code, 'is not the original: nothing was changed' in out, self.state(), self.restarts()), (1, True, NEW, ['systemctl restart kryuk-capture.service']), out)
+
+
+class Order(unittest.TestCase):
+    def test_the_new_store_works_with_the_original_work_file_and_not_the_other_way_round(self):
+        """Why ops_media.py goes in first and comes out last."""
+        with tempfile.TemporaryDirectory() as tmp:
+            for kind, media, work, expected in (('media-first', HERE, SERVER, 0), ('work-first', SERVER, HERE, 1)):
+                code = Path(tmp) / kind
+                code.mkdir()
+                for name in ('runtime.py', 'contact_metrics.py'):
+                    shutil.copyfile(SERVER / name, code / name)
+                shutil.copyfile(media / 'ops_media.py', code / 'ops_media.py')
+                shutil.copyfile(work / 'ops_work.py', code / 'ops_work.py')
+                done = subprocess.run([sys.executable, '-B', str(HERE / 'selftest.py'), str(code)], capture_output=True, text=True, timeout=120)
+                self.assertEqual(done.returncode, expected, kind + ': ' + done.stdout + done.stderr)
+        text = (HERE / 'install.sh').read_text(encoding='utf-8')
+        self.assertIn('FILES="ops_media.py ops_work.py"', text)
+        self.assertIn('BACK="ops_work.py ops_media.py"', text)
+
+
+class SelfTest(unittest.TestCase):
+    def test_the_self_test_passes_on_the_patched_files_and_fails_on_the_installed_ones(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            for kind, source in (('patched', HERE), ('installed', SERVER)):
+                code = Path(tmp) / kind
+                code.mkdir()
+                for name in ('runtime.py', 'contact_metrics.py'):
+                    shutil.copyfile(SERVER / name, code / name)
+                for name in OLD:
+                    shutil.copyfile(source / name, code / name)
+                done = subprocess.run([sys.executable, '-B', str(HERE / 'selftest.py'), str(code)], capture_output=True, text=True, timeout=120)
+                self.assertEqual((done.returncode, done.stdout.split(':')[0]), (0, 'SELFTEST OK') if kind == 'patched' else (1, 'SELFTEST FAILED'), done.stdout + done.stderr)
+
+
+if __name__ == '__main__':
+    unittest.main()

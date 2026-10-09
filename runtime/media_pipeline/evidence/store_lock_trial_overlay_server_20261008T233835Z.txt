@@ -1,0 +1,34 @@
+script sha256: a464e5a97a88a19d305b9c25f4d60d697ed3a6c11f988994ab506cc090775446 (as committed at 6d7673f)
+time: 2026-10-08T23:38:35Z; systemd 259 (259.5-0ubuntu3.4)
+before: kryuk-capture.service=active/running/pid68640/dropins[] kryuk-operations.service=inactive/dead/pid0/dropins[] kryuk-backup.service=inactive/dead/pid0/dropins[] kryuk-api-read.service=inactive/dead/pid0/dropins[] kryuk-bro-api.service=active/running/pid50227/dropins[] kryuk-armen.service=active/running/pid70745/dropins[] kryuk-operations.timer=active/waiting/pid/dropins[] kryuk-backup.timer=active/waiting/pid/dropins[] 
+--- C. the hold, on a throwaway one-shot unit of /etc/systemd/system
+  ok    C1 unit file under /etc: /etc/systemd/system/kryuk-overlaytrial-328707.service
+  ok    C2 the drop-in under /etc is loaded (what install.sh reads back): yes
+  ok    C3 held: exit code of systemctl start: 0
+  ok    C4 held: ConditionResult: no
+  ok    C5 held: its command did not run: 0
+  seen  C6 held: state: inactive/dead
+  ok    C7 released: no drop-in loaded: 
+  ok    C8 released: exit code of systemctl start: 0
+  ok    C9 released: its command ran: 1
+  seen  C10 released: ConditionResult / Result: no / success
+--- D. the guard, on a throwaway service of /etc/systemd/system with Restart=on-failure
+  ok    D1 no guard: it runs: yes
+  ok    D2 no guard: a killed process is restarted by systemd: yes
+  ok    D3 the guard is loaded for the running service: no
+  ok    D4 the guard does not stop a service that is running: yes/328968
+  ok    D5 guarded: a killed process is NOT restarted: no
+  seen  D6 guarded: state after the kill: failed/signal
+  ok    D7 guarded, no marker: a start does nothing (up / ConditionResult): no/no
+  ok    D8 guarded, marker made for the restart: it starts: 0/yes
+  ok    D9 guarded, marker removed again: a killed process stays down: no
+  ok    D10 guard taken away: it starts: yes
+  ok    D11 guard taken away: a killed process is restarted again: yes
+--- after the clean-up
+  ok    throwaway one-shot unit: not-found
+  ok    throwaway service: not-found
+  ok    files of the trial left in /etc/systemd/system and /run: 0
+  ok    every real unit and timer: state, main process and drop-ins as before: yes
+time: 2026-10-08T23:38:58Z
+TRIAL OK
+exit: 0

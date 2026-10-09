@@ -1,0 +1,65 @@
+time: 2026-10-08T16:19:21Z; python: Python 3.14.4; folder: /tmp/store-lock-rehearsal.E8SY9r
+### install.sh status
+time: 2026-10-08T16:19:21Z; code folder: /tmp/store-lock-rehearsal.E8SY9r/code; rehearsal: 1
+installed ops_media.py: original
+installed ops_work.py: original
+kept copy of ops_media.py: none
+kept copy of ops_work.py: none
+exit: 0
+### install.sh 
+time: 2026-10-08T16:19:21Z; code folder: /tmp/store-lock-rehearsal.E8SY9r/code; rehearsal: 1
+installed ops_media.py: original
+installed ops_work.py: original
+health: not asked (rehearsal)
+SELFTEST OK: python 3.14.4; one original for the same bytes, a variant, a refused variant for a missing original, the lock held and re-entered, a draft with an asset; temporary folder removed: True
+restart: not done (rehearsal)
+health: not asked (rehearsal)
+installed ops_media.py: new 0f877f7703279ec984da924f5f34965b99ac0d9488b428facae6d9fa1c897df4
+installed ops_work.py: new 69aa0809da3b8dd5c894b1abe2c2e9feb735785184bf8bc79fe979a3495da251
+kept original: /tmp/store-lock-rehearsal.E8SY9r/code/ops_media.py.before-store-lock
+kept original: /tmp/store-lock-rehearsal.E8SY9r/code/ops_work.py.before-store-lock
+INSTALLED at 2026-10-08T16:19:22Z. Way back: sudo bash /tmp/store-lock-rehearsal.E8SY9r/package/install.sh rollback
+exit: 0
+### install.sh 
+time: 2026-10-08T16:19:22Z; code folder: /tmp/store-lock-rehearsal.E8SY9r/code; rehearsal: 1
+installed ops_media.py: new
+installed ops_work.py: new
+ALREADY INSTALLED
+exit: 0
+### install.sh status
+time: 2026-10-08T16:19:22Z; code folder: /tmp/store-lock-rehearsal.E8SY9r/code; rehearsal: 1
+installed ops_media.py: new
+installed ops_work.py: new
+kept copy of ops_media.py: 5ca3e4dea8b0b11040a4a85ff0985c4c881ac80348abfaf7c8058cca2dbbda4c
+kept copy of ops_work.py: d1e6a2dfa653f40ddbf886c170e8c0d143b1750ad59c1703c647313f7e8818d6
+exit: 0
+### install.sh rollback
+time: 2026-10-08T16:19:22Z; code folder: /tmp/store-lock-rehearsal.E8SY9r/code; rehearsal: 1
+installed ops_media.py: new
+installed ops_work.py: new
+restart: not done (rehearsal)
+health: not asked (rehearsal)
+installed ops_media.py: original
+installed ops_work.py: original
+ROLLED BACK at 2026-10-08T16:19:22Z
+exit: 0
+### install.sh status
+time: 2026-10-08T16:19:22Z; code folder: /tmp/store-lock-rehearsal.E8SY9r/code; rehearsal: 1
+installed ops_media.py: original
+installed ops_work.py: original
+kept copy of ops_media.py: none
+kept copy of ops_work.py: none
+exit: 0
+### refused on the real folder
+STOP: a rehearsal is not run on the real code folder
+exit: 1
+### left behind in the rehearsal code folder
+nothing (no kept copy, no part file, no __pycache__)
+### the real files
+before: 5ca3e4dea8b0b11040a4a85ff0985c4c881ac80348abfaf7c8058cca2dbbda4c d1e6a2dfa653f40ddbf886c170e8c0d143b1750ad59c1703c647313f7e8818d6
+after:  5ca3e4dea8b0b11040a4a85ff0985c4c881ac80348abfaf7c8058cca2dbbda4c d1e6a2dfa653f40ddbf886c170e8c0d143b1750ad59c1703c647313f7e8818d6
+unchanged: yes
+kept copies in the real folder: 0
+kryuk-capture: active, running since Thu 2026-10-08 11:12:38 UTC
+temporary folders left: 0
+time: 2026-10-08T16:19:22Z

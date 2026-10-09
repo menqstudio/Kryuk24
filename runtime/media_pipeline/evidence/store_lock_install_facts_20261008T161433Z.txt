@@ -1,0 +1,38 @@
+time: 2026-10-08T16:14:33Z
+--- installed files
+ops_media.py: 5ca3e4dea8b0b11040a4a85ff0985c4c881ac80348abfaf7c8058cca2dbbda4c root:root 644
+ops_work.py: d1e6a2dfa653f40ddbf886c170e8c0d143b1750ad59c1703c647313f7e8818d6 root:root 644
+drwxr-xr-x  2 root root  4096 Oct  8 11:12 __pycache__
+-rw-r--r--  1 root root 11430 Oct  7 13:01 bro_api.py.before-api-read
+-rw-r--r--  1 root root  7347 Oct  7 13:01 bro_worker.py.before-api-read
+-rw-r--r--  1 root root 65185 Oct  7 02:38 ops_views.py.before-kryuk-colours
+-rw-r--r--  1 root root 10077 Oct  7 13:01 ops_work.py.before-api-read
+-rw-r--r--  1 root root  9823 Oct  7 13:01 test_bro_http.py.before-api-read
+code folder: root:root 755
+--- units: user, group, state
+kryuk-capture: User=kryuk-run Group=kryuk-run Supp= UMask=0077 active=active enabled=enabled load=loaded
+kryuk-operations: User=kryuk-run Group=kryuk-run Supp= UMask=0077 active=inactive enabled=static load=loaded
+kryuk-backup: User=kryuk-run Group=kryuk-run Supp= UMask=0077 active=inactive enabled=static load=loaded
+kryuk-api-read: User=kryuk-api-read Group=kryuk-api-read Supp=kryuk-db UMask=0077 active=inactive enabled=static load=loaded
+kryuk-bro-api: User=kryuk-run Group=kryuk-run Supp= UMask=0077 active=active enabled=disabled load=loaded
+kryuk-armen: User=kryuk-armen Group=kryuk-armen Supp= UMask=0077 active=active enabled=disabled load=loaded
+--- timers
+Fri 2026-10-09 00:04:57 UTC           7h Thu 2026-10-08 00:00:31 UTC       16h ago kryuk-backup.timer             kryuk-backup.service
+Fri 2026-10-09 06:00:32 UTC          13h Thu 2026-10-08 06:01:21 UTC       10h ago kryuk-operations.timer         kryuk-operations.service
+--- groups of the users
+uid=1000(kryuk) gid=1000(kryuk) groups=1000(kryuk),27(sudo),100(users)
+uid=103(kryuk-run) gid=109(kryuk-run) groups=109(kryuk-run),986(kryuk-db)
+uid=999(kryuk-api-read) gid=982(kryuk-api-read) groups=982(kryuk-api-read),986(kryuk-db)
+--- data folder and media folder
+/var/lib/kryuk24: kryuk-run:kryuk-db 2770
+/var/lib/kryuk24/runtime.sqlite: kryuk-run:kryuk-db 660
+/var/lib/kryuk24/media: is not there
+--- tools
+curl: /usr/bin/curl
+runuser: /usr/sbin/runuser
+sha256sum: /usr/bin/sha256sum
+install: /usr/bin/install
+Python 3.14.4
+--- health
+{"mode":"STAGING","ok":true,"sending_enabled":false}
+--- end
