@@ -832,6 +832,29 @@ class Trial:
             # The parent rule belongs to v5.4. An attempt stored without the end of its job is judged by the old rule: FAIL.
             return 'sure' if ceiling is None or taken_by is None or p.get('ParentProcessId') in family else 'doubt'
 
+        def gone_parent_was_in_the_job(p):
+            """The parent of p is gone and its pid is a job pid: can that job process have been the parent?
+            A pid number is not enough. On main b666488 (run 37866022891, 09.10.2026) the chain of the harness's own
+            process lister went up to wininit.exe, created with the machine; its parent pid, 740, had died at boot and
+            Windows had given the number to a process of the job ten minutes later. Read by number alone, everything
+            under wininit.exe was "started by the job", and the lister was reported as a leftover (T7.6.b).
+            A parent is created before its child, and a job process is created during the run. So:
+              - a child created before the run began cannot have a job process for a parent;
+              - when Windows confirmed creation times for that job pid and all of them are later than the child's,
+                none of those processes can be its parent.
+            What neither rule settles stays as before: the pid number decides."""
+            up = p.get('ParentProcessId')
+            if up not in peak:
+                return False
+            start = p.get('Start')
+            if isinstance(start, str) and start:
+                if start[:19] < floor:
+                    return False
+                times = recorded.get(str(up))
+                if times and all(str(t)[:23] > start.replace('Z', '+00:00')[:23] for t in times):
+                    return False
+            return True
+
         def from_job(p, depth=0):
             if own(p) == 'sure':
                 return True
@@ -839,7 +862,7 @@ class Trial:
             mother = alive.get(up)
             # A parent is older than its child. A younger process under the parent's pid is a reuse: the parent is gone.
             if mother is None or mother is p or (mother.get('Start') and p.get('Start') and str(mother['Start']) > str(p['Start'])):
-                return up in peak
+                return gone_parent_was_in_the_job(p)
             return depth < 20 and from_job(mother, depth + 1)
         leftovers = [p for p in after if from_job(p) and (not p.get('Start') or str(p['Start'])[:19] >= floor)] if valid else []
         doubtful = [p for p in after if own(p) == 'doubt' and p not in leftovers] if valid else []
