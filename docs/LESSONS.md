@@ -189,6 +189,14 @@
 - **What happened (08.10.2026):** wrote "Update 08.10.2026 00:55 UTC" into a public PR text; the clock said 07:25. The session had been idle for hours between two of Gev's messages and I continued from the last time I remembered. The lesson about times already existed, twice.
   **Why:** a new message feels like the next minute; it may be the next morning.
   **Do instead:** at the first command after every new message from Gev, print `date -u`. A time goes into a document only from the output of the command that ran last.
+- **What happened (08.10.2026):** the script Gev started for Armen's password printed "Done" in green although the server had refused the password (too short).
+  **Why:** the remote command was `step; rm helper`, so the exit code was `rm`'s; only the success path had been thought through, and the script was handed over untried.
+  **Do instead:** in `a; b` keep the exit of the step that matters (`a; result=$?; b; exit $result`). Before giving Gev a script, walk its failure path once: what does it print when the server says no?
+- **What happened (08.10.2026):** the HTTPS check expected 401 on `/` and reported a failure; the installed config answers 404 there by itself (`location / { return 404; }` runs before the password is asked).
+  **Why:** the expectation was written from the idea "the whole server is behind the password", not from the config lines that had been read an hour earlier.
+  **Do instead:** take every expected status in a check from the line of the config that produces it; an expectation without a line behind it is a guess.
+- **What happened (08.10.2026):** the session's permission check refused writing the script that edits the installed Nginx file; after Gev's explicit "yes, change Nginx, this path only" the same write went through.
+  **Do instead (worked):** on a refusal stop that one outcome, finish everything that does not depend on it, tell Gev in plain words what the step does and what it opens, and wait for his word. Ask for the yes with its scope before writing a script that changes access control.
 - **What happened (08.10.2026):** ran `tools/make_signage.py --help` to see its options; the script has no argument parser, so it ran in full and rewrote seven PDFs in the working tree (same content, new timestamps). Caught by `git status`, put back with `git checkout`.
   **Why:** assumed every script answers `--help`.
   **Do instead:** read a generator's top of file (docstring, `argparse` or not) before running it with any argument; a script without a parser is run only when its output is wanted.
