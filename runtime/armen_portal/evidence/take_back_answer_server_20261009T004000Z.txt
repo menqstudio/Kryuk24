@@ -1,0 +1,93 @@
+Armen portal, a saved answer can be taken back, 09.10.2026. Outputs as printed.
+
+What Gev saw on the live page: after a second tap the mark went to the answer on the left or on the right.
+That was the saved answer of that question coming back when an unsaved pick was dropped. Now a tap on the marked answer leaves nothing marked.
+
+# 1. deploy/browser_check.py before the install: 264 ok
+ok   390-dark every saved answer says Сохранено beside it
+ok   390-dark after a reload the saved answers are the pressed ones
+ok   390-dark over a saved answer: a second tap on a new pick leaves nothing marked, not the saved one beside it
+ok   390-dark a tap on the saved answer brings it back with nothing to save
+ok   390-dark a tap on the saved answer that is marked leaves nothing marked and waits for the save button
+ok   390-dark after the save button the answer is taken back on the server, as a row of its own
+ok   390-dark after a reload that question has no answer and the two others keep theirs
+all browser checks passed
+Not run: the same check against the page as it was before (it would fail at the first of these lines).
+
+# 2. deploy/update_and_restart.sh with the package of commit b94c63e
+== time
+2026-10-09T00:39:57Z
+data before: 3 files; credential file: root:kryuk-armen 640
+== time
+2026-10-09T00:39:57Z
+package: matches its checksums
+== tests of the new package on this server, as the service user
+----------------------------------------------------------------------
+Ran 29 tests in 28.788s
+
+OK
+== replace
+replaced portal.py
+same     provision.py
+same     exclude.py
+replaced app.js
+same     login.js
+same     theme.js
+replaced index.html
+same     login.html
+same     style.css
+same     tokens.css
+same     fonts.css
+same     logo-light.webp
+same     logo-dark.webp
+same     bro.webp
+same     font-golos-cyrillic.woff2
+same     font-golos-latin.woff2
+same     font-robotocond-700-cyrillic.woff2
+same     font-robotocond-700-latin.woff2
+same     requirements.txt
+b700838d0eb80ff0b8dea92d9c24ae2a0aa77676b45455cd8a11b46e9a789770  portal.py
+aed7cf94f0d0c4094dad35793679ec41f00da1fb43cd0fdb114da7f8437524bb  provision.py
+6ec99ea0fd2d9ae4d31d0e1585210ca99899c02136970c7158bd4dd73015f405  exclude.py
+8c28a338475ff96a328cd09bcc85f000680f3ab742e10bc737a66333178a0d2d  app.js
+38372c8084e8daa26712da92836b4eea10347d16a922cfe31b5a46e35e2e3edc  login.js
+aca785eb129b3b9729616f94a87de0ffcd8514b7d9667b37c23ba9fa3e402b3e  theme.js
+2c235052d2e82c1c761df177b1554b06b8c58cb31f696122883b83ba77454ccd  index.html
+eb8f597a77b75d62f8d7f35ac581ae694bc8bd080ac3dcea86b913ba6fbbf91d  login.html
+64aeafed363a24c92d126693e195cff9833b5cb740bf9d3ef93581973810d105  style.css
+279c5f54ce63076b0e8277ec0b71de49e7c078e2f8d544852ed859f1c55f2b33  tokens.css
+5c6398703fd86257459f749a9d7a6e1b9c3a8c782eeccabc2560e9338a01ca91  fonts.css
+88dbfa573cadba7b88a5ed570c335d05232cad234173a0c437e9bcbb33dfd1da  logo-light.webp
+27124c329f9a99afaaf538766d0aa8c7b4dce3d5606746cc44566310877b17d6  logo-dark.webp
+ccbcb2250984b4088c5a8002fabb1d1c74c239b60568ced7482038fbb790115f  bro.webp
+17d048ca05cb1218af3c0d6dcdf882989e6d1cc5dcb598ea50eaf54850ff7229  font-golos-cyrillic.woff2
+9a69d0aa4734c4022224c002a3d944a702e0204972a49d892789f5668b922c2a  font-golos-latin.woff2
+7b9ef131039e058b622d4da5cbb6d2e783526d137cbf74738f8984c25c2d3fbf  font-robotocond-700-cyrillic.woff2
+ab74f0c2d7ec37e44e017b9586675dd00c519591207dc3bbc8e003c5628dc9b7  font-robotocond-700-latin.woff2
+41b54a6fb2918667ca47a61d73b522629d84490f3d78f0f20b21135faba10d35  requirements.txt
+code folder: everything owned by root; portal: inactive
+2026-10-09T00:40:26Z
+== update done
+== after the start: active active, enabled disabled, code updated: yes
+data after: 3 files; credential file: root:kryuk-armen 640
+login form: 200; state without a session: 401; page script without a session: 401
+tokens.css: 200
+fonts.css: 200
+style.css: 200
+theme.js: 200
+logo-light.webp: 200
+logo-dark.webp: 200
+bro.webp: 200
+font-golos-cyrillic.woff2: 200
+wrong password: 401
+2026-10-09T00:40:27Z
+== update and restart done
+exit: 0
+helpers left in /tmp: 0
+
+# 3. from outside
+from outside, over HTTPS, 2026-10-09T00:40:27Z
+login page: 200; state without a session: 401
+style.css served 64aeafed363a24c92d126693e195cff9833b5cb740bf9d3ef93581973810d105 / in the commit 64aeafed363a24c92d126693e195cff9833b5cb740bf9d3ef93581973810d105
+
+Not seen by the one who installed it: the page behind a login on the live address.
