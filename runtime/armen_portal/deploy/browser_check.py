@@ -79,14 +79,21 @@ def run(width, theme, pw, base):
     def shot(name):
         wide = page.evaluate('[document.documentElement.scrollWidth, document.documentElement.clientWidth]')
         check('%s %s: no sideways scroll' % (tag, name), wide[0] <= wide[1], wide)
+        # the band's content and the page's column keep to the container (960 px, the operator page's), also on a wide screen:
+        # on 09.10.2026 the login page was installed stretched over a whole desktop window and no check saw it
+        columns = page.evaluate("[...document.querySelectorAll('.top .wrap, main')].map(e => Math.round(e.getBoundingClientRect().width))")
+        check('%s %s: the band and the column are not wider than the container' % (tag, name), len(columns) == 2 and max(columns) <= 960, columns)
         page.screenshot(path=str(out / ('%s-%s.png' % (tag, name))), full_page=True)
 
     page.goto(URL)
     page.wait_for_selector('#login')
     page.evaluate('document.fonts.ready')
-    check('%s the page uses the design fonts' % tag, page.evaluate("document.fonts.check('700 16px \"Roboto Condensed\"', 'Вход') && document.fonts.check('16px \"Golos Text\"', 'Вход')"))
-    check('%s the logo for this theme is the one shown' % tag, page.evaluate("getComputedStyle(document.querySelector('.on-%s')).display" % theme) == 'block'
-          and page.evaluate("getComputedStyle(document.querySelector('.on-%s')).display" % ('light' if theme == 'dark' else 'dark')) == 'none')
+    # one family for text and headings, as on the operator page (Golos Text, one variable file for 400 to 700)
+    check('%s the page uses the design font, regular and bold, and its heading is set in it' % tag,
+          page.evaluate("document.fonts.check('16px \"Golos Text\"', 'Вход') && document.fonts.check('700 16px \"Golos Text\"', 'Вход')")
+          and page.evaluate("getComputedStyle(document.querySelector('h1')).fontFamily").strip('\'"').startswith('Golos Text'))
+    check('%s the band shows the logo for a dark ground and Bro\'s picture, both loaded' % tag,
+          page.evaluate("[...document.querySelectorAll('.top img')].map(i => [i.getAttribute('src'), i.complete && i.naturalWidth > 0])") == [['logo-dark.webp', True], ['bro.webp', True]])
     shot('1-login')
     page.fill('#password', SAMPLE)
     page.click('#login button')
@@ -107,9 +114,16 @@ def run(width, theme, pw, base):
     shot('3-photos-picked')
     page.click('#pending li:nth-child(3) button')
     check('%s a picked item can be removed' % tag, page.locator('#pending li').count() == 2)
+    # what is on the photos: three chips, one always picked, no drop-down
+    check('%s the photo kind is three chips with the first picked, and no drop-down' % tag,
+          page.locator('select').count() == 0 and [b.get_attribute('aria-pressed') for b in page.locator('#purpose button').all()] == ['true', 'false', 'false'])
+    page.click('#purpose button[data-value=EQUIPMENT]')
+    page.click('#purpose button[data-value=EQUIPMENT]')   # a second tap leaves it picked: a photo always has a kind
+    check('%s a tap picks another kind and exactly one stays picked' % tag, [b.get_attribute('aria-pressed') for b in page.locator('#purpose button').all()] == ['false', 'true', 'false'])
     page.dblclick('#send')  # a double tap
     wait('#upload-status', 'Сохранено')
     check('%s after the button both are stored once, a double tap adds nothing' % tag, rows('SELECT count(*) FROM armen_photos')[0][0] == 2)
+    check('%s the picked kind is the one the server stored' % tag, [r[0] for r in rows('SELECT DISTINCT purpose FROM armen_photos')] == ['EQUIPMENT'])
     check('%s the result is the server\'s, next to the button' % tag, page.inner_text('#upload-status') == 'Сохранено: 2 из 2' and page.locator('#pending .state.ok').count() == 2, page.inner_text('#upload-status'))
     page.locator('#photos img').nth(1).wait_for(timeout=20000)
     shot('4-photos-saved')
@@ -118,6 +132,14 @@ def run(width, theme, pw, base):
     wait('#pending', 'Уже было загружено')
     check('%s the same picture again makes no second photo and says so' % tag, rows('SELECT count(*) FROM armen_photos')[0][0] == 2 and 'Уже было загружено' in page.inner_text('#pending'))
 
+    # answers: a second tap takes a pick back (Gev, 09.10.2026: there was no way to cancel a pick)
+    first = '#questions .question:nth-child(1) .choices button:nth-child(1)'
+    page.click(first)
+    picked = (page.get_attribute(first, 'aria-pressed'), page.locator('#questions .note.warn').count(), page.is_disabled('#save'))
+    page.click(first)
+    back = (page.get_attribute(first, 'aria-pressed'), page.locator('#questions .note.warn').count(), page.is_disabled('#save'), page.inner_text('#save'))
+    check('%s a second tap on a picked answer takes it back and nothing is left to save' % tag,
+          picked == ('true', 1, False) and back == ('false', 0, True, 'Сохранить ответы') and rows('SELECT count(*) FROM armen_answers')[0][0] == 0, (picked, back))
     # answers: picked is not saved; one is refused on purpose
     for q in (1, 2, 3):
         page.click('#questions .question:nth-child(%d) .choices button:nth-child(1)' % q)
@@ -153,6 +175,31 @@ def run(width, theme, pw, base):
     page.wait_for_selector('#questions .question')
     check('%s after a reload the saved answers are the pressed ones' % tag, page.locator('#questions button[aria-pressed=true]').count() == 3 and page.locator('#photos img').count() == 2)
 
+    # a SAVED answer: a tap on the marked one leaves nothing marked in that question (Gev, 09.10.2026: after a
+    # second tap the mark jumped to the saved answer beside it, which looked like the choice moving sideways)
+    def marks(q):
+        return [b.get_attribute('aria-pressed') for b in page.locator('#questions .question:nth-child(%d) .choices button' % q).all()]
+    one = '#questions .question:nth-child(1) .choices button:nth-child(%d)'
+    was = marks(1)
+    page.click(one % 2)                                   # another answer is picked over the saved one
+    page.click(one % 2)                                   # a second tap on it
+    after_cancel = marks(1)
+    check('%s over a saved answer: a second tap on a new pick leaves nothing marked, not the saved one beside it' % tag,
+          was[0] == 'true' and 'true' not in after_cancel and 'Ответ снят' in page.inner_text('#questions .question:nth-child(1) .qhead'), (was, after_cancel))
+    page.click(one % 1)                                   # the saved one again: back as it was, nothing to save
+    check('%s a tap on the saved answer brings it back with nothing to save' % tag, marks(1) == was and page.is_disabled('#save'))
+    page.click(one % 1)                                   # a tap on the saved, marked answer: take it back
+    check('%s a tap on the saved answer that is marked leaves nothing marked and waits for the save button' % tag,
+          'true' not in marks(1) and not page.is_disabled('#save') and rows("SELECT count(*) FROM armen_answers WHERE answer=''")[0][0] == 0)
+    page.click('#save')
+    wait('#save-status', 'Сохранено')
+    check('%s after the save button the answer is taken back on the server, as a row of its own' % tag,
+          [r[0] for r in rows("SELECT answer FROM armen_answers WHERE question=(SELECT id FROM (SELECT question AS id FROM armen_answers ORDER BY rowid LIMIT 1)) ORDER BY rowid")][-1] == ''
+          and 'true' not in marks(1) and page.inner_text('#ring-count') == '2/5', page.inner_text('#ring-count'))
+    page.reload()
+    page.wait_for_selector('#questions .question')
+    check('%s after a reload that question has no answer and the two others keep theirs' % tag, 'true' not in marks(1) and page.locator('#questions button[aria-pressed=true]').count() == 2)
+
     page.click('#logout')
     page.wait_for_selector('#login')
     check('%s sign-out returns to the login form and the cookie no longer opens the page' % tag, page.goto(URL + 'api/state').status == 401)
@@ -172,7 +219,7 @@ with tempfile.TemporaryDirectory() as folder:
     if made.returncode != 0:
         sys.exit('the throwaway certificate was not made: ' + made.stderr.strip()[-600:])
     with sync_playwright() as pw:
-        for width, theme in ((360, 'light'), (390, 'light'), (430, 'light'), (390, 'dark')):
+        for width, theme in ((360, 'light'), (390, 'light'), (430, 'light'), (390, 'dark'), (1280, 'light'), (1280, 'dark')):
             run(width, theme, pw, base)
 print('FAILED: %d' % len(failures) if failures else 'all browser checks passed')
 sys.exit(1 if failures else 0)

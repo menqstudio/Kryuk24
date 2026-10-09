@@ -12,7 +12,8 @@ const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 let state = null;      // the last state the server gave
 const saved = {};      // question id -> the answer the server holds for today
-const chosen = {};     // question id -> {value, key}: picked here, not saved yet. The key stays with the choice,
+const chosen = {};     // question id -> {value, key}: picked here, not saved yet; value '' means: take the saved
+                       // answer back. The key stays with the choice,
                        // so a second tap or a retry repeats the same request and the server stores it once.
 const results = {};    // question id -> {ok, text}: what the server said about the last save of that answer
 const pending = [];    // photos picked, not sent yet: {file, url, status, text, percent, problem}
@@ -39,7 +40,8 @@ function recall() {
     if (!kept || kept.day !== state.day) return;
     for (const q of state.questions) {
       const c = kept.chosen[q.id];
-      if (c && q.options.some(o => o[0] === c.value) && /^[a-f0-9]{32}$/.test(c.key) && c.value !== saved[q.id]) chosen[q.id] = { value: c.value, key: c.key };
+      const known = c && (q.options.some(o => o[0] === c.value) || (c.value === '' && saved[q.id] !== undefined));
+      if (known && /^[a-f0-9]{32}$/.test(c.key) && c.value !== saved[q.id]) chosen[q.id] = { value: c.value, key: c.key };
     }
   } catch (e) {}
 }
@@ -56,6 +58,7 @@ async function api(path, options = {}) {
 // ---- answers: pick first, save with one button
 function renderQuestions() {
   $('question-heading').textContent = 'Сегодня · ' + state.day;
+  renderSummary();
   const area = $('questions');
   area.replaceChildren();
   for (const q of state.questions) {
@@ -70,8 +73,13 @@ function renderQuestions() {
       b.setAttribute('aria-pressed', String(current === value));
       b.disabled = readOnly || saving;
       b.onclick = () => {
-        if (value === saved[q.id]) delete chosen[q.id];
-        else if (!chosen[q.id] || chosen[q.id].value !== value) chosen[q.id] = { value, key: key() };
+        // A tap on the one that is marked leaves nothing marked: an unsaved pick is dropped, and when the server
+        // holds an answer, taking it back becomes the unsaved choice ('' is sent by the save button).
+        // A tap on the answer the server holds brings it back with nothing to save. Any other tap picks.
+        if (value === current) {
+          if (saved[q.id] !== undefined) chosen[q.id] = { value: '', key: key() }; else delete chosen[q.id];
+        } else if (value === saved[q.id]) delete chosen[q.id];
+        else chosen[q.id] = { value, key: key() };
         delete results[q.id];
         note($('save-status'), '');
         remember(); renderQuestions();
@@ -83,7 +91,7 @@ function renderQuestions() {
     if (results[q.id] && !results[q.id].ok) {
       note(mark, 'Не сохранено', 'error');
       const line = document.createElement('p'); note(line, results[q.id].text, 'error'); card.append(line);
-    } else if (chosen[q.id]) note(mark, 'Не сохранено', 'warn');
+    } else if (chosen[q.id]) note(mark, chosen[q.id].value === '' ? 'Ответ снят, не сохранено' : 'Не сохранено', 'warn');
     else if (saved[q.id] !== undefined) note(mark, 'Сохранено', 'ok');
     else note(mark, '');
     area.append(card);
@@ -104,7 +112,8 @@ async function saveAnswers() {
     try {
       await api('api/answer', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, 'Idempotency-Key': pick.key },
         body: JSON.stringify({ question: id, answer: pick.value, day: state.day }) });
-      saved[id] = pick.value; delete chosen[id]; results[id] = { ok: true, text: 'Сохранено' };
+      if (pick.value === '') delete saved[id]; else saved[id] = pick.value;
+      delete chosen[id]; results[id] = { ok: true, text: 'Сохранено' };
     } catch (e) {
       results[id] = { ok: false, text: e.message };
       failed.push('«' + state.questions.find(q => q.id === id).title + '»');
@@ -156,7 +165,8 @@ function renderPending() {
   $('send').hidden = !count && !sending;
   $('send').disabled = sending || !count;
   $('send').textContent = count ? 'Загрузить фото (' + count + ')' : 'Загрузить фото';
-  for (const id of ['gallery', 'camera', 'purpose']) $(id).disabled = sending;
+  for (const id of ['gallery', 'camera']) $(id).disabled = sending;
+  for (const b of $('purpose').children) b.disabled = sending;
 }
 function sendOne(p, purpose) {
   return new Promise(resolve => {
@@ -175,7 +185,7 @@ async function sendPhotos() {
   if (sending || readOnly) return;
   const queue = waiting();
   if (!queue.length) return;
-  sending = true; const purpose = $('purpose').value; let done = 0;
+  sending = true; const purpose = $('purpose').querySelector('[aria-pressed=true]').dataset.value; let done = 0;
   $('progress').hidden = false;
   for (const p of queue) {
     p.status = 'uploading'; p.percent = 0; $('progress').value = 0;
@@ -190,6 +200,34 @@ async function sendPhotos() {
   note($('upload-status'), bad ? 'Сохранено ' + done + ' из ' + queue.length + '. Не загружено: ' + bad + '. Они остались в списке, нажмите «Загрузить фото» еще раз.' : 'Сохранено: ' + done + ' из ' + queue.length, bad ? 'error' : 'ok');
   if (done) try { state.photos = (await api('api/state')).photos; renderPhotos(); } catch (e) { note($('status'), 'Список фото не обновился. Обновите страницу.', 'error'); }
 }
+// ---- the band and the summary card, in the layout of the operator page. Counts come from what the server holds.
+const RING = 263.89;   // the length of the ring's circle (r = 42)
+function moscow() { return new Date(Date.now() + 3 * 3600000); }   // read with getUTC*: Moscow has no summer time
+function tick() {
+  const t = moscow(), h = t.getUTCHours();
+  $('clock').textContent = String(h).padStart(2, '0') + ':' + String(t.getUTCMinutes()).padStart(2, '0');
+  $('clock-box').classList.toggle('night', !(h >= 7 && h < 19));
+  const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+  $('subline').textContent = 'фото и ответы · ' + t.getUTCDate() + ' ' + months[t.getUTCMonth()];
+  if (actor === 'armen') $('greeting').textContent = (h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер') + ', Армен';
+}
+function renderSummary() {
+  const total = state.questions.length;
+  const done = state.questions.filter(q => saved[q.id] !== undefined).length;
+  const unsaved = Object.keys(chosen).length;
+  $('ring-count').textContent = done + '/' + total;
+  $('ring').setAttribute('stroke-dashoffset', String(total ? Math.round(RING * (1 - done / total) * 100) / 100 : RING));
+  const whose = readOnly ? 'Армен ответил' : 'Сегодня отвечено';
+  $('headline').textContent = total && done === total ? (readOnly ? 'Армен ответил на все' : 'На сегодня все отвечено') : whose + ' ' + done + ' из ' + total;
+  $('headline-sub').textContent = readOnly ? '' : unsaved ? 'Не сохранено: ' + unsaved + '. Нажмите «Сохранить ответы».' : done === total ? 'Спасибо. Больше ничего не нужно.' : 'Осталось ответить: ' + (total - done) + '.';
+  const answers = $('pill-answers');
+  answers.hidden = false;
+  answers.textContent = unsaved ? 'Не сохранено: ' + unsaved : done === total ? 'Ответы сохранены' : 'Ответов: ' + done + ' из ' + total;
+  answers.className = 'pill ' + (unsaved ? 'todo' : done === total ? 'done' : 'wait');
+  const photos = $('pill-photos');
+  photos.hidden = false;
+  photos.textContent = 'Последние фото: ' + state.photos.length;
+}
 function renderPhotos() {
   const photos = $('photos');
   photos.replaceChildren();
@@ -200,6 +238,7 @@ function renderPhotos() {
     photos.append(card);
   }
   if (!state.photos.length) { const none = document.createElement('p'); none.className = 'hint empty'; none.textContent = 'Пока нет фото.'; photos.append(none); }
+  renderSummary();
 }
 
 async function load() {
@@ -218,6 +257,9 @@ if (actor === 'test') {
   $('greeting').textContent = 'Тестовый вход';
   $('question-hint').textContent = 'Тест: ответы и фото этого входа не учитываются и никуда не передаются.';
 }
+tick(); setInterval(tick, 20000);
+// what is on the photos: one of three, picked like an answer; one is always picked
+for (const b of $('purpose').children) b.onclick = () => { for (const other of $('purpose').children) other.setAttribute('aria-pressed', String(other === b)); };
 for (const id of ['gallery', 'camera']) $(id).onchange = e => addPhotos(e.target);
 $('send').onclick = sendPhotos;
 $('save').onclick = saveAnswers;

@@ -48,7 +48,7 @@ MAX_LOGIN_BODY=16384
 # system's own file (design/tokens/kryuk.tokens.css, copied byte for byte and checked in CI); the logo files are the
 # official lockup; the fonts are the site's. Fonts and logo may be kept by the browser for a day.
 PUBLIC={'login.js':'text/javascript; charset=utf-8','theme.js':'text/javascript; charset=utf-8','style.css':'text/css; charset=utf-8',
- 'tokens.css':'text/css; charset=utf-8','fonts.css':'text/css; charset=utf-8','logo-light.webp':'image/webp','logo-dark.webp':'image/webp',
+ 'tokens.css':'text/css; charset=utf-8','fonts.css':'text/css; charset=utf-8','logo-light.webp':'image/webp','logo-dark.webp':'image/webp','bro.webp':'image/webp',
  'font-golos-cyrillic.woff2':'font/woff2','font-golos-latin.woff2':'font/woff2','font-robotocond-700-cyrillic.woff2':'font/woff2','font-robotocond-700-latin.woff2':'font/woff2'}
 MAX_IMAGE=20*1024*1024
 MAX_TOTAL=1024*1024*1024
@@ -120,7 +120,8 @@ CREATE TABLE IF NOT EXISTS armen_excluded(kind TEXT,id TEXT,reason TEXT,marked_b
  def answer(self,actor,key,d):
   if set(d)!={'question','answer','day'}:raise ValueError('exact answer fields required')
   q=next((q for q in QUESTIONS if q['id']==d['question']),None)
-  if not q or d['answer'] not in {v for v,_ in q['options']} or not isinstance(d['day'],str):raise ValueError('invalid question/answer/day; reload page')
+  # An empty answer takes the day's answer back. It is a row of its own: the history keeps what was said and that it was taken back.
+  if not q or not isinstance(d['answer'],str) or (d['answer']!='' and d['answer'] not in {v for v,_ in q['options']}) or not isinstance(d['day'],str):raise ValueError('invalid question/answer/day; reload page')
   if not isinstance(key,str) or not re.fullmatch('[a-f0-9]{32}',key):raise ValueError('request key required')
   dg=hashlib.sha256(encode(d).encode()).hexdigest()
   with self.db() as c:
@@ -264,7 +265,8 @@ CREATE TABLE IF NOT EXISTS armen_excluded(kind TEXT,id TEXT,reason TEXT,marked_b
   for r in answers:
    if r['day']==today:latest[r['actor']+':'+r['question']]=r
   test=actor=='test' and not owner
-  return {'day':today,'questions':QUESTIONS,'answers':list(latest.values()),'photos':photos,'test_account':test,
+  # A question whose last word today is a taking back has no answer.
+  return {'day':today,'questions':QUESTIONS,'answers':[r for r in latest.values() if r['answer']!=''],'photos':photos,'test_account':test,
           'trust':'TEST_NOT_COUNTED' if test else 'ARMEN_REPORTED','publishing_enabled':False,'orders_created':False}
  def preview(self,actor,ident,owner=False):
   if not re.fullmatch('[a-f0-9]{32}',ident):raise LookupError('unavailable')

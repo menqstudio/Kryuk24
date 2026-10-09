@@ -45,6 +45,11 @@ for name in ('style.css', 'fonts.css', 'index.html', 'login.html', 'app.js', 'lo
 for name, source in SAME.items():
     if (PORTAL / name).read_bytes() != source.read_bytes():
         problems.append('runtime/armen_portal/%s differs from %s' % (name, source.relative_to(ROOT).as_posix()))
+# Bro's picture on the portal is the one the operator page carries inside itself
+import base64
+carried = re.findall(r"^AVATAR='data:image/webp;base64,([A-Za-z0-9+/=]+)'", PAGE.read_text(encoding='utf-8'), re.M)
+if len(carried) != 1 or (PORTAL / 'bro.webp').read_bytes() != base64.b64decode(carried[0]):
+    problems.append("runtime/armen_portal/bro.webp differs from the operator page's picture of Bro")
 tokens = dict(re.findall(r'--([a-z]+-\d+):\s*(#[0-9A-Fa-f]{6});', TOKENS.read_text(encoding='utf-8')))
 page = PAGE.read_text(encoding='utf-8')
 for link in ('/operator/work/armen/tokens.css', '/operator/work/armen/fonts.css'):

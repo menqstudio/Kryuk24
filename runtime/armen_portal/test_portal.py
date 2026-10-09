@@ -62,6 +62,19 @@ class Tests(unittest.TestCase):
   self.assertEqual(self.answer(user='gev')[0],403)
   d=dict(question='availability',answer='READY',day=day(),actor='gev')
   with self.assertRaises(ValueError):self.store.answer('armen',uuid.uuid4().hex,d)
+ def test_an_answer_can_be_taken_back_and_the_history_keeps_both(self):
+  d=dict(question='inquiries',answer='YES',day=day())
+  self.store.answer('armen',uuid.uuid4().hex,d)
+  self.assertEqual([(a['question'],a['answer']) for a in self.store.state('armen')['answers']],[('inquiries','YES')])
+  key=uuid.uuid4().hex;back=self.store.answer('armen',key,{**d,'answer':''})
+  self.assertEqual((back['saved'],back,self.store.state('armen')['answers']),(True,self.store.answer('armen',key,{**d,'answer':''}),[]),'taken back once, a repeat of the request says the same')
+  with self.store.db() as c:self.assertEqual([r[0] for r in c.execute('SELECT answer FROM armen_answers ORDER BY rowid')],['YES',''])
+  self.assertEqual(self.store.state('gev',owner=True)['answers'],[],'the reviewer sees no answer either')
+  self.store.answer('armen',uuid.uuid4().hex,{**d,'answer':'NO'})
+  self.assertEqual([(a['question'],a['answer']) for a in self.store.state('armen')['answers']],[('inquiries','NO')],'and it can be answered again')
+  for wrong in (None,0,[],'  '):
+   with self.assertRaises(ValueError):self.store.answer('armen',uuid.uuid4().hex,{**d,'answer':wrong})
+  with self.assertRaises(ValueError):self.store.answer('armen',uuid.uuid4().hex,dict(question='no-such-question',answer='',day=day()))
  def test_answer_idempotency_and_history(self):
   key=uuid.uuid4().hex;d=dict(question='inquiries',answer='YES',day=day())
   first=self.store.answer('armen',key,d);self.assertEqual(first,self.store.answer('armen',key,d))
@@ -268,9 +281,9 @@ print(len(saved),round(peak()))
   self.assertEqual(self.request(PREFIX+'app.js')[0],200)
   status,raw,headers=self.request(user=None)
   self.assertIn("font-src 'self'",headers['Content-Security-Policy'])
-  for name in (b'tokens.css',b'fonts.css',b'style.css',b'theme.js',b'logo-light.webp',b'logo-dark.webp'):self.assertIn(name,raw)
+  for name in (b'tokens.css',b'fonts.css',b'style.css',b'theme.js',b'logo-dark.webp',b'bro.webp',b'class="wrap"'):self.assertIn(name,raw)
   page=self.request()[1]
-  for part in (b'id="send"',b'id="save"',b'id="pending"',b'tokens.css'):self.assertIn(part,page)
+  for part in (b'id="send"',b'id="save"',b'id="pending"',b'tokens.css',b'class="wrap"'):self.assertIn(part,page)
  def test_rows_marked_as_a_test_are_out_of_every_state_and_preview(self):
   # Gev tried the portal under Armen's account; his rows are marked and must not count as Armen's.
   photo=self.store.photo('armen',self.png(),'WORK')['id']
