@@ -485,6 +485,34 @@ class FalsePass(Base):
         self.assertEqual(got['status'], 'FAIL')
         self.assertEqual([row[0] for row in ast.literal_eval(got['detail'])], [5001, 5002], 'the escaped process and what it started, not the lister')
 
+    def test_a_dead_ancestor_whose_pid_a_job_process_took_later_does_not_make_the_whole_machine_a_leftover(self):
+        """main b666488, run 37866022891, 09.10.2026: T7.6.b named the harness's own process lister. The numbers are that run's."""
+        ended = datetime(2026, 10, 9, 0, 49, 50, 502211, tzinfo=timezone.utc)
+        me = os.getpid()
+        chain = [self.proc(856, 740, name='wininit.exe', start='2026-10-09T00:39:05.0427010Z'),      # its parent, 740, died at boot
+                 self.proc(972, 856, name='services.exe', start='2026-10-09T00:39:05.4999270Z'),
+                 self.proc(2544, 972, name='svchost.exe', start='2026-10-09T00:39:09.6901780Z'),
+                 self.proc(7392, 2544, name='Runner.Worker.exe', start='2026-10-09T00:41:10.5711670Z')]
+        lister = self.proc(9136, me, name='powershell.exe', start='2026-10-09T00:49:51.5040500Z')    # started by the harness after the job ended
+
+        def judged(after, peak, created, started=datetime(2026, 10, 9, 0, 49, 49, 132699, tzinfo=timezone.utc)):
+            mine = {'ProcessId': me, 'ParentProcessId': 7392, 'Name': 'python.exe', 'Start': '2026-10-09T00:46:47.6212440Z'}
+            run = {'proc_before': [mine], 'proc_after': [mine] + after, 'job': {'peak_pids': list(peak), 'survivors': 0, 'peak_created': created},
+                   'started': started.isoformat(), 'job_ended': ended.isoformat()}
+            return {c['id'][-1]: c for c in self.trial().cleanup_checks('X', run)}['b']
+        got = judged(chain + [lister], peak=[740, 6000], created={'740': ['2026-10-09T00:49:49.445103+00:00']})
+        self.assertEqual((got['status'], got.get('why')), ('PASS', None), got['detail'])
+        # the same without a recorded creation time for 740: wininit.exe is older than the run, that alone settles it
+        self.assertEqual(judged(chain + [lister], peak=[740, 6000], created={})['status'], 'PASS')
+        # what must still be caught: a process started during the run whose parent, a job process, is gone
+        orphan = self.proc(6001, 6000, name='node.exe', start='2026-10-09T00:49:49.9000000Z')
+        got = judged(chain + [lister, orphan], peak=[740, 6000], created={'6000': ['2026-10-09T00:49:49.500000+00:00']})
+        self.assertEqual(got['status'], 'FAIL')
+        self.assertEqual([row[0] for row in ast.literal_eval(got['detail'])], [6001], 'the orphan of the job and nothing else')
+        # and a child older than every job process recorded under its dead parent's pid is not that parent's child
+        elder = self.proc(6002, 6000, name='conhost.exe', start='2026-10-09T00:49:49.3000000Z')
+        self.assertEqual(judged(chain + [elder], peak=[6000], created={'6000': ['2026-10-09T00:49:49.500000+00:00']})['status'], 'PASS')
+
     def test_a_job_process_is_known_by_pid_and_creation_time(self):
         ended = datetime(2026, 10, 7, 1, 0, 40, 900000, tzinfo=timezone.utc)
         born = {'5000': ['2026-10-07T01:00:10.123456+00:00']}                                               # what win_job recorded for the pid
