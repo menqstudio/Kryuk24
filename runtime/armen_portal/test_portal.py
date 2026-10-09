@@ -268,9 +268,9 @@ print(len(saved),round(peak()))
   self.assertEqual(self.request(PREFIX+'app.js')[0],200)
   status,raw,headers=self.request(user=None)
   self.assertIn("font-src 'self'",headers['Content-Security-Policy'])
-  for name in (b'tokens.css',b'fonts.css',b'style.css',b'theme.js',b'logo-light.webp',b'logo-dark.webp'):self.assertIn(name,raw)
+  for name in (b'tokens.css',b'fonts.css',b'style.css',b'theme.js',b'logo-dark.webp',b'bro.webp',b'class="wrap"'):self.assertIn(name,raw)
   page=self.request()[1]
-  for part in (b'id="send"',b'id="save"',b'id="pending"',b'tokens.css'):self.assertIn(part,page)
+  for part in (b'id="send"',b'id="save"',b'id="pending"',b'tokens.css',b'class="wrap"'):self.assertIn(part,page)
  def test_rows_marked_as_a_test_are_out_of_every_state_and_preview(self):
   # Gev tried the portal under Armen's account; his rows are marked and must not count as Armen's.
   photo=self.store.photo('armen',self.png(),'WORK')['id']

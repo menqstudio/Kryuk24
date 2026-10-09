@@ -79,14 +79,18 @@ def run(width, theme, pw, base):
     def shot(name):
         wide = page.evaluate('[document.documentElement.scrollWidth, document.documentElement.clientWidth]')
         check('%s %s: no sideways scroll' % (tag, name), wide[0] <= wide[1], wide)
+        # the band's content and the page's column keep to the container (45rem), also on a wide screen:
+        # on 09.10.2026 the login page was installed stretched over a whole desktop window and no check saw it
+        columns = page.evaluate("[...document.querySelectorAll('.top .wrap, main')].map(e => Math.round(e.getBoundingClientRect().width))")
+        check('%s %s: the band and the column are not wider than the container' % (tag, name), len(columns) == 2 and max(columns) <= 720, columns)
         page.screenshot(path=str(out / ('%s-%s.png' % (tag, name))), full_page=True)
 
     page.goto(URL)
     page.wait_for_selector('#login')
     page.evaluate('document.fonts.ready')
     check('%s the page uses the design fonts' % tag, page.evaluate("document.fonts.check('700 16px \"Roboto Condensed\"', 'Вход') && document.fonts.check('16px \"Golos Text\"', 'Вход')"))
-    check('%s the logo for this theme is the one shown' % tag, page.evaluate("getComputedStyle(document.querySelector('.on-%s')).display" % theme) == 'block'
-          and page.evaluate("getComputedStyle(document.querySelector('.on-%s')).display" % ('light' if theme == 'dark' else 'dark')) == 'none')
+    check('%s the band shows the logo for a dark ground and Bro\'s picture, both loaded' % tag,
+          page.evaluate("[...document.querySelectorAll('.top img')].map(i => [i.getAttribute('src'), i.complete && i.naturalWidth > 0])") == [['logo-dark.webp', True], ['bro.webp', True]])
     shot('1-login')
     page.fill('#password', SAMPLE)
     page.click('#login button')
@@ -172,7 +176,7 @@ with tempfile.TemporaryDirectory() as folder:
     if made.returncode != 0:
         sys.exit('the throwaway certificate was not made: ' + made.stderr.strip()[-600:])
     with sync_playwright() as pw:
-        for width, theme in ((360, 'light'), (390, 'light'), (430, 'light'), (390, 'dark')):
+        for width, theme in ((360, 'light'), (390, 'light'), (430, 'light'), (390, 'dark'), (1280, 'light'), (1280, 'dark')):
             run(width, theme, pw, base)
 print('FAILED: %d' % len(failures) if failures else 'all browser checks passed')
 sys.exit(1 if failures else 0)
