@@ -6,7 +6,7 @@ Gev's requirement of 08.10.2026: Armen puts his photos into his portal instead o
 
 This module is the part between the portal's hand-over and Gev's approval. It is built on what the runtime already has and changes none of it: `ops_media.MediaStore` (the shared media inbox: one original for one sha256) and `ops_work.Operations` (the day's `MEDIA_INBOX` task, its draft, Gev's approval in his dashboard, the recorded result).
 
-**State: in the repository, with tests, and rehearsed on the server in a temporary place. Not installed: the live portal hands nothing over (its unit has no outbox) and nothing in the live runtime knows this module.** The proposed install, its permissions, backup and rollback: [`INSTALL_PLAN.md`](INSTALL_PLAN.md).
+**State: in the repository, with tests, and rehearsed on the server in a temporary place. The lock-aware store (`store_patch/`) is installed on the live runtime since 09.10.2026 00:08 UTC (see `INSTALL_PLAN.md` and `docs/CURRENT_STATE.md` section 6); the media pipeline itself is not installed: the live portal hands nothing over (its unit has no outbox) and nothing in the live runtime drives this module.** The proposed install, its permissions, backup and rollback: [`INSTALL_PLAN.md`](INSTALL_PLAN.md).
 
 ### What it reads of the portal
 
