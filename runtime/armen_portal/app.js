@@ -71,8 +71,10 @@ function renderQuestions() {
       b.setAttribute('aria-pressed', String(current === value));
       b.disabled = readOnly || saving;
       b.onclick = () => {
-        if (value === saved[q.id]) delete chosen[q.id];
-        else if (!chosen[q.id] || chosen[q.id].value !== value) chosen[q.id] = { value, key: key() };
+        // A second tap on a picked answer takes the pick back; so does a tap on the answer the server already holds.
+        // A saved answer itself is not removed here: it is changed by picking another and saving.
+        if (value === saved[q.id] || (chosen[q.id] && chosen[q.id].value === value)) delete chosen[q.id];
+        else chosen[q.id] = { value, key: key() };
         delete results[q.id];
         note($('save-status'), '');
         remember(); renderQuestions();
@@ -157,7 +159,8 @@ function renderPending() {
   $('send').hidden = !count && !sending;
   $('send').disabled = sending || !count;
   $('send').textContent = count ? 'Загрузить фото (' + count + ')' : 'Загрузить фото';
-  for (const id of ['gallery', 'camera', 'purpose']) $(id).disabled = sending;
+  for (const id of ['gallery', 'camera']) $(id).disabled = sending;
+  for (const b of $('purpose').children) b.disabled = sending;
 }
 function sendOne(p, purpose) {
   return new Promise(resolve => {
@@ -176,7 +179,7 @@ async function sendPhotos() {
   if (sending || readOnly) return;
   const queue = waiting();
   if (!queue.length) return;
-  sending = true; const purpose = $('purpose').value; let done = 0;
+  sending = true; const purpose = $('purpose').querySelector('[aria-pressed=true]').dataset.value; let done = 0;
   $('progress').hidden = false;
   for (const p of queue) {
     p.status = 'uploading'; p.percent = 0; $('progress').value = 0;
@@ -197,6 +200,7 @@ function moscow() { return new Date(Date.now() + 3 * 3600000); }   // read with 
 function tick() {
   const t = moscow(), h = t.getUTCHours();
   $('clock').textContent = String(h).padStart(2, '0') + ':' + String(t.getUTCMinutes()).padStart(2, '0');
+  $('clock-box').classList.toggle('night', !(h >= 7 && h < 19));
   const months = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
   $('subline').textContent = 'фото и ответы · ' + t.getUTCDate() + ' ' + months[t.getUTCMonth()];
   if (actor === 'armen') $('greeting').textContent = (h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер') + ', Армен';
@@ -248,6 +252,8 @@ if (actor === 'test') {
   $('question-hint').textContent = 'Тест: ответы и фото этого входа не учитываются и никуда не передаются.';
 }
 tick(); setInterval(tick, 20000);
+// what is on the photos: one of three, picked like an answer; one is always picked
+for (const b of $('purpose').children) b.onclick = () => { for (const other of $('purpose').children) other.setAttribute('aria-pressed', String(other === b)); };
 for (const id of ['gallery', 'camera']) $(id).onchange = e => addPhotos(e.target);
 $('send').onclick = sendPhotos;
 $('save').onclick = saveAnswers;

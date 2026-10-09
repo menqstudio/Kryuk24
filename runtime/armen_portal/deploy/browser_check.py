@@ -79,16 +79,19 @@ def run(width, theme, pw, base):
     def shot(name):
         wide = page.evaluate('[document.documentElement.scrollWidth, document.documentElement.clientWidth]')
         check('%s %s: no sideways scroll' % (tag, name), wide[0] <= wide[1], wide)
-        # the band's content and the page's column keep to the container (45rem), also on a wide screen:
+        # the band's content and the page's column keep to the container (960 px, the operator page's), also on a wide screen:
         # on 09.10.2026 the login page was installed stretched over a whole desktop window and no check saw it
         columns = page.evaluate("[...document.querySelectorAll('.top .wrap, main')].map(e => Math.round(e.getBoundingClientRect().width))")
-        check('%s %s: the band and the column are not wider than the container' % (tag, name), len(columns) == 2 and max(columns) <= 720, columns)
+        check('%s %s: the band and the column are not wider than the container' % (tag, name), len(columns) == 2 and max(columns) <= 960, columns)
         page.screenshot(path=str(out / ('%s-%s.png' % (tag, name))), full_page=True)
 
     page.goto(URL)
     page.wait_for_selector('#login')
     page.evaluate('document.fonts.ready')
-    check('%s the page uses the design fonts' % tag, page.evaluate("document.fonts.check('700 16px \"Roboto Condensed\"', 'Вход') && document.fonts.check('16px \"Golos Text\"', 'Вход')"))
+    # one family for text and headings, as on the operator page (Golos Text, one variable file for 400 to 700)
+    check('%s the page uses the design font, regular and bold, and its heading is set in it' % tag,
+          page.evaluate("document.fonts.check('16px \"Golos Text\"', 'Вход') && document.fonts.check('700 16px \"Golos Text\"', 'Вход')")
+          and page.evaluate("getComputedStyle(document.querySelector('h1')).fontFamily").strip('\'"').startswith('Golos Text'))
     check('%s the band shows the logo for a dark ground and Bro\'s picture, both loaded' % tag,
           page.evaluate("[...document.querySelectorAll('.top img')].map(i => [i.getAttribute('src'), i.complete && i.naturalWidth > 0])") == [['logo-dark.webp', True], ['bro.webp', True]])
     shot('1-login')
@@ -111,9 +114,16 @@ def run(width, theme, pw, base):
     shot('3-photos-picked')
     page.click('#pending li:nth-child(3) button')
     check('%s a picked item can be removed' % tag, page.locator('#pending li').count() == 2)
+    # what is on the photos: three chips, one always picked, no drop-down
+    check('%s the photo kind is three chips with the first picked, and no drop-down' % tag,
+          page.locator('select').count() == 0 and [b.get_attribute('aria-pressed') for b in page.locator('#purpose button').all()] == ['true', 'false', 'false'])
+    page.click('#purpose button[data-value=EQUIPMENT]')
+    page.click('#purpose button[data-value=EQUIPMENT]')   # a second tap leaves it picked: a photo always has a kind
+    check('%s a tap picks another kind and exactly one stays picked' % tag, [b.get_attribute('aria-pressed') for b in page.locator('#purpose button').all()] == ['false', 'true', 'false'])
     page.dblclick('#send')  # a double tap
     wait('#upload-status', 'Сохранено')
     check('%s after the button both are stored once, a double tap adds nothing' % tag, rows('SELECT count(*) FROM armen_photos')[0][0] == 2)
+    check('%s the picked kind is the one the server stored' % tag, [r[0] for r in rows('SELECT DISTINCT purpose FROM armen_photos')] == ['EQUIPMENT'])
     check('%s the result is the server\'s, next to the button' % tag, page.inner_text('#upload-status') == 'Сохранено: 2 из 2' and page.locator('#pending .state.ok').count() == 2, page.inner_text('#upload-status'))
     page.locator('#photos img').nth(1).wait_for(timeout=20000)
     shot('4-photos-saved')
@@ -122,6 +132,14 @@ def run(width, theme, pw, base):
     wait('#pending', 'Уже было загружено')
     check('%s the same picture again makes no second photo and says so' % tag, rows('SELECT count(*) FROM armen_photos')[0][0] == 2 and 'Уже было загружено' in page.inner_text('#pending'))
 
+    # answers: a second tap takes a pick back (Gev, 09.10.2026: there was no way to cancel a pick)
+    first = '#questions .question:nth-child(1) .choices button:nth-child(1)'
+    page.click(first)
+    picked = (page.get_attribute(first, 'aria-pressed'), page.locator('#questions .note.warn').count(), page.is_disabled('#save'))
+    page.click(first)
+    back = (page.get_attribute(first, 'aria-pressed'), page.locator('#questions .note.warn').count(), page.is_disabled('#save'), page.inner_text('#save'))
+    check('%s a second tap on a picked answer takes it back and nothing is left to save' % tag,
+          picked == ('true', 1, False) and back == ('false', 0, True, 'Сохранить ответы') and rows('SELECT count(*) FROM armen_answers')[0][0] == 0, (picked, back))
     # answers: picked is not saved; one is refused on purpose
     for q in (1, 2, 3):
         page.click('#questions .question:nth-child(%d) .choices button:nth-child(1)' % q)
