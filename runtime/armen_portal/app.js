@@ -12,7 +12,8 @@ const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 let state = null;      // the last state the server gave
 const saved = {};      // question id -> the answer the server holds for today
-const chosen = {};     // question id -> {value, key}: picked here, not saved yet. The key stays with the choice,
+const chosen = {};     // question id -> {value, key}: picked here, not saved yet; value '' means: take the saved
+                       // answer back. The key stays with the choice,
                        // so a second tap or a retry repeats the same request and the server stores it once.
 const results = {};    // question id -> {ok, text}: what the server said about the last save of that answer
 const pending = [];    // photos picked, not sent yet: {file, url, status, text, percent, problem}
@@ -39,7 +40,8 @@ function recall() {
     if (!kept || kept.day !== state.day) return;
     for (const q of state.questions) {
       const c = kept.chosen[q.id];
-      if (c && q.options.some(o => o[0] === c.value) && /^[a-f0-9]{32}$/.test(c.key) && c.value !== saved[q.id]) chosen[q.id] = { value: c.value, key: c.key };
+      const known = c && (q.options.some(o => o[0] === c.value) || (c.value === '' && saved[q.id] !== undefined));
+      if (known && /^[a-f0-9]{32}$/.test(c.key) && c.value !== saved[q.id]) chosen[q.id] = { value: c.value, key: c.key };
     }
   } catch (e) {}
 }
@@ -71,9 +73,12 @@ function renderQuestions() {
       b.setAttribute('aria-pressed', String(current === value));
       b.disabled = readOnly || saving;
       b.onclick = () => {
-        // A second tap on a picked answer takes the pick back; so does a tap on the answer the server already holds.
-        // A saved answer itself is not removed here: it is changed by picking another and saving.
-        if (value === saved[q.id] || (chosen[q.id] && chosen[q.id].value === value)) delete chosen[q.id];
+        // A tap on the one that is marked leaves nothing marked: an unsaved pick is dropped, and when the server
+        // holds an answer, taking it back becomes the unsaved choice ('' is sent by the save button).
+        // A tap on the answer the server holds brings it back with nothing to save. Any other tap picks.
+        if (value === current) {
+          if (saved[q.id] !== undefined) chosen[q.id] = { value: '', key: key() }; else delete chosen[q.id];
+        } else if (value === saved[q.id]) delete chosen[q.id];
         else chosen[q.id] = { value, key: key() };
         delete results[q.id];
         note($('save-status'), '');
@@ -86,7 +91,7 @@ function renderQuestions() {
     if (results[q.id] && !results[q.id].ok) {
       note(mark, 'Не сохранено', 'error');
       const line = document.createElement('p'); note(line, results[q.id].text, 'error'); card.append(line);
-    } else if (chosen[q.id]) note(mark, 'Не сохранено', 'warn');
+    } else if (chosen[q.id]) note(mark, chosen[q.id].value === '' ? 'Ответ снят, не сохранено' : 'Не сохранено', 'warn');
     else if (saved[q.id] !== undefined) note(mark, 'Сохранено', 'ok');
     else note(mark, '');
     area.append(card);
@@ -107,7 +112,8 @@ async function saveAnswers() {
     try {
       await api('api/answer', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, 'Idempotency-Key': pick.key },
         body: JSON.stringify({ question: id, answer: pick.value, day: state.day }) });
-      saved[id] = pick.value; delete chosen[id]; results[id] = { ok: true, text: 'Сохранено' };
+      if (pick.value === '') delete saved[id]; else saved[id] = pick.value;
+      delete chosen[id]; results[id] = { ok: true, text: 'Сохранено' };
     } catch (e) {
       results[id] = { ok: false, text: e.message };
       failed.push('«' + state.questions.find(q => q.id === id).title + '»');

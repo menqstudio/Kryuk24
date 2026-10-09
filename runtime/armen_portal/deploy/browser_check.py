@@ -175,6 +175,31 @@ def run(width, theme, pw, base):
     page.wait_for_selector('#questions .question')
     check('%s after a reload the saved answers are the pressed ones' % tag, page.locator('#questions button[aria-pressed=true]').count() == 3 and page.locator('#photos img').count() == 2)
 
+    # a SAVED answer: a tap on the marked one leaves nothing marked in that question (Gev, 09.10.2026: after a
+    # second tap the mark jumped to the saved answer beside it, which looked like the choice moving sideways)
+    def marks(q):
+        return [b.get_attribute('aria-pressed') for b in page.locator('#questions .question:nth-child(%d) .choices button' % q).all()]
+    one = '#questions .question:nth-child(1) .choices button:nth-child(%d)'
+    was = marks(1)
+    page.click(one % 2)                                   # another answer is picked over the saved one
+    page.click(one % 2)                                   # a second tap on it
+    after_cancel = marks(1)
+    check('%s over a saved answer: a second tap on a new pick leaves nothing marked, not the saved one beside it' % tag,
+          was[0] == 'true' and 'true' not in after_cancel and 'Ответ снят' in page.inner_text('#questions .question:nth-child(1) .qhead'), (was, after_cancel))
+    page.click(one % 1)                                   # the saved one again: back as it was, nothing to save
+    check('%s a tap on the saved answer brings it back with nothing to save' % tag, marks(1) == was and page.is_disabled('#save'))
+    page.click(one % 1)                                   # a tap on the saved, marked answer: take it back
+    check('%s a tap on the saved answer that is marked leaves nothing marked and waits for the save button' % tag,
+          'true' not in marks(1) and not page.is_disabled('#save') and rows("SELECT count(*) FROM armen_answers WHERE answer=''")[0][0] == 0)
+    page.click('#save')
+    wait('#save-status', 'Сохранено')
+    check('%s after the save button the answer is taken back on the server, as a row of its own' % tag,
+          [r[0] for r in rows("SELECT answer FROM armen_answers WHERE question=(SELECT id FROM (SELECT question AS id FROM armen_answers ORDER BY rowid LIMIT 1)) ORDER BY rowid")][-1] == ''
+          and 'true' not in marks(1) and page.inner_text('#ring-count') == '2/5', page.inner_text('#ring-count'))
+    page.reload()
+    page.wait_for_selector('#questions .question')
+    check('%s after a reload that question has no answer and the two others keep theirs' % tag, 'true' not in marks(1) and page.locator('#questions button[aria-pressed=true]').count() == 2)
+
     page.click('#logout')
     page.wait_for_selector('#login')
     check('%s sign-out returns to the login form and the cookie no longer opens the page' % tag, page.goto(URL + 'api/state').status == 401)

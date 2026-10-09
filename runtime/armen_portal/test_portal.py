@@ -62,6 +62,19 @@ class Tests(unittest.TestCase):
   self.assertEqual(self.answer(user='gev')[0],403)
   d=dict(question='availability',answer='READY',day=day(),actor='gev')
   with self.assertRaises(ValueError):self.store.answer('armen',uuid.uuid4().hex,d)
+ def test_an_answer_can_be_taken_back_and_the_history_keeps_both(self):
+  d=dict(question='inquiries',answer='YES',day=day())
+  self.store.answer('armen',uuid.uuid4().hex,d)
+  self.assertEqual([(a['question'],a['answer']) for a in self.store.state('armen')['answers']],[('inquiries','YES')])
+  key=uuid.uuid4().hex;back=self.store.answer('armen',key,{**d,'answer':''})
+  self.assertEqual((back['saved'],back,self.store.state('armen')['answers']),(True,self.store.answer('armen',key,{**d,'answer':''}),[]),'taken back once, a repeat of the request says the same')
+  with self.store.db() as c:self.assertEqual([r[0] for r in c.execute('SELECT answer FROM armen_answers ORDER BY rowid')],['YES',''])
+  self.assertEqual(self.store.state('gev',owner=True)['answers'],[],'the reviewer sees no answer either')
+  self.store.answer('armen',uuid.uuid4().hex,{**d,'answer':'NO'})
+  self.assertEqual([(a['question'],a['answer']) for a in self.store.state('armen')['answers']],[('inquiries','NO')],'and it can be answered again')
+  for wrong in (None,0,[],'  '):
+   with self.assertRaises(ValueError):self.store.answer('armen',uuid.uuid4().hex,{**d,'answer':wrong})
+  with self.assertRaises(ValueError):self.store.answer('armen',uuid.uuid4().hex,dict(question='no-such-question',answer='',day=day()))
  def test_answer_idempotency_and_history(self):
   key=uuid.uuid4().hex;d=dict(question='inquiries',answer='YES',day=day())
   first=self.store.answer('armen',key,d);self.assertEqual(first,self.store.answer('armen',key,d))
