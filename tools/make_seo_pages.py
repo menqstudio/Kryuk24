@@ -15,7 +15,6 @@ site/_ready/<slug>/index.html, а по адресу на сайте — загл
 """
 import html
 import json
-import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
