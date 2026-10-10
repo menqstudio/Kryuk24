@@ -4,6 +4,8 @@
 #   -Kind actions         token YANDEX_ACTIONS_TOKEN; also one read-only call to the Direct API (list of campaigns)
 param([ValidateSet('read', 'actions')][string]$Kind = 'read')
 $ErrorActionPreference = 'Stop'
+# Yandex answers in UTF-8; without this the Cyrillic names and error texts print as '?'.
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 $variable = if ($Kind -eq 'actions') { 'YANDEX_ACTIONS_TOKEN' } else { 'YANDEX_OAUTH_TOKEN' }
 $token = [Environment]::GetEnvironmentVariable($variable, 'User')
 if (-not $token) { Write-Host "NO TOKEN: the user variable $variable is not set." -ForegroundColor Red; exit 2 }
